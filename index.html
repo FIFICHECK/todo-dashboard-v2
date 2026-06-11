@@ -19,27 +19,17 @@
     .week-chip:hover { background: #0f3460; color: #fff; }
     .week-chip.active { background: #e94560; color: #fff; }
 
-    .main-grid { display: grid; gap: 1px; background: #333; border-radius: 8px; overflow: hidden; max-width: 100%; overflow-x: auto; }
+    .main-grid { display: grid; gap: 1px; background: #333; border-radius: 8px; overflow: auto; max-width: 100%; }
     
-    .header-cell { background: #16213e; padding: 12px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.85rem; min-width: 140px; }
+    .header-cell { background: #16213e; padding: 12px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.8rem; min-width: 100px; }
     .header-cell.date-header { background: #0f3460; color: #e94560; }
-
+    .header-cell.work-pool-header { background: #e94560; color: #fff; min-width: 120px; }
     .header-cell.weekend { background: #1a1a2e; color: #666; }
     
-    .date-section { background: #1f1f3a; padding: 4px; min-width: 140px; vertical-align: top; }
-    .date-section.weekend { background: #181828; }
+    .work-pool-col { background: #1f1f3a; padding: 8px; min-width: 120px; vertical-align: top; }
     
-    .date-header { 
-      background: #0f3460; 
-      color: #e94560; 
-      padding: 8px; 
-      text-align: center; 
-      font-weight: bold; 
-      font-size: 0.85rem;
-      border-radius: 6px 6px 0 0;
-      margin-bottom: 4px;
-    }
-    .date-header .day-name { font-size: 0.7rem; color: #888; font-weight: normal; }
+    .date-col { background: #1f1f3a; padding: 4px; min-width: 100px; vertical-align: top; }
+    .date-col.weekend { background: #181828; }
     
     .rm-block { 
       background: #252540; 
@@ -47,12 +37,13 @@
       margin-bottom: 4px; 
       border-left: 3px solid #555;
       padding: 6px 8px;
+      min-height: 60px;
     }
     .rm-block.has-name { border-left-color: #e94560; }
     
     .rm-name { 
       font-weight: bold; 
-      font-size: 0.75rem; 
+      font-size: 0.7rem; 
       color: #e94560; 
       cursor: pointer;
       margin-bottom: 4px;
@@ -61,28 +52,28 @@
     .rm-name:hover { text-decoration: underline; }
     .rm-name.empty { color: #888; font-style: italic; }
     
-    .work-row { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
-    
-    .work-input {
-      flex: 1;
-      background: #1a1a2e;
-      border: 1px solid #333;
-      border-radius: 4px;
-      padding: 4px 6px;
-      color: #fff;
-      font-size: 0.7rem;
-      font-family: inherit;
+    .work-pool-item {
+      background: #252540;
+      border-radius: 6px;
+      padding: 6px 8px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      border: 1px solid transparent;
     }
-    .work-input::placeholder { color: #555; }
-    .work-input:focus { outline: none; border-color: #e94560; }
+    .work-pool-item:hover { border-color: #e94560; }
+    .work-pool-item.selected { border-color: #4ecca3; background: #1f3a2e; }
     
-    .btn { cursor: pointer; font-size: 0.85rem; padding: 2px 4px; }
-    .btn:hover { transform: scale(1.2); }
+    .work-item { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; padding: 2px 4px; background: #1a1a2e; border-radius: 4px; }
+    .work-item.done { opacity: 0.5; }
+    .work-item .work-text { flex: 1; font-size: 0.7rem; word-break: break-word; }
+    .work-item .work-text a { color: #4fc3f7; text-decoration: none; }
+    .work-item .btn { cursor: pointer; font-size: 0.8rem; padding: 1px; }
+    .work-item .btn:hover { transform: scale(1.2); }
+    .work-item .btn-clear { color: #666; font-size: 0.7rem; }
+    .work-item .btn-clear:hover { color: #e94560; }
     
-    .btn-clear { color: #666; font-size: 0.75rem; }
-    .btn-clear:hover { color: #e94560; }
-    
-    .add-row-btn { 
+    .add-work-btn { 
       background: transparent; 
       border: 1px dashed #444; 
       color: #666; 
@@ -93,8 +84,8 @@
       font-size: 0.7rem; 
       margin-top: 4px;
     }
-    .add-row-btn:hover { border-color: #e94560; color: #e94560; }
-
+    .add-work-btn:hover { border-color: #e94560; color: #e94560; }
+    
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
     .modal-overlay.active { display: flex; }
     .modal { background: #1f1f3a; border-radius: 10px; padding: 24px; width: 400px; max-width: 90vw; }
@@ -109,7 +100,7 @@
 </head>
 <body>
   <h1>📋 Fiona Team To-Do Dashboard v2</h1>
-  <p class="subtitle">垂直：日期 → 7個 RM | 水平：無限工作行，每行有 ✅/✕</p>
+  <p class="subtitle">左方：工作池（剔選工作）| 頂部：日期 | 每個日期：7個 RM 空格</p>
 
   <div class="date-controls">
     <div class="date-nav">
@@ -122,19 +113,17 @@
 
   <div class="main-grid" id="mainGrid"></div>
 
-  <div class="modal-overlay" id="taskModal">
+  <div class="modal-overlay" id="workModal">
     <div class="modal">
-      <h3>加入工作</h3>
-      <input type="hidden" id="editDateIdx">
-      <input type="hidden" id="editRmIdx">
-      <input type="hidden" id="editRowIdx">
-      <label>工作描述</label>
-      <input type="text" id="taskInput" placeholder="輸入工作內容...">
+      <h3 id="workModalTitle">加入工作</h3>
+      <input type="hidden" id="editWorkId">
+      <label>工作名稱</label>
+      <input type="text" id="workNameInput" placeholder="輸入工作名稱...">
       <label>URL 連結（可選）</label>
-      <input type="text" id="urlInput" placeholder="https://...">
+      <input type="text" id="workUrlInput" placeholder="https://...">
       <div class="modal-buttons">
-        <button class="cancel-btn" onclick="closeTaskModal()">取消</button>
-        <button class="save-btn" onclick="saveTask()">儲存</button>
+        <button class="cancel-btn" onclick="closeWorkModal()">取消</button>
+        <button class="save-btn" onclick="saveWork()">儲存</button>
       </div>
     </div>
   </div>
@@ -142,7 +131,6 @@
   <script>
     var MAX_RMS = 7;
     var RM_COLORS = ['#e94560', '#f39c12', '#9b59b6', '#3498db', '#1abc9c', '#e74c3c', '#2ecc71'];
-    var DAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
     var currentWeekStart = getMonday(new Date());
     var data = {};
     var RMS = ['', '', '', '', '', '', ''];
@@ -157,19 +145,19 @@
     }
 
     function loadData() {
-      var saved = localStorage.getItem('todo_dashboard_v9');
+      var saved = localStorage.getItem('todo_dashboard_v10');
       if (saved) {
         var parsed = JSON.parse(saved);
-        data = parsed.data || {};
+        data = parsed.data || { works: [], assignments: {} };
         RMS = parsed.rms || ['', '', '', '', '', '', ''];
       } else {
-        data = { tasks: {} };
+        data = { works: [], assignments: {} };
         RMS = ['', '', '', '', '', '', ''];
       }
     }
 
     function saveData() {
-      localStorage.setItem('todo_dashboard_v9', JSON.stringify({ data: data, rms: RMS }));
+      localStorage.setItem('todo_dashboard_v10', JSON.stringify({ data: data, rms: RMS }));
     }
 
     function navigateWeek(direction) {
@@ -202,15 +190,6 @@
       return (currentWeekStart.getMonth() + 1) + '/' + currentWeekStart.getDate() + ' - ' + (weekEnd.getMonth() + 1) + '/' + weekEnd.getDate();
     }
 
-    function initDateData(dateKey) {
-      if (!data.tasks[dateKey]) {
-        data.tasks[dateKey] = [];
-        for (var i = 0; i < MAX_RMS; i++) {
-          data.tasks[dateKey].push({ rows: [{ text: '', url: '', done: false }] });
-        }
-      }
-    }
-
     function renderWeekChips() {
       var container = document.getElementById('weekChips');
       var today = new Date();
@@ -225,67 +204,96 @@
       container.innerHTML = html;
     }
 
+    function getAssignmentKey(dateKey, rmIdx) {
+      return dateKey + '_' + rmIdx;
+    }
+
+    function toggleWorkDone(dateKey, rmIdx, workId) {
+      var key = getAssignmentKey(dateKey, rmIdx);
+      if (!data.assignments[key]) return;
+      var work = data.assignments[key].find(function(w) { return w.id === workId; });
+      if (work) {
+        work.done = !work.done;
+        saveData();
+        renderGrid();
+      }
+    }
+
+    function removeWorkFromCell(dateKey, rmIdx, workId) {
+      var key = getAssignmentKey(dateKey, rmIdx);
+      if (!data.assignments[key]) return;
+      data.assignments[key] = data.assignments[key].filter(function(w) { return w.id !== workId; });
+      saveData();
+      renderGrid();
+    }
+
+    function addWorkToCell(dateKey, rmIdx, work) {
+      var key = getAssignmentKey(dateKey, rmIdx);
+      if (!data.assignments[key]) data.assignments[key] = [];
+      // Check if already added
+      var exists = data.assignments[key].some(function(w) { return w.id === work.id; });
+      if (!exists) {
+        data.assignments[key].push({ id: work.id, text: work.text, url: work.url, done: false });
+        saveData();
+        renderGrid();
+      }
+    }
+
     function renderGrid() {
       var grid = document.getElementById('mainGrid');
       var dates = getWeekDates();
       document.getElementById('currentDateLabel').textContent = formatDateLabel();
       renderWeekChips();
 
-      // Header row: RM column + date columns
-      var html = '<div class="header-cell" style="background:#16213e;"></div>';
+      // Header row: Work Pool + date columns
+      var html = '<div class="header-cell work-pool-header">工作池</div>';
       dates.forEach(function(date) {
-        var isWeekend = date.getDay() === 0 || date.getDay() === 6;
-        var dayName = DAY_NAMES[date.getDay()];
-        html += '<div class="date-header ' + (isWeekend ? 'weekend' : '') + '">' + 
-          (date.getMonth() + 1) + '/' + date.getDate() + 
-          '</div>';
+        html += '<div class="header-cell date-header">' + (date.getMonth() + 1) + '/' + date.getDate() + '</div>';
       });
 
-      // For each RM (7 rows)
+      // Work pool column
+      html += '<div class="work-pool-col">';
+      data.works.forEach(function(work) {
+        html += '<div class="work-pool-item" onclick="openEditWork(\'' + work.id + '\')">' + escapeHtml(work.text) + '</div>';
+      });
+      html += '<button class="add-work-btn" onclick="openAddWork()">+ 新增工作</button>';
+      html += '</div>';
+
+      // RM rows
       for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
         var rmColor = RM_COLORS[rmIdx];
+        var rmName = RMS[rmIdx] || 'RM' + (rmIdx + 1);
         
-        // RM label cell
-        html += '<div class="header-cell" style="background:#16213e;color:' + rmColor + ';border-top:3px solid ' + rmColor + ';cursor:pointer;" onclick="setRmName(' + rmIdx + ')">' + 
-          (RMS[rmIdx] ? escapeHtml(RMS[rmIdx]) : '設定 RM') + '</div>';
+        // RM header cell
+        html += '<div class="header-cell" style="background:#16213e;color:' + rmColor + ';border-top:3px solid ' + rmColor + ';cursor:pointer;" onclick="setRmName(' + rmIdx + ')">' + escapeHtml(rmName) + '</div>';
         
         // For each date
-        dates.forEach(function(date, dateIdx) {
+        dates.forEach(function(date) {
           var dateKey = getDateKey(date);
-          var isWeekend = date.getDay() === 0 || date.getDay() === 6;
-          initDateData(dateKey);
+          var key = getAssignmentKey(dateKey, rmIdx);
+          var assignedWorks = data.assignments[key] || [];
           
-          var slotData = data.tasks[dateKey][rmIdx];
-          var rows = slotData ? slotData.rows : [{ text: '', url: '', done: false }];
+          html += '<div class="date-col">';
+          html += '<div class="rm-block ' + (RMS[rmIdx] ? 'has-name' : '') + '" style="border-left-color:' + (RMS[rmIdx] ? rmColor : '#555') + '">';
           
-          html += '<div class="date-section ' + (isWeekend ? 'weekend' : '') + '">';
-          
-          // Each work row
-          rows.forEach(function(row, rowIdx) {
-            var isDone = row.done;
-            var hasText = row.text && row.text.trim() !== '';
-            
-            html += '<div class="rm-block ' + (RMS[rmIdx] ? 'has-name' : '') + '" style="border-left-color:' + (RMS[rmIdx] ? rmColor : '#555') + '">';
-            
-            // Work input row
-            html += '<div class="work-row">';
-            html += '<input type="text" class="work-input ' + (isDone ? 'done' : '') + '" ' +
-              'id="input_' + dateIdx + '_' + rmIdx + '_' + rowIdx + '" ' +
-              'placeholder="輸入工作..." value="' + escapeHtml(row.text) + '" ' +
-              'oninput="saveWork(' + dateIdx + ',' + rmIdx + ',' + rowIdx + ',this.value)" ' +
-              'onkeypress="if(event.key===\'Enter\'){addNewRow(' + dateIdx + ',' + rmIdx + ',' + rowIdx + ');}">';
-            html += '<span class="btn" onclick="toggleDone(' + dateIdx + ',' + rmIdx + ',' + rowIdx + ')">' + (isDone ? '✅' : '☐') + '</span>';
-            html += '<span class="btn-clear" onclick="clearRow(' + dateIdx + ',' + rmIdx + ',' + rowIdx + ')">✕</span>';
-            html += '</div>';
-            
-            // Add new row on Enter - handled by onkeypress above
+          // Show assigned works
+          assignedWorks.forEach(function(w) {
+            html += '<div class="work-item ' + (w.done ? 'done' : '') + '">';
+            html += '<span class="btn" onclick="toggleWorkDone(\'' + dateKey + '\',' + rmIdx + ',\'' + w.id + '\')">' + (w.done ? '✅' : '☐') + '</span>';
+            html += '<span class="work-text">' + escapeHtml(w.text) + (w.url ? ' <a href="' + escapeHtml(w.url) + '" target="_blank">🔗</a>' : '') + '</span>';
+            html += '<span class="btn-clear" onclick="removeWorkFromCell(\'' + dateKey + '\',' + rmIdx + ',\'' + w.id + '\')">✕</span>';
             html += '</div>';
           });
           
-          // Add row button
-          html += '<button class="add-row-btn" onclick="addNewRow(' + dateIdx + ',' + rmIdx + ',' + (rows.length - 1) + ')">+ 新增工作行</button>';
-          
+          // Work pool selector
+          html += '<div style="margin-top:4px;">';
+          data.works.forEach(function(work) {
+            var isAssigned = assignedWorks.some(function(w) { return w.id === work.id; });
+            html += '<div class="work-pool-item ' + (isAssigned ? 'selected' : '') + '" style="font-size:0.65rem;padding:4px 6px;margin-bottom:2px;" onclick="addWorkToCell(\'' + dateKey + '\',' + rmIdx + ',' + JSON.stringify(work).replace(/"/g, '&quot;') + ')">' + (isAssigned ? '✓ ' : '+ ') + escapeHtml(work.text) + '</div>';
+          });
           html += '</div>';
+          
+          html += '</div></div>';
         });
       }
       
@@ -308,92 +316,54 @@
       }
     }
 
-    function saveWork(dateIdx, rmIdx, rowIdx, value) {
-      var dates = getWeekDates();
-      var dateKey = getDateKey(dates[dateIdx]);
-      initDateData(dateKey);
-      data.tasks[dateKey][rmIdx].rows[rowIdx].text = value;
-      saveData();
+    function openAddWork() {
+      document.getElementById('workModalTitle').textContent = '新增工作';
+      document.getElementById('editWorkId').value = '';
+      document.getElementById('workNameInput').value = '';
+      document.getElementById('workUrlInput').value = '';
+      document.getElementById('workModal').classList.add('active');
+      document.getElementById('workNameInput').focus();
     }
 
-    function toggleDone(dateIdx, rmIdx, rowIdx) {
-      var dates = getWeekDates();
-      var dateKey = getDateKey(dates[dateIdx]);
-      initDateData(dateKey);
-      data.tasks[dateKey][rmIdx].rows[rowIdx].done = !data.tasks[dateKey][rmIdx].rows[rowIdx].done;
+    function openEditWork(workId) {
+      var work = data.works.find(function(w) { return w.id === workId; });
+      if (!work) return;
+      document.getElementById('workModalTitle').textContent = '編輯工作';
+      document.getElementById('editWorkId').value = workId;
+      document.getElementById('workNameInput').value = work.text;
+      document.getElementById('workUrlInput').value = work.url || '';
+      document.getElementById('workModal').classList.add('active');
+      document.getElementById('workNameInput').focus();
+    }
+
+    function saveWork() {
+      var id = document.getElementById('editWorkId').value;
+      var text = document.getElementById('workNameInput').value.trim();
+      var url = document.getElementById('workUrlInput').value.trim();
+      
+      if (!text) { alert('請輸入工作名稱'); return; }
+      
+      if (id) {
+        var work = data.works.find(function(w) { return w.id === id; });
+        if (work) {
+          work.text = text;
+          work.url = url;
+        }
+      } else {
+        data.works.push({ id: Date.now().toString(), text: text, url: url });
+      }
+      
       saveData();
+      closeWorkModal();
       renderGrid();
     }
 
-    function clearRow(dateIdx, rmIdx, rowIdx) {
-      var dates = getWeekDates();
-      var dateKey = getDateKey(dates[dateIdx]);
-      initDateData(dateKey);
-      data.tasks[dateKey][rmIdx].rows[rowIdx].text = '';
-      data.tasks[dateKey][rmIdx].rows[rowIdx].url = '';
-      data.tasks[dateKey][rmIdx].rows[rowIdx].done = false;
-      saveData();
-      renderGrid();
+    function closeWorkModal() {
+      document.getElementById('workModal').classList.remove('active');
     }
 
-    function addNewRow(dateIdx, rmIdx, afterRowIdx) {
-      var dates = getWeekDates();
-      var dateKey = getDateKey(dates[dateIdx]);
-      initDateData(dateKey);
-      data.tasks[dateKey][rmIdx].rows.splice(afterRowIdx + 1, 0, { text: '', url: '', done: false });
-      saveData();
-      renderGrid();
-      // Focus the new input
-      setTimeout(function() {
-        var input = document.getElementById('input_' + dateIdx + '_' + rmIdx + '_' + (afterRowIdx + 1));
-        if (input) input.focus();
-      }, 100);
-    }
-
-    function editWork(dateIdx, rmIdx, rowIdx) {
-      var dates = getWeekDates();
-      var dateKey = getDateKey(dates[dateIdx]);
-      initDateData(dateKey);
-      
-      document.getElementById('editDateIdx').value = dateIdx;
-      document.getElementById('editRmIdx').value = rmIdx;
-      document.getElementById('editRowIdx').value = rowIdx;
-      
-      var row = data.tasks[dateKey][rmIdx].rows[rowIdx];
-      document.getElementById('taskInput').value = row ? row.text : '';
-      document.getElementById('urlInput').value = row ? (row.url || '') : '';
-      
-      document.getElementById('taskModal').classList.add('active');
-      document.getElementById('taskInput').focus();
-    }
-
-    function saveTask() {
-      var dateIdx = parseInt(document.getElementById('editDateIdx').value);
-      var rmIdx = parseInt(document.getElementById('editRmIdx').value);
-      var rowIdx = parseInt(document.getElementById('editRowIdx').value);
-      var text = document.getElementById('taskInput').value.trim();
-      var url = document.getElementById('urlInput').value.trim();
-      
-      if (!text) { alert('請輸入工作描述'); return; }
-      
-      var dates = getWeekDates();
-      var dateKey = getDateKey(dates[dateIdx]);
-      initDateData(dateKey);
-      
-      data.tasks[dateKey][rmIdx].rows[rowIdx].text = text;
-      data.tasks[dateKey][rmIdx].rows[rowIdx].url = url;
-      
-      saveData();
-      closeTaskModal();
-      renderGrid();
-    }
-
-    function closeTaskModal() {
-      document.getElementById('taskModal').classList.remove('active');
-    }
-
-    document.getElementById('taskModal').addEventListener('click', function(e) {
-      if (e.target.classList.contains('modal-overlay')) closeTaskModal();
+    document.getElementById('workModal').addEventListener('click', function(e) {
+      if (e.target.classList.contains('modal-overlay')) closeWorkModal();
     });
 
     loadData();
