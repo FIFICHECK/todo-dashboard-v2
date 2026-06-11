@@ -9,6 +9,15 @@
     body { font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; padding: 20px; }
     h1 { text-align: center; color: #fff; margin-bottom: 10px; font-size: 1.8rem; }
     .subtitle { text-align: center; color: #aaa; margin-bottom: 20px; font-size: 0.9rem; }
+    .rm-controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .rm-controls button { background: #0f3460; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    .rm-controls button:hover { background: #e94560; }
+    .rm-list { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .rm-chip { background: #252540; border: 1px solid #333; border-radius: 20px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+    .rm-chip:hover { border-color: #e94560; }
+    .rm-chip .rm-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .rm-chip .delete-rm { color: #666; font-size: 0.7rem; margin-left: 4px; }
+    .rm-chip .delete-rm:hover { color: #e94560; }
     .date-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
     .date-nav { display: flex; align-items: center; gap: 10px; }
     .date-nav button { background: #16213e; color: #fff; border: 1px solid #0f3460; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 1rem; }
@@ -18,7 +27,7 @@
     .week-chip { padding: 8px 14px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; color: #aaa; }
     .week-chip:hover { background: #0f3460; color: #fff; }
     .week-chip.active { background: #e94560; color: #fff; }
-    .main-grid { display: grid; grid-template-columns: 90px repeat(7, 1fr); gap: 1px; background: #333; border-radius: 8px; overflow: hidden; max-width: 100%; overflow-x: auto; }
+    .main-grid { display: grid; gap: 1px; background: #333; border-radius: 8px; overflow: hidden; max-width: 100%; overflow-x: auto; }
     .header-cell { background: #16213e; padding: 12px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.85rem; min-width: 120px; }
     .header-cell.date-header { background: #0f3460; color: #e94560; }
     .header-cell .day-name { font-size: 0.7rem; color: #888; margin-top: 2px; }
@@ -41,31 +50,32 @@
     .add-task-btn:hover { border-color: #0f3460; color: #4fc3f7; }
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
     .modal-overlay.active { display: flex; }
-    .modal { background: #1f1f3a; border-radius: 10px; padding: 24px; width: 450px; max-width: 90vw; }
+    .modal { background: #1f1f3a; border-radius: 10px; padding: 24px; width: 400px; max-width: 90vw; }
     .modal h3 { color: #fff; margin-bottom: 16px; }
-    .modal input[type="text"], .modal input[type="date"] { width: 100%; padding: 10px; margin-bottom: 10px; background: #252540; border: 1px solid #333; border-radius: 6px; color: #fff; font-family: inherit; box-sizing: border-box; }
+    .modal input[type="text"] { width: 100%; padding: 10px; margin-bottom: 10px; background: #252540; border: 1px solid #333; border-radius: 6px; color: #fff; font-family: inherit; box-sizing: border-box; }
     .modal label { display: block; margin-bottom: 6px; color: #aaa; font-size: 0.85rem; }
-    .schedule-options { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-    .schedule-option { background: #252540; border: 1px solid #333; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 0.8rem; color: #aaa; transition: all 0.2s; }
-    .schedule-option:hover { border-color: #0f3460; }
-    .schedule-option.selected { background: #0f3460; border-color: #e94560; color: #fff; }
     .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
     .modal-buttons button { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.9rem; }
     .modal-buttons .cancel-btn { background: #333; color: #fff; }
     .modal-buttons .save-btn { background: #e94560; color: #fff; }
+    .modal-buttons .delete-btn { background: #c0392b; color: #fff; margin-right: auto; }
+    .schedule-options { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .schedule-option { background: #252540; border: 1px solid #333; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 0.8rem; color: #aaa; transition: all 0.2s; }
+    .schedule-option:hover { border-color: #0f3460; }
+    .schedule-option.selected { background: #0f3460; border-color: #e94560; color: #fff; }
     .legend { display: flex; justify-content: center; gap: 15px; margin-top: 20px; font-size: 0.8rem; color: #888; flex-wrap: wrap; }
     .legend span { display: flex; align-items: center; gap: 5px; }
     .legend .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .dot-cat { background: #e94560; }
-    .dot-fifi { background: #f39c12; }
-    .dot-suezette { background: #9b59b6; }
-    .dot-pipi { background: #e74c3c; }
-    .dot-candy { background: #2ecc71; }
   </style>
 </head>
 <body>
   <h1>📋 Fiona Team To-Do Dashboard v2</h1>
-  <p class="subtitle">左方：RM 排列 | 頂部：每日日期（顯示星期）</p>
+  <p class="subtitle">左方：RM 排列（可自行新增/刪除）| 頂部：每日日期（顯示星期）</p>
+
+  <div class="rm-controls">
+    <button onclick="openAddRmModal()">+ 新增 RM</button>
+    <div class="rm-list" id="rmList"></div>
+  </div>
 
   <div class="date-controls">
     <div class="date-nav">
@@ -78,17 +88,9 @@
 
   <div class="main-grid" id="mainGrid"></div>
 
-  <div class="legend">
-    <span><span class="dot dot-cat"></span>Cat</span>
-    <span><span class="dot dot-fifi"></span>Fi Fi</span>
-    <span><span class="dot dot-suezette"></span>Suezette</span>
-    <span><span class="dot dot-pipi"></span>Pipi</span>
-    <span><span class="dot dot-candy"></span>Candy</span>
-  </div>
-
   <div class="modal-overlay" id="taskModal">
     <div class="modal">
-      <h3 id="modalTitle">加入工作</h3>
+      <h3 id="taskModalTitle">加入工作</h3>
       <input type="hidden" id="editTaskId">
       <input type="hidden" id="editRm">
       <input type="hidden" id="editDate">
@@ -105,15 +107,30 @@
         <div class="schedule-option" data-value="yearly" onclick="selectSchedule(this)">每年</div>
       </div>
       <div class="modal-buttons">
-        <button class="cancel-btn" onclick="closeModal()">取消</button>
+        <button class="cancel-btn" onclick="closeTaskModal()">取消</button>
         <button class="save-btn" onclick="saveTask()">儲存</button>
       </div>
     </div>
   </div>
 
+  <div class="modal-overlay" id="rmModal">
+    <div class="modal">
+      <h3 id="rmModalTitle">新增 RM</h3>
+      <input type="hidden" id="editRmId">
+      <label>RM 名稱</label>
+      <input type="text" id="rmNameInput" placeholder="例如：Cat">
+      <div class="modal-buttons">
+        <button class="delete-btn" id="deleteRmBtn" style="display:none;" onclick="deleteRm()">刪除</button>
+        <button class="cancel-btn" onclick="closeRmModal()">取消</button>
+        <button class="save-btn" onclick="saveRm()">儲存</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    var RMS = ['cat', 'fifi', 'suezette', 'pipi', 'candy'];
-    var RM_NAMES = { cat: 'Cat', fififi: 'Fi Fi', suezette: 'Suezette', pipi: 'Pipi', candy: 'Candy' };
+    var RMS = [];
+    var RM_NAMES = {};
+    var RM_COLORS = ['#e94560', '#f39c12', '#9b59b6', '#3498db', '#1abc9c', '#e74c3c', '#2ecc71'];
     var DAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
     var currentWeekStart = getMonday(new Date());
     var data = {};
@@ -129,12 +146,21 @@
     }
 
     function loadData() {
-      localStorage.removeItem('todo_dashboard_v2_rm');
-      data = { tasks: {} };
+      var saved = localStorage.getItem('todo_dashboard_v3');
+      if (saved) {
+        var parsed = JSON.parse(saved);
+        data = parsed.data || {};
+        RMS = parsed.rms || [];
+        RM_NAMES = parsed.rmNames || {};
+      } else {
+        data = { tasks: {} };
+        RMS = [];
+        RM_NAMES = {};
+      }
     }
 
     function saveData() {
-      localStorage.setItem('todo_dashboard_v2_rm', JSON.stringify(data));
+      localStorage.setItem('todo_dashboard_v3', JSON.stringify({ data: data, rms: RMS, rmNames: RM_NAMES }));
     }
 
     function navigateWeek(direction) {
@@ -168,7 +194,7 @@
     }
 
     function selectSchedule(el) {
-      document.querySelectorAll('.schedule-option').forEach(function(opt) { opt.classList.remove('selected'); });
+      document.querySelectorAll('#taskModal .schedule-option').forEach(function(opt) { opt.classList.remove('selected'); });
       el.classList.add('selected');
       selectedSchedule = el.dataset.value;
     }
@@ -192,6 +218,19 @@
       }
     }
 
+    function renderRmList() {
+      var container = document.getElementById('rmList');
+      var html = '';
+      RMS.forEach(function(rm, idx) {
+        var color = RM_COLORS[idx % RM_COLORS.length];
+        html += '<div class="rm-chip" onclick="openEditRmModal(\'' + rm + '\')">' +
+          '<span class="rm-dot" style="background:' + color + '"></span>' + 
+          escapeHtml(RM_NAMES[rm]) +
+          '<span class="delete-rm" onclick="event.stopPropagation(); deleteRmConfirm(\'' + rm + '\')">✕</span></div>';
+      });
+      container.innerHTML = html;
+    }
+
     function renderWeekChips() {
       var container = document.getElementById('weekChips');
       var today = new Date();
@@ -211,6 +250,16 @@
       var dates = getWeekDates();
       document.getElementById('currentDateLabel').textContent = formatDateLabel();
       renderWeekChips();
+      renderRmList();
+
+      if (RMS.length === 0) {
+        grid.style.gridTemplateColumns = '90px';
+        grid.innerHTML = '<div style="padding:40px;text-align:center;color:#666;background:#1f1f3a;">請先點擊「+ 新增 RM」新增成員</div>';
+        return;
+      }
+
+      var colCount = 1 + dates.length;
+      grid.style.gridTemplateColumns = '90px repeat(' + dates.length + ', 1fr)';
 
       var html = '<div class="header-cell">RM</div>';
       dates.forEach(function(date) {
@@ -219,8 +268,9 @@
         html += '<div class="header-cell date-header ' + (isWeekend ? 'weekend' : '') + '">' + (date.getMonth() + 1) + '/' + date.getDate() + '<div class="day-name">星期' + dayName + '</div></div>';
       });
 
-      RMS.forEach(function(rm) {
-        html += '<div class="rm-row"><div class="rm-label">' + RM_NAMES[rm] + '</div>';
+      RMS.forEach(function(rm, rmIdx) {
+        var rmColor = RM_COLORS[rmIdx % RM_COLORS.length];
+        html += '<div class="rm-row"><div class="rm-label" style="border-top:3px solid ' + rmColor + '">' + escapeHtml(RM_NAMES[rm]) + '</div>';
         dates.forEach(function(date) {
           var dateKey = getDateKey(date);
           var isWeekend = date.getDay() === 0 || date.getDay() === 6;
@@ -236,7 +286,7 @@
             }
           });
           var bgStyle = isWeekend ? 'background:#181828;' : '';
-          cellHtml += '<button class="add-task-btn" onclick="openAddModal(\'' + dateKey + '\', \'' + rm + '\')">+ 加入工作</button>';
+          cellHtml += '<button class="add-task-btn" onclick="openAddTaskModal(\'' + dateKey + '\', \'' + rm + '\')">+ 加入工作</button>';
           html += '<div class="task-cell ' + (isWeekend ? 'weekend' : '') + '" style="' + bgStyle + '">' + cellHtml + '</div>';
         });
         html += '</div>';
@@ -250,8 +300,8 @@
       return div.innerHTML;
     }
 
-    function openAddModal(dateKey, rm) {
-      document.getElementById('modalTitle').textContent = '加入工作';
+    function openAddTaskModal(dateKey, rm) {
+      document.getElementById('taskModalTitle').textContent = '加入工作';
       document.getElementById('editTaskId').value = '';
       document.getElementById('editRm').value = rm;
       document.getElementById('editDate').value = dateKey;
@@ -259,8 +309,8 @@
       document.getElementById('taskInput').value = '';
       document.getElementById('urlInput').value = '';
       selectedSchedule = 'once';
-      document.querySelectorAll('.schedule-option').forEach(function(opt) { opt.classList.remove('selected'); });
-      document.querySelector('.schedule-option[data-value="once"]').classList.add('selected');
+      document.querySelectorAll('#taskModal .schedule-option').forEach(function(opt) { opt.classList.remove('selected'); });
+      document.querySelector('#taskModal .schedule-option[data-value="once"]').classList.add('selected');
       document.getElementById('taskModal').classList.add('active');
       document.getElementById('taskInput').focus();
     }
@@ -268,7 +318,7 @@
     function editTask(dateKey, rm, idx) {
       var task = data.tasks[dateKey][rm][idx];
       if (!task) return;
-      document.getElementById('modalTitle').textContent = '編輯工作';
+      document.getElementById('taskModalTitle').textContent = '編輯工作';
       document.getElementById('editTaskId').value = task.id;
       document.getElementById('editRm').value = rm;
       document.getElementById('editDate').value = dateKey;
@@ -276,7 +326,7 @@
       document.getElementById('taskInput').value = task.text;
       document.getElementById('urlInput').value = task.url || '';
       selectedSchedule = task.schedule || 'once';
-      document.querySelectorAll('.schedule-option').forEach(function(opt) { opt.classList.toggle('selected', opt.dataset.value === selectedSchedule); });
+      document.querySelectorAll('#taskModal .schedule-option').forEach(function(opt) { opt.classList.toggle('selected', opt.dataset.value === selectedSchedule); });
       document.getElementById('taskModal').classList.add('active');
       document.getElementById('taskInput').focus();
     }
@@ -300,7 +350,7 @@
         data.tasks[dateKey][rm].push({ id: Date.now().toString(), text: text, url: url, done: false, schedule: selectedSchedule, date: dateKey });
       }
       saveData();
-      closeModal();
+      closeTaskModal();
       renderGrid();
     }
 
@@ -317,12 +367,77 @@
       renderGrid();
     }
 
-    function closeModal() {
+    function closeTaskModal() {
       document.getElementById('taskModal').classList.remove('active');
     }
 
+    function openAddRmModal() {
+      if (RMS.length >= 7) {
+        alert('最多只能新增 7 位 RM');
+        return;
+      }
+      document.getElementById('rmModalTitle').textContent = '新增 RM';
+      document.getElementById('editRmId').value = '';
+      document.getElementById('rmNameInput').value = '';
+      document.getElementById('deleteRmBtn').style.display = 'none';
+      document.getElementById('rmModal').classList.add('active');
+      document.getElementById('rmNameInput').focus();
+    }
+
+    function openEditRmModal(rmId) {
+      document.getElementById('rmModalTitle').textContent = '編輯 RM';
+      document.getElementById('editRmId').value = rmId;
+      document.getElementById('rmNameInput').value = RM_NAMES[rmId] || '';
+      document.getElementById('deleteRmBtn').style.display = 'block';
+      document.getElementById('rmModal').classList.add('active');
+      document.getElementById('rmNameInput').focus();
+    }
+
+    function saveRm() {
+      var id = document.getElementById('editRmId').value;
+      var name = document.getElementById('rmNameInput').value.trim();
+      if (!name) { alert('請輸入 RM 名稱'); return; }
+
+      if (id) {
+        RM_NAMES[id] = name;
+      } else {
+        var newId = 'rm_' + Date.now();
+        RMS.push(newId);
+        RM_NAMES[newId] = name;
+      }
+
+      saveData();
+      closeRmModal();
+      renderGrid();
+    }
+
+    function deleteRmConfirm(rmId) {
+      if (!confirm('確定刪除 ' + RM_NAMES[rmId] + '？所有相關工作都會被刪除！')) return;
+      deleteRm(rmId);
+    }
+
+    function deleteRm(rmId) {
+      var idx = RMS.indexOf(rmId);
+      if (idx > -1) RMS.splice(idx, 1);
+      delete RM_NAMES[rmId];
+      Object.keys(data.tasks).forEach(function(dateKey) {
+        if (data.tasks[dateKey][rmId]) delete data.tasks[dateKey][rmId];
+      });
+      saveData();
+      closeRmModal();
+      renderGrid();
+    }
+
+    function closeRmModal() {
+      document.getElementById('rmModal').classList.remove('active');
+    }
+
     document.getElementById('taskModal').addEventListener('click', function(e) {
-      if (e.target.classList.contains('modal-overlay')) closeModal();
+      if (e.target.classList.contains('modal-overlay')) closeTaskModal();
+    });
+
+    document.getElementById('rmModal').addEventListener('click', function(e) {
+      if (e.target.classList.contains('modal-overlay')) closeRmModal();
     });
 
     loadData();
