@@ -58,7 +58,9 @@
     .legend .dot { width: 10px; height: 10px; border-radius: 50%; }
     .dot-cat { background: #e94560; }
     .dot-fifi { background: #f39c12; }
+    .dot-suezette { background: #9b59b6; }
     .dot-pipi { background: #e74c3c; }
+    .dot-candy { background: #2ecc71; }
   </style>
 </head>
 <body>
@@ -79,7 +81,9 @@
   <div class="legend">
     <span><span class="dot dot-cat"></span>Cat</span>
     <span><span class="dot dot-fifi"></span>Fi Fi</span>
-    <span><span class="dot dot-pipi"></span>PiPI</span>
+    <span><span class="dot dot-suezette"></span>Suezette</span>
+    <span><span class="dot dot-pipi"></span>Pipi</span>
+    <span><span class="dot dot-candy"></span>Candy</span>
   </div>
 
   <div class="modal-overlay" id="taskModal">
@@ -108,8 +112,8 @@
   </div>
 
   <script>
-    var RMS = ['cat', 'fifi', 'pipi'];
-    var RM_NAMES = { cat: 'Cat', fififi: 'Fi Fi', pipi: 'PiPI' };
+    var RMS = ['cat', 'fifi', 'suezette', 'pipi', 'candy'];
+    var RM_NAMES = { cat: 'Cat', fififi: 'Fi Fi', suezette: 'Suezette', pipi: 'Pipi', candy: 'Candy' };
     var DAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
     var currentWeekStart = getMonday(new Date());
     var data = {};
@@ -125,7 +129,6 @@
     }
 
     function loadData() {
-      // Clear previous records and start fresh
       localStorage.removeItem('todo_dashboard_v2_rm');
       data = { tasks: {} };
     }
