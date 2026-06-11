@@ -214,10 +214,10 @@
 
       // Header row
       var html = '<tr class="header-row">';
-      html += '<th class="work-col">工作</th>';
+      html += '<th class="work-col" style="cursor:pointer;" onclick="openAddWork()">+ 新增工作</th>';
       dates.forEach(function(date) {
         var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-        html += '<th class="date-col">' + (date.getMonth() + 1) + '/' + date.getDate() + '<br><span style="font-size:0.7rem;color:#aaa;">星期' + dayNames[date.getDay()] + '</span></th>';
+        html += '<th class="date-col" style="cursor:pointer;" onclick="openAddWork()">' + (date.getMonth() + 1) + '/' + date.getDate() + '<br><span style="font-size:0.7rem;color:#aaa;">星期' + dayNames[date.getDay()] + '</span></th>';
       });
       html += '</tr>';
 
@@ -260,9 +260,6 @@
         
         html += '</tr>';
       });
-
-      // Add work row
-      html += '<tr><td class="add-row" colspan="8"><button class="add-btn" onclick="openAddWork()">+ 新增工作</button></td></tr>';
 
       table.innerHTML = html;
     }
