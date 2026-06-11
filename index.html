@@ -56,11 +56,8 @@
     .legend { display: flex; justify-content: center; gap: 15px; margin-top: 20px; font-size: 0.8rem; color: #888; flex-wrap: wrap; }
     .legend span { display: flex; align-items: center; gap: 5px; }
     .legend .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .dot-parco { background: #9b59b6; }
-    .dot-fifi { background: #f39c12; }
     .dot-cat { background: #e94560; }
-    .dot-jerry { background: #3498db; }
-    .dot-moses { background: #1abc9c; }
+    .dot-fifi { background: #f39c12; }
     .dot-pipi { background: #e74c3c; }
   </style>
 </head>
@@ -80,11 +77,8 @@
   <div class="main-grid" id="mainGrid"></div>
 
   <div class="legend">
-    <span><span class="dot dot-parco"></span>Parco</span>
-    <span><span class="dot dot-fifi"></span>Fi Fi</span>
     <span><span class="dot dot-cat"></span>Cat</span>
-    <span><span class="dot dot-jerry"></span>Jerry</span>
-    <span><span class="dot dot-moses"></span>Moses</span>
+    <span><span class="dot dot-fifi"></span>Fi Fi</span>
     <span><span class="dot dot-pipi"></span>PiPI</span>
   </div>
 
@@ -114,8 +108,8 @@
   </div>
 
   <script>
-    var RMS = ['parco', 'fifi', 'cat', 'jerry', 'moses', 'pipi'];
-    var RM_NAMES = { parco: 'Parco', fififi: 'Fi Fi', cat: 'Cat', jerry: 'Jerry', moses: 'Moses', pipi: 'PiPI' };
+    var RMS = ['cat', 'fifi', 'pipi'];
+    var RM_NAMES = { cat: 'Cat', fififi: 'Fi Fi', pipi: 'PiPI' };
     var DAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
     var currentWeekStart = getMonday(new Date());
     var data = {};
@@ -131,8 +125,9 @@
     }
 
     function loadData() {
-      var saved = localStorage.getItem('todo_dashboard_v2_rm');
-      data = saved ? JSON.parse(saved) : { tasks: {} };
+      // Clear previous records and start fresh
+      localStorage.removeItem('todo_dashboard_v2_rm');
+      data = { tasks: {} };
     }
 
     function saveData() {
