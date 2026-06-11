@@ -21,7 +21,7 @@
 
     .main-grid { display: grid; gap: 1px; background: #333; border-radius: 8px; overflow: auto; max-width: 100%; }
     
-    .header-cell { background: #16213e; padding: 10px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.8rem; min-width: 80px; }
+    .header-cell { background: #16213e; padding: 10px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.75rem; min-width: 60px; }
     .header-cell.work-header { background: #e94560; min-width: 150px; text-align: left; padding-left: 12px; }
     .header-cell.rm-header { color: #fff; }
     .header-cell.weekend { background: #1a1a2e; color: #666; }
@@ -33,13 +33,26 @@
     .work-name .work-text { flex: 1; }
     .work-name .work-url { color: #4fc3f7; font-size: 0.75rem; text-decoration: none; }
     
-    .rm-cell { background: #1f1f3a; padding: 8px; text-align: center; }
+    .rm-cell { background: #1f1f3a; padding: 8px 4px; text-align: center; }
     .rm-cell.weekend { background: #181828; }
     
-    .checkbox { cursor: pointer; font-size: 1.4rem; padding: 4px; display: inline-block; }
-    .checkbox:hover { transform: scale(1.2); }
-    .checkbox.checked { color: #4ecca3; }
-    .checkbox.unchecked { color: #555; }
+    .rm-boxes { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+    
+    .rm-check { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      gap: 2px;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      min-width: 32px;
+    }
+    .rm-check:hover { background: #333; }
+    .rm-check .rm-label { font-size: 0.6rem; font-weight: bold; }
+    .rm-check .check-icon { font-size: 1.3rem; }
+    .rm-check.checked .check-icon { color: #4ecca3; }
+    .rm-check.unchecked .check-icon { color: #555; }
     
     .add-work-row { background: #1f1f3a; padding: 10px; text-align: left; }
     .add-work-btn { 
@@ -68,7 +81,7 @@
 </head>
 <body>
   <h1>📋 Fiona Team To-Do Dashboard v2</h1>
-  <p class="subtitle">左方：工作列表 | 同行右方：7 個 RM 可剔選 ✅/✕</p>
+  <p class="subtitle">左方：工作 | 右方：7 個 RM 可剔選 ✅/☐</p>
 
   <div class="date-controls">
     <div class="date-nav">
@@ -213,26 +226,24 @@
         dates.forEach(function(date) {
           var dateKey = getDateKey(date);
           var isWeekend = date.getDay() === 0 || date.getDay() === 6;
-          var key = getCheckKey(dateKey, work.id, 0); // Just for weekend check
           
           html += '<div class="rm-cell ' + (isWeekend ? 'weekend' : '') + '">';
+          html += '<div class="rm-boxes">';
           
-          // Show all 7 RMs inline
+          // 7 RM checkboxes
           for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
             var checkKey = getCheckKey(dateKey, work.id, rmIdx);
             var isChecked = data.checks[checkKey] || false;
             var rmColor = RM_COLORS[rmIdx];
             var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
             
-            html += '<span class="checkbox ' + (isChecked ? 'checked' : 'unchecked') + '" ';
-            html += 'style="color:' + rmColor + ';cursor:pointer;font-size:0.9rem;margin:2px 4px;display:inline-block;" ';
-            html += 'onclick="toggleCheck(\'' + dateKey + '\',\'' + work.id + '\',' + rmIdx + ')" ';
-            html += 'title="' + rmName + '">';
-            html += isChecked ? '✅' : '☐';
-            html += '</span>';
+            html += '<div class="rm-check ' + (isChecked ? 'checked' : 'unchecked') + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + work.id + '\',' + rmIdx + ')" title="' + rmName + '">';
+            html += '<span class="rm-label" style="color:' + rmColor + ';">' + rmName.substring(0, 2) + '</span>';
+            html += '<span class="check-icon">' + (isChecked ? '✅' : '☐') + '</span>';
+            html += '</div>';
           }
           
-          html += '</div>';
+          html += '</div></div>';
         });
         
         html += '</div>';
@@ -251,7 +262,7 @@
         for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
           var rmColor = RM_COLORS[rmIdx];
           var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
-          html += '<span style="color:' + rmColor + ';cursor:pointer;margin:0 2px;" onclick="setRmName(' + rmIdx + ')">' + escapeHtml(rmName.substring(0, 2)) + '</span>';
+          html += '<span style="color:' + rmColor + ';cursor:pointer;margin:0 3px;" onclick="setRmName(' + rmIdx + ')">' + escapeHtml(rmName.substring(0, 2)) + '</span>';
         }
         html += '</div>';
       });
@@ -321,7 +332,6 @@
       var id = document.getElementById('editWorkId').value;
       if (!confirm('確定刪除呢项工作？')) return;
       data.works = data.works.filter(function(w) { return w.id !== id; });
-      // Also remove all checks for this work
       Object.keys(data.checks).forEach(function(key) {
         if (key.indexOf(id) !== -1) delete data.checks[key];
       });
