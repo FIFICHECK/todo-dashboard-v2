@@ -23,7 +23,7 @@
     
     .header-row th { background: #16213e; padding: 12px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.85rem; }
     .header-row th.work-col { background: #e94560; text-align: left; padding-left: 12px; min-width: 150px; }
-    .header-row th.date-col { min-width: 500px; }
+    .header-row th.date-col { min-width: 700px; }
     
     .data-row td { background: #1f1f3a; padding: 10px; vertical-align: middle; border-bottom: 1px solid #333; }
     .data-row td.work-col { background: #252540; text-align: left; cursor: pointer; min-width: 150px; border-left: 3px solid #555; }
@@ -34,7 +34,7 @@
     .work-name .work-text { flex: 1; }
     .work-name .work-url { color: #4fc3f7; font-size: 0.8rem; text-decoration: none; }
     
-    .rm-checkboxes { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .rm-checkboxes { display: flex; gap: 6px; justify-content: center; flex-wrap: nowrap; overflow-x: auto; }
     
     .rm-check { 
       display: flex; 
@@ -42,10 +42,11 @@
       align-items: center; 
       gap: 2px;
       cursor: pointer;
-      padding: 6px 10px;
-      border-radius: 8px;
+      padding: 4px 6px;
+      border-radius: 6px;
       background: #333;
-      min-width: 60px;
+      min-width: 50px;
+      flex-shrink: 0;
     }
     .rm-check:hover { background: #444; }
     .rm-check.checked { background: #1f3a2e; }
