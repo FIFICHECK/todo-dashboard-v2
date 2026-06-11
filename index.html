@@ -59,14 +59,14 @@
     .week-nav .current-week {
       color: #e94560;
       font-weight: bold;
-      min-width: 200px;
+      min-width: 300px;
       text-align: center;
     }
 
     /* Main Grid */
     .main-grid {
       display: grid;
-      grid-template-columns: 100px repeat(7, 1fr);
+      grid-template-columns: 100px repeat(6, 1fr);
       gap: 1px;
       background: #333;
       border-radius: 8px;
@@ -79,6 +79,7 @@
       text-align: center;
       font-weight: bold;
       color: #fff;
+      font-size: 0.9rem;
     }
 
     .header-cell.rm-header {
@@ -96,18 +97,25 @@
       text-align: center;
       font-weight: bold;
       color: #e94560;
-      writing-mode: horizontal-tb;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 0.85rem;
+      writing-mode: horizontal-tb;
     }
 
     .task-cell {
       background: #1f1f3a;
       padding: 8px;
-      min-height: 120px;
+      min-height: 150px;
       vertical-align: top;
+    }
+
+    /* Date Badge */
+    .date-badge {
+      font-size: 0.7rem;
+      color: #666;
+      margin-bottom: 4px;
     }
 
     /* Task Items */
@@ -219,7 +227,7 @@
       background: #1f1f3a;
       border-radius: 10px;
       padding: 24px;
-      width: 400px;
+      width: 450px;
       max-width: 90vw;
     }
 
@@ -228,8 +236,8 @@
       margin-bottom: 16px;
     }
 
-    .modal input,
-    .modal textarea {
+    .modal input[type="text"],
+    .modal input[type="date"] {
       width: 100%;
       padding: 10px;
       margin-bottom: 10px;
@@ -238,16 +246,51 @@
       border-radius: 6px;
       color: #fff;
       font-family: inherit;
+      box-sizing: border-box;
     }
 
-    .modal textarea {
-      min-height: 80px;
-      resize: vertical;
+    .modal label {
+      display: block;
+      margin-bottom: 6px;
+      color: #aaa;
+      font-size: 0.85rem;
     }
 
-    .modal input::placeholder,
-    .modal textarea::placeholder {
-      color: #666;
+    .schedule-options {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .schedule-option {
+      background: #252540;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #aaa;
+      transition: all 0.2s;
+    }
+
+    .schedule-option:hover {
+      border-color: #0f3460;
+    }
+
+    .schedule-option.selected {
+      background: #0f3460;
+      border-color: #e94560;
+      color: #fff;
+    }
+
+    .date-picker-wrapper {
+      display: none;
+      margin-bottom: 10px;
+    }
+
+    .date-picker-wrapper.visible {
+      display: block;
     }
 
     .modal-buttons {
@@ -287,6 +330,7 @@
       margin-top: 20px;
       font-size: 0.8rem;
       color: #888;
+      flex-wrap: wrap;
     }
 
     .legend span {
@@ -301,18 +345,30 @@
       border-radius: 50%;
     }
 
-    .dot.cat { background: #e94560; }
-    .dot.candy { background: #4ecca3; }
+    .dot.parco { background: #e94560; }
     .dot.fifi { background: #f39c12; }
-    .dot.jerry { background: #3498db; }
-    .dot.moses { background: #9b59b6; }
-    .dot.alvis { background: #1abc9c; }
-    .dot.knald { background: #e74c3c; }
+    .dot.cat { background: #3498db; }
+    .dot.jerry { background: #9b59b6; }
+    .dot.moses { background: #1abc9c; }
+    .dot.candy { background: #e74c3c; }
+
+    /* Schedule type badges */
+    .schedule-badge {
+      font-size: 0.65rem;
+      padding: 2px 5px;
+      border-radius: 3px;
+      margin-right: 4px;
+      display: inline-block;
+    }
+    .badge-daily { background: #3498db; color: #fff; }
+    .badge-weekly { background: #9b59b6; color: #fff; }
+    .badge-yearly { background: #f39c12; color: #fff; }
+    .badge-specific { background: #1abc9c; color: #fff; }
   </style>
 </head>
 <body>
   <h1>📋 Fiona Team To-Do Dashboard v2</h1>
-  <p class="subtitle">橫向：RM 排列 | 縱向：每週工作</p>
+  <p class="subtitle">橫向：RM 排列 | 縱向：每週工作 | 可自訂重複週期</p>
 
   <div class="week-nav">
     <button onclick="navigateWeek(-1)">◀ 上一組</button>
@@ -325,13 +381,12 @@
   </div>
 
   <div class="legend">
+    <span><span class="dot parco"></span>Parco</span>
+    <span><span class="dot fifi"></span>Fi Fi</span>
     <span><span class="dot cat"></span>Cat</span>
-    <span><span class="dot candy"></span>Candy</span>
-    <span><span class="dot fififi"></span>Fi Fi</span>
     <span><span class="dot jerry"></span>Jerry</span>
     <span><span class="dot moses"></span>Moses</span>
-    <span><span class="dot alvis"></span>Alvis</span>
-    <span><span class="dot knald"></span>Knald</span>
+    <span><span class="dot candy"></span>Candy</span>
   </div>
 
   <!-- Add/Edit Task Modal -->
@@ -341,9 +396,28 @@
       <input type="hidden" id="editTaskId">
       <input type="hidden" id="editRm">
       <input type="hidden" id="editWeek">
+      <input type="hidden" id="editDayDate">
       <input type="hidden" id="editIndex">
-      <input type="text" id="taskInput" placeholder="工作描述">
-      <input type="text" id="urlInput" placeholder="URL 連結（可選）">
+      
+      <label>工作描述</label>
+      <input type="text" id="taskInput" placeholder="輸入工作內容...">
+      
+      <label>URL 連結（可選）</label>
+      <input type="text" id="urlInput" placeholder="https://...">
+      
+      <label>重複週期</label>
+      <div class="schedule-options">
+        <div class="schedule-option selected" data-value="weekly" onclick="selectSchedule(this)">每週一次</div>
+        <div class="schedule-option" data-value="daily" onclick="selectSchedule(this)">每日（除週六日）</div>
+        <div class="schedule-option" data-value="yearly" onclick="selectSchedule(this)">每年</div>
+        <div class="schedule-option" data-value="specific" onclick="selectSchedule(this)">指定日期</div>
+      </div>
+      
+      <div class="date-picker-wrapper" id="datePickerWrapper">
+        <label>指定日期</label>
+        <input type="date" id="specificDateInput">
+      </div>
+      
       <div class="modal-buttons">
         <button class="cancel-btn" onclick="closeModal()">取消</button>
         <button class="save-btn" onclick="saveTask()">儲存</button>
@@ -352,19 +426,19 @@
   </div>
 
   <script>
-    const RMS = ['cat', 'candy', 'fifi', 'jerry', 'moses', 'alvis', 'knald'];
+    const RMS = ['parco', 'fifi', 'cat', 'jerry', 'moses', 'candy'];
     const RM_NAMES = {
-      cat: 'Cat',
-      candy: 'Candy',
+      parco: 'Parco',
       fififi: 'Fi Fi',
+      cat: 'Cat',
       jerry: 'Jerry',
       moses: 'Moses',
-      alvis: 'Alvis',
-      knald: 'Knald'
+      candy: 'Candy'
     };
 
     let currentWeekOffset = 0;
     let data = {};
+    let selectedSchedule = 'weekly';
 
     // Load data from localStorage
     function loadData() {
@@ -379,6 +453,20 @@
     // Save data to localStorage
     function saveData() {
       localStorage.setItem('todo_dashboard_v2', JSON.stringify(data));
+    }
+
+    // Select schedule option
+    function selectSchedule(el) {
+      document.querySelectorAll('.schedule-option').forEach(opt => opt.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedSchedule = el.dataset.value;
+      
+      const datePicker = document.getElementById('datePickerWrapper');
+      if (selectedSchedule === 'specific') {
+        datePicker.classList.add('visible');
+      } else {
+        datePicker.classList.remove('visible');
+      }
     }
 
     // Get ISO week key for a date
@@ -405,34 +493,65 @@
       return `${formatDate(isoWeekStart)} - ${formatDate(isoWeekEnd)}`;
     }
 
-    // Get the 3 weeks to display
-    function getDisplayWeeks() {
-      const today = new Date();
-      const currentWeekKey = getWeekKey(today);
-      const [year, week] = currentWeekKey.split('-W').map(Number);
+    // Get all dates in a week (Mon-Fri for daily tasks)
+    function getWeekDates(weekKey) {
+      const [year, week] = weekKey.split('-W').map(Number);
+      const simple = new Date(year, 0, 1 + (week - 1) * 7);
+      const dow = simple.getDay();
+      let monday;
+      if (dow <= 4) monday = new Date(simple.getDate() - simple.getDay() + 1);
+      else monday = new Date(simple.getDate() + 8 - simple.getDay());
       
-      const weeks = [];
-      for (let i = -1; i <= 1; i++) {
-        let w = week + i;
-        let y = year;
-        if (w < 1) {
-          y--;
-          w = 52 + w;
-        } else if (w > 52) {
-          y++;
-          w = w - 52;
-        }
-        const key = `${y}-W${String(w).padStart(2, '0')}`;
-        weeks.push(key);
+      const dates = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        dates.push(d);
       }
-      return weeks;
+      return dates;
+    }
+
+    // Check if task should show on this date
+    function shouldShowTask(task, date) {
+      const d = new Date(date);
+      const dayOfWeek = d.getDay();
+      
+      if (task.schedule === 'daily') {
+        // Show Mon-Fri only
+        return dayOfWeek >= 1 && dayOfWeek <= 5;
+      } else if (task.schedule === 'weekly') {
+        // Show once per week (Monday)
+        return dayOfWeek === 1;
+      } else if (task.schedule === 'yearly') {
+        // Show on same month/day as original
+        const taskDate = new Date(task.createdDate);
+        return d.getMonth() === taskDate.getMonth() && d.getDate() === taskDate.getDate();
+      } else if (task.schedule === 'specific') {
+        // Show only on specific date
+        if (!task.specificDate) return false;
+        const taskDate = new Date(task.specificDate);
+        const checkDate = new Date(d);
+        return checkDate.toDateString() === taskDate.toDateString();
+      }
+      return true;
+    }
+
+    // Get schedule badge HTML
+    function getScheduleBadge(schedule) {
+      const badges = {
+        daily: '<span class="schedule-badge badge-daily">每日</span>',
+        weekly: '<span class="schedule-badge badge-weekly">每週</span>',
+        yearly: '<span class="schedule-badge badge-yearly">每年</span>',
+        specific: '<span class="schedule-badge badge-specific">指定</span>'
+      };
+      return badges[schedule] || '';
     }
 
     // Initialize week data
     function initWeekData(weekKey) {
       if (!data.tasks[weekKey]) {
         data.tasks[weekKey] = {};
-        RMS.forEach(rm => data.tasks[weekKey][rm] = []);
+        RMS.forEach(rm => data.tasks[weekKey][rm] = {});
       }
     }
 
@@ -444,14 +563,16 @@
 
     // Render the grid
     function renderGrid() {
-      const displayWeeks = getDisplayWeeks();
       const grid = document.getElementById('mainGrid');
       
-      // Calculate actual weeks based on offset
-      const weeks = displayWeeks.map((wk, i) => {
-        const offset = currentWeekOffset * 3;
-        const [year, week] = wk.split('-W').map(Number);
-        let w = week + offset;
+      // Calculate weeks
+      const today = new Date();
+      const currentWeekKey = getWeekKey(today);
+      const [year, week] = currentWeekKey.split('-W').map(Number);
+      
+      const weeks = [];
+      for (let i = -1; i <= 1; i++) {
+        let w = week + (currentWeekOffset * 3) + i;
         let y = year;
         if (w < 1) {
           y--;
@@ -460,14 +581,13 @@
           y++;
           w = w - 52;
         }
-        return `${y}-W${String(w).padStart(2, '0')}`;
-      });
+        const key = `${y}-W${String(w).padStart(2, '0')}`;
+        weeks.push(key);
+      }
 
       // Update label
-      const centralWeek = weeks[1];
-      const centralDate = new Date();
       document.getElementById('currentWeekLabel').textContent = 
-        `${getWeekRange(weeks[0]).split(' - ')[0]} / ${getWeekRange(centralWeek)} / ${getWeekRange(weeks[2]).split(' - ')[1]}`;
+        `${getWeekRange(weeks[0]).split(' - ')[0]} / ${getWeekRange(weeks[1])} / ${getWeekRange(weeks[2]).split(' - ')[1]}`;
 
       // Build header row
       let html = '<div class="header-cell">工作週</div>';
@@ -479,30 +599,80 @@
       weeks.forEach(weekKey => {
         initWeekData(weekKey);
         const weekRange = getWeekRange(weekKey);
+        const weekDates = getWeekDates(weekKey);
+        
+        // Group tasks by date within each RM cell
+        RMS.forEach(rm => {
+          const tasks = data.tasks[weekKey][rm] || {};
+          
+          // Collect all tasks that should show on each day
+          weekDates.forEach((date, dayIdx) => {
+            if (!tasks[dayIdx]) tasks[dayIdx] = [];
+            
+            // For each task in this RM's week data
+            Object.values(tasks).forEach(dayTasks => {
+              if (Array.isArray(dayTasks)) {
+                dayTasks.forEach(task => {
+                  if (shouldShowTask(task, date)) {
+                    // Check if already shown today
+                    const dateStr = date.toISOString().split('T')[0];
+                    if (!task._shownDates) task._shownDates = [];
+                    if (!task._shownDates.includes(dateStr)) {
+                      task._shownDates.push(dateStr);
+                    }
+                  }
+                });
+              }
+            });
+          });
+        });
+
+        // Now render the grid
         html += `<div class="week-row">`;
         html += `<div class="week-label">${weekRange}</div>`;
         
         RMS.forEach(rm => {
-          const tasks = data.tasks[weekKey][rm] || [];
-          let tasksHtml = tasks.map((task, idx) => `
-            <div class="task-item ${task.done ? 'done' : ''}" data-task-id="${task.id}">
-              <span class="checkbox" onclick="toggleTask('${weekKey}', '${rm}', ${idx})">
-                ${task.done ? '✅' : '☐'}
-              </span>
-              <span class="task-text">
-                ${escapeHtml(task.text)}
-                ${task.url ? `<br><a href="${escapeHtml(task.url)}" target="_blank">🔗 連結</a>` : ''}
-              </span>
-              <div class="task-actions">
-                <button onclick="editTask('${weekKey}', '${rm}', ${idx})">✏️ 編輯</button>
-                <button onclick="deleteTask('${weekKey}', '${rm}', ${idx})">🗑️ 刪除</button>
+          let cellHtml = '';
+          const weekTasks = data.tasks[weekKey][rm] || {};
+          
+          // Get all unique tasks for this RM this week
+          const allTasksThisWeek = [];
+          const seenIds = new Set();
+          
+          weekDates.forEach((date, dayIdx) => {
+            const dayTasks = weekTasks[dayIdx] || [];
+            dayTasks.forEach(task => {
+              if (!seenIds.has(task.id)) {
+                seenIds.add(task.id);
+                allTasksThisWeek.push({ task, date, dayIdx });
+              }
+            });
+          });
+
+          // Render each task once
+          allTasksThisWeek.forEach(({ task, date, dayIdx }) => {
+            const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+            cellHtml += `
+              <div class="task-item ${task.done ? 'done' : ''}" data-task-id="${task.id}">
+                <span class="checkbox" onclick="toggleTask('${weekKey}', '${rm}', ${dayIdx}, '${task.id}')">
+                  ${task.done ? '✅' : '☐'}
+                </span>
+                <span class="task-text">
+                  ${getScheduleBadge(task.schedule)}
+                  ${escapeHtml(task.text)}
+                  ${task.url ? `<br><a href="${escapeHtml(task.url)}" target="_blank">🔗 連結</a>` : ''}
+                </span>
+                <div class="task-actions">
+                  <button onclick="editTask('${weekKey}', '${rm}', ${dayIdx}, '${task.id}')">✏️</button>
+                  <button onclick="deleteTask('${weekKey}', '${rm}', ${dayIdx}, '${task.id}')">🗑️</button>
+                </div>
               </div>
-            </div>
-          `).join('');
+            `;
+          });
           
-          tasksHtml += `<button class="add-task-btn" onclick="openAddModal('${weekKey}', '${rm}')">+ 加入工作</button>`;
+          cellHtml += `<button class="add-task-btn" onclick="openAddModal('${weekKey}', '${rm}')">+ 加入工作</button>`;
           
-          html += `<div class="task-cell">${tasksHtml}</div>`;
+          html += `<div class="task-cell">${cellHtml}</div>`;
         });
         
         html += `</div>`;
@@ -519,28 +689,56 @@
     }
 
     // Open add modal
-    function openAddModal(weekKey, rm) {
+    function openAddModal(weekKey, rm, dayIdx = 0) {
       document.getElementById('modalTitle').textContent = '加入工作';
       document.getElementById('editTaskId').value = '';
       document.getElementById('editRm').value = rm;
       document.getElementById('editWeek').value = weekKey;
+      document.getElementById('editDayDate').value = dayIdx;
       document.getElementById('editIndex').value = '';
       document.getElementById('taskInput').value = '';
       document.getElementById('urlInput').value = '';
+      document.getElementById('specificDateInput').value = '';
+      
+      // Reset schedule selection
+      selectedSchedule = 'weekly';
+      document.querySelectorAll('.schedule-option').forEach(opt => opt.classList.remove('selected'));
+      document.querySelector('.schedule-option[data-value="weekly"]').classList.add('selected');
+      document.getElementById('datePickerWrapper').classList.remove('visible');
+      
       document.getElementById('taskModal').classList.add('active');
       document.getElementById('taskInput').focus();
     }
 
     // Open edit modal
-    function editTask(weekKey, rm, idx) {
-      const task = data.tasks[weekKey][rm][idx];
+    function editTask(weekKey, rm, dayIdx, taskId) {
+      const tasks = data.tasks[weekKey][rm][dayIdx] || [];
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      
       document.getElementById('modalTitle').textContent = '編輯工作';
       document.getElementById('editTaskId').value = task.id;
       document.getElementById('editRm').value = rm;
       document.getElementById('editWeek').value = weekKey;
-      document.getElementById('editIndex').value = idx;
+      document.getElementById('editDayDate').value = dayIdx;
+      document.getElementById('editIndex').value = tasks.indexOf(task);
       document.getElementById('taskInput').value = task.text;
       document.getElementById('urlInput').value = task.url || '';
+      
+      // Set schedule
+      selectedSchedule = task.schedule || 'weekly';
+      document.querySelectorAll('.schedule-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.value === selectedSchedule);
+      });
+      
+      const datePicker = document.getElementById('datePickerWrapper');
+      if (selectedSchedule === 'specific') {
+        datePicker.classList.add('visible');
+        document.getElementById('specificDateInput').value = task.specificDate || '';
+      } else {
+        datePicker.classList.remove('visible');
+      }
+      
       document.getElementById('taskModal').classList.add('active');
       document.getElementById('taskInput').focus();
     }
@@ -550,9 +748,11 @@
       const id = document.getElementById('editTaskId').value;
       const rm = document.getElementById('editRm').value;
       const week = document.getElementById('editWeek').value;
-      const idx = document.getElementById('editIndex').value;
+      const dayIdx = parseInt(document.getElementById('editDayDate').value) || 0;
       const text = document.getElementById('taskInput').value.trim();
       const url = document.getElementById('urlInput').value.trim();
+      const schedule = selectedSchedule;
+      const specificDate = document.getElementById('specificDateInput').value;
 
       if (!text) {
         alert('請輸入工作描述');
@@ -562,20 +762,42 @@
       initWeekData(week);
 
       if (id) {
-        // Edit existing
-        const taskIdx = data.tasks[week][rm].findIndex(t => t.id === id);
-        if (taskIdx !== -1) {
-          data.tasks[week][rm][taskIdx].text = text;
-          data.tasks[week][rm][taskIdx].url = url;
+        // Edit existing - find and update
+        for (let di = 0; di < 7; di++) {
+          const dayTasks = data.tasks[week][rm][di] || [];
+          const idx = dayTasks.findIndex(t => t.id === id);
+          if (idx !== -1) {
+            dayTasks[idx].text = text;
+            dayTasks[idx].url = url;
+            dayTasks[idx].schedule = schedule;
+            dayTasks[idx].specificDate = schedule === 'specific' ? specificDate : '';
+            break;
+          }
         }
       } else {
-        // Add new
-        data.tasks[week][rm].push({
+        // Add new task
+        const newTask = {
           id: Date.now().toString(),
           text: text,
           url: url,
-          done: false
-        });
+          done: false,
+          schedule: schedule,
+          specificDate: schedule === 'specific' ? specificDate : '',
+          createdDate: new Date().toISOString()
+        };
+        
+        // Add to all applicable days based on schedule
+        if (schedule === 'daily') {
+          // Add to Mon-Fri of this week
+          for (let di = 0; di < 5; di++) {
+            if (!data.tasks[week][rm][di]) data.tasks[week][rm][di] = [];
+            data.tasks[week][rm][di].push({...newTask, id: newTask.id + '_' + di});
+          }
+        } else {
+          // Add to selected day only
+          if (!data.tasks[week][rm][dayIdx]) data.tasks[week][rm][dayIdx] = [];
+          data.tasks[week][rm][dayIdx].push(newTask);
+        }
       }
 
       saveData();
@@ -584,17 +806,32 @@
     }
 
     // Delete task
-    function deleteTask(weekKey, rm, idx) {
-      if (confirm('確定刪除呢项工作？')) {
-        data.tasks[weekKey][rm].splice(idx, 1);
-        saveData();
-        renderGrid();
+    function deleteTask(weekKey, rm, dayIdx, taskId) {
+      if (!confirm('確定刪除呢项工作？')) return;
+      
+      // Remove from all days
+      for (let di = 0; di < 7; di++) {
+        const dayTasks = data.tasks[weekKey][rm][di] || [];
+        const filtered = dayTasks.filter(t => t.id !== taskId);
+        data.tasks[weekKey][rm][di] = filtered;
       }
+      
+      saveData();
+      renderGrid();
     }
 
     // Toggle task done
-    function toggleTask(weekKey, rm, idx) {
-      data.tasks[weekKey][rm][idx].done = !data.tasks[weekKey][rm][idx].done;
+    function toggleTask(weekKey, rm, dayIdx, taskId) {
+      // Find the task across all days
+      for (let di = 0; di < 7; di++) {
+        const dayTasks = data.tasks[weekKey][rm][di] || [];
+        const task = dayTasks.find(t => t.id === taskId);
+        if (task) {
+          task.done = !task.done;
+          break;
+        }
+      }
+      
       saveData();
       renderGrid();
     }
