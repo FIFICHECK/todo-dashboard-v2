@@ -264,19 +264,6 @@
       // Add work row
       html += '<tr><td class="add-row" colspan="8"><button class="add-btn" onclick="openAddWork()">+ 新增工作</button></td></tr>';
 
-      // RM settings row
-      html += '<tr class="rm-settings"><td class="work-col">RM 設定</td>';
-      dates.forEach(function(date) {
-        html += '<td>';
-        for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
-          var rmColor = RM_COLORS[rmIdx];
-          var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
-          html += '<span class="rm-name" style="color:' + rmColor + ';" onclick="setRmName(' + rmIdx + ')">' + escapeHtml(rmName.substring(0, 2)) + ' </span>';
-        }
-        html += '</td>';
-      });
-      html += '</tr>';
-
       table.innerHTML = html;
     }
 
