@@ -42,15 +42,15 @@
       align-items: center; 
       gap: 2px;
       cursor: pointer;
-      padding: 6px 8px;
+      padding: 6px 10px;
       border-radius: 8px;
       background: #333;
-      min-width: 45px;
+      min-width: 60px;
     }
     .rm-check:hover { background: #444; }
     .rm-check.checked { background: #1f3a2e; }
     
-    .rm-check .rm-label { font-size: 0.8rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; }
+    .rm-check .rm-label { font-size: 0.85rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; }
     .rm-check .check-icon { font-size: 1.4rem; }
     .rm-check.checked .check-icon { color: #4ecca3; }
     .rm-check.unchecked .check-icon { color: #555; }
@@ -247,7 +247,7 @@
             var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
             
             html += '<div class="rm-check ' + (isChecked ? 'checked' : 'unchecked') + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + work.id + '\',' + rmIdx + ')" title="' + rmName + '">';
-            html += '<span class="rm-label" style="color:#fff;background:' + rmColor + ';border-radius:3px;">' + escapeHtml(rmName.substring(0, 2)) + '</span>';
+            html += '<span class="rm-label" style="color:#fff;background:' + rmColor + ';border-radius:3px;white-space:nowrap;">' + escapeHtml(rmName) + '</span>';
             html += '<span class="check-icon">' + (isChecked ? '✅' : '☐') + '</span>';
             html += '</div>';
           }
