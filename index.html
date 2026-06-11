@@ -18,30 +18,86 @@
     .week-chip { padding: 8px 14px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; color: #aaa; }
     .week-chip:hover { background: #0f3460; color: #fff; }
     .week-chip.active { background: #e94560; color: #fff; }
+
     .main-grid { display: grid; gap: 1px; background: #333; border-radius: 8px; overflow: hidden; max-width: 100%; overflow-x: auto; }
-    .header-cell { background: #16213e; padding: 12px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.85rem; min-width: 120px; }
+    
+    .header-cell { background: #16213e; padding: 10px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.85rem; min-width: 140px; }
     .header-cell.date-header { background: #0f3460; color: #e94560; }
     .header-cell .day-name { font-size: 0.7rem; color: #888; margin-top: 2px; }
     .header-cell.weekend { background: #1a1a2e; color: #666; }
-    .rm-row { display: contents; }
-    .rm-label { background: #16213e; padding: 12px 8px; text-align: center; font-weight: bold; color: #e94560; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; writing-mode: horizontal-tb; min-width: 90px; }
-    .rm-label.empty { color: #888; border: 2px dashed #444; background: #1a1a2e; cursor: pointer; }
-    .rm-label.empty:hover { color: #e94560; border-color: #e94560; background: #252540; }
-    .rm-label .add-icon { font-size: 1.2rem; margin-right: 4px; }
-    .task-cell { background: #1f1f3a; padding: 6px; min-height: 120px; vertical-align: top; }
-    .task-cell.weekend { background: #181828; }
-    .task-item { background: #252540; border-radius: 6px; padding: 6px 8px; margin-bottom: 4px; border-left: 3px solid #0f3460; position: relative; }
-    .task-item.done { border-left-color: #4ecca3; opacity: 0.7; }
-    .task-item.done .task-text { text-decoration: line-through; color: #888; }
-    .task-text { font-size: 0.8rem; line-height: 1.3; word-break: break-word; }
-    .task-text a { color: #4fc3f7; text-decoration: none; font-size: 0.75rem; }
-    .task-actions { display: flex; gap: 2px; margin-top: 4px; opacity: 0; transition: opacity 0.2s; }
-    .task-item:hover .task-actions { opacity: 1; }
-    .task-actions button { background: transparent; border: none; color: #888; cursor: pointer; font-size: 0.7rem; padding: 2px 4px; border-radius: 3px; }
-    .task-actions button:hover { background: #333; color: #fff; }
-    .checkbox { cursor: pointer; margin-right: 2px; font-size: 0.85rem; }
-    .add-task-btn { background: transparent; border: 1px dashed #444; color: #666; width: 100%; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; margin-top: 4px; }
-    .add-task-btn:hover { border-color: #0f3460; color: #4fc3f7; }
+    
+    .rm-header-cell { background: #16213e; padding: 10px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.85rem; min-width: 90px; }
+    
+    .date-col { display: contents; }
+    
+    .date-cell { background: #1f1f3a; padding: 4px; min-width: 140px; vertical-align: top; }
+    .date-cell.weekend { background: #181828; }
+    
+    .rm-slot { 
+      background: #252540; 
+      border-radius: 6px; 
+      padding: 6px 8px; 
+      margin-bottom: 4px; 
+      border-left: 3px solid #555;
+      position: relative;
+    }
+    .rm-slot:hover { border-left-color: #e94560; }
+    
+    .rm-slot-header { 
+      display: flex; 
+      align-items: center; 
+      gap: 6px; 
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+    .rm-slot-header:hover .rm-name { color: #e94560; }
+    
+    .rm-name { 
+      font-weight: bold; 
+      font-size: 0.8rem; 
+      color: #e94560;
+      flex: 1;
+    }
+    .rm-name.empty { color: #555; font-style: italic; }
+    
+    .slot-checkbox {
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 2px;
+    }
+    .slot-checkbox:hover { transform: scale(1.2); }
+    
+    .slot-delete {
+      cursor: pointer;
+      color: #666;
+      font-size: 0.8rem;
+      padding: 2px;
+    }
+    .slot-delete:hover { color: #e94560; }
+    
+    .task-list { font-size: 0.75rem; color: #ccc; margin: 2px 0 2px 20px; padding-left: 8px; border-left: 2px solid #444; }
+    .task-item-row { display: flex; align-items: flex-start; gap: 4px; margin: 2px 0; }
+    .task-item-row.done { text-decoration: line-through; color: #666; }
+    .task-check { cursor: pointer; font-size: 0.8rem; }
+    .task-check:hover { transform: scale(1.2); }
+    .task-text { flex: 1; word-break: break-word; }
+    .task-text a { color: #4fc3f7; text-decoration: none; font-size: 0.7rem; }
+    .task-delete { cursor: pointer; color: #666; font-size: 0.7rem; }
+    .task-delete:hover { color: #e94560; }
+    
+    .add-task-btn { 
+      background: transparent; 
+      border: 1px dashed #444; 
+      color: #666; 
+      width: 100%; 
+      padding: 4px; 
+      border-radius: 4px; 
+      cursor: pointer; 
+      font-size: 0.7rem; 
+      margin-top: 4px;
+    }
+    .add-task-btn:hover { border-color: #e94560; color: #e94560; }
+
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
     .modal-overlay.active { display: flex; }
     .modal { background: #1f1f3a; border-radius: 10px; padding: 24px; width: 400px; max-width: 90vw; }
@@ -52,16 +108,11 @@
     .modal-buttons button { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.9rem; }
     .modal-buttons .cancel-btn { background: #333; color: #fff; }
     .modal-buttons .save-btn { background: #e94560; color: #fff; }
-    .modal-buttons .delete-btn { background: #c0392b; color: #fff; margin-right: auto; }
-    .schedule-options { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-    .schedule-option { background: #252540; border: 1px solid #333; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 0.8rem; color: #aaa; transition: all 0.2s; }
-    .schedule-option:hover { border-color: #0f3460; }
-    .schedule-option.selected { background: #0f3460; border-color: #e94560; color: #fff; }
   </style>
 </head>
 <body>
   <h1>📋 Fiona Team To-Do Dashboard v2</h1>
-  <p class="subtitle">頂部：每日日期 + 星期 | 左方：7 個固定 RM 位置（可即時新增/編輯）</p>
+  <p class="subtitle">頂部：每日日期 | 每個日期格內有 7 個 RM 位置（可剔✅完成/X刪除）| 左方：每格+加入工作</p>
 
   <div class="date-controls">
     <div class="date-nav">
@@ -77,22 +128,13 @@
   <div class="modal-overlay" id="taskModal">
     <div class="modal">
       <h3 id="taskModalTitle">加入工作</h3>
-      <input type="hidden" id="editTaskId">
-      <input type="hidden" id="editRm">
+      <input type="hidden" id="editDateIdx">
       <input type="hidden" id="editRmIdx">
-      <input type="hidden" id="editDate">
-      <input type="hidden" id="editIndex">
+      <input type="hidden" id="editTaskIdx">
       <label>工作描述</label>
       <input type="text" id="taskInput" placeholder="輸入工作內容...">
       <label>URL 連結（可選）</label>
       <input type="text" id="urlInput" placeholder="https://...">
-      <label>重複週期</label>
-      <div class="schedule-options">
-        <div class="schedule-option selected" data-value="once" onclick="selectSchedule(this)">一次</div>
-        <div class="schedule-option" data-value="daily" onclick="selectSchedule(this)">每日（除週六日）</div>
-        <div class="schedule-option" data-value="weekly" onclick="selectSchedule(this)">每週</div>
-        <div class="schedule-option" data-value="yearly" onclick="selectSchedule(this)">每年</div>
-      </div>
       <div class="modal-buttons">
         <button class="cancel-btn" onclick="closeTaskModal()">取消</button>
         <button class="save-btn" onclick="saveTask()">儲存</button>
@@ -100,28 +142,13 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="rmModal">
-    <div class="modal">
-      <h3 id="rmModalTitle">設定 RM 名稱</h3>
-      <input type="hidden" id="editRmIdx">
-      <label>RM 名稱（第 <span id="rmPositionHint">1</span> 行）</label>
-      <input type="text" id="rmNameInput" placeholder="例如：Cat">
-      <div class="modal-buttons">
-        <button class="delete-btn" id="deleteRmBtn" style="display:none;" onclick="deleteRm()">清除名稱</button>
-        <button class="cancel-btn" onclick="closeRmModal()">取消</button>
-        <button class="save-btn" onclick="saveRm()">儲存</button>
-      </div>
-    </div>
-  </div>
-
   <script>
     var MAX_RMS = 7;
-    var RMS = ['', '', '', '', '', '', ''];
     var RM_COLORS = ['#e94560', '#f39c12', '#9b59b6', '#3498db', '#1abc9c', '#e74c3c', '#2ecc71'];
     var DAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
     var currentWeekStart = getMonday(new Date());
     var data = {};
-    var selectedSchedule = 'once';
+    var RMS = ['', '', '', '', '', '', ''];
 
     function getMonday(d) {
       var date = new Date(d);
@@ -133,7 +160,7 @@
     }
 
     function loadData() {
-      var saved = localStorage.getItem('todo_dashboard_v4');
+      var saved = localStorage.getItem('todo_dashboard_v5');
       if (saved) {
         var parsed = JSON.parse(saved);
         data = parsed.data || {};
@@ -145,7 +172,7 @@
     }
 
     function saveData() {
-      localStorage.setItem('todo_dashboard_v4', JSON.stringify({ data: data, rms: RMS }));
+      localStorage.setItem('todo_dashboard_v5', JSON.stringify({ data: data, rms: RMS }));
     }
 
     function navigateWeek(direction) {
@@ -178,29 +205,11 @@
       return (currentWeekStart.getMonth() + 1) + '/' + currentWeekStart.getDate() + ' - ' + (weekEnd.getMonth() + 1) + '/' + weekEnd.getDate();
     }
 
-    function selectSchedule(el) {
-      document.querySelectorAll('#taskModal .schedule-option').forEach(function(opt) { opt.classList.remove('selected'); });
-      el.classList.add('selected');
-      selectedSchedule = el.dataset.value;
-    }
-
-    function shouldShowTask(task, date) {
-      if (task.schedule === 'daily') return date.getDay() >= 1 && date.getDay() <= 5;
-      else if (task.schedule === 'weekly') return date.getDay() === 1;
-      else if (task.schedule === 'yearly') {
-        var taskDate = new Date(task.date);
-        return date.getMonth() === taskDate.getMonth() && date.getDate() === taskDate.getDate();
-      } else {
-        var taskDate = new Date(task.date);
-        return date.toDateString() === taskDate.toDateString();
-      }
-    }
-
     function initDateData(dateKey) {
       if (!data.tasks[dateKey]) {
-        data.tasks[dateKey] = {};
+        data.tasks[dateKey] = [];
         for (var i = 0; i < MAX_RMS; i++) {
-          data.tasks[dateKey][i] = [];
+          data.tasks[dateKey].push({ name: RMS[i], done: false, tasks: [] });
         }
       }
     }
@@ -225,49 +234,67 @@
       document.getElementById('currentDateLabel').textContent = formatDateLabel();
       renderWeekChips();
 
-      var colCount = 1 + dates.length;
-      grid.style.gridTemplateColumns = '90px repeat(' + dates.length + ', 1fr)';
-
-      var html = '<div class="header-cell">RM</div>';
+      // Header row: RM label + date columns
+      var html = '<div class="header-cell rm-header-cell">RM</div>';
       dates.forEach(function(date) {
         var isWeekend = date.getDay() === 0 || date.getDay() === 6;
         var dayName = DAY_NAMES[date.getDay()];
-        html += '<div class="header-cell date-header ' + (isWeekend ? 'weekend' : '') + '">' + (date.getMonth() + 1) + '/' + date.getDate() + '<div class="day-name">星期' + dayName + '</div></div>';
+        html += '<div class="header-cell date-header ' + (isWeekend ? 'weekend' : '') + '">' + 
+          (date.getMonth() + 1) + '/' + date.getDate() + 
+          '<div class="day-name">星期' + dayName + '</div></div>';
       });
 
+      // For each RM slot (0-6), create a row across all dates
       for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
-        var rmName = RMS[rmIdx];
         var rmColor = RM_COLORS[rmIdx];
-        var isEmpty = !rmName;
-
-        if (isEmpty) {
-          html += '<div class="rm-row"><div class="rm-label empty" onclick="openRmModal(' + rmIdx + ')"><span class="add-icon">+</span>點此填入</div>';
-        } else {
-          html += '<div class="rm-row"><div class="rm-label" style="border-top:3px solid ' + rmColor + '" onclick="openRmModal(' + rmIdx + ')">' + escapeHtml(rmName) + '</div>';
-        }
-
-        dates.forEach(function(date) {
+        var rmName = RMS[rmIdx] || '位置 ' + (rmIdx + 1);
+        
+        // RM label cell
+        html += '<div class="rm-header-cell" style="background:#16213e;color:' + rmColor + ';cursor:pointer;" onclick="openRmNameModal(' + rmIdx + ')">' + 
+          (RMS[rmIdx] ? RMS[rmIdx] : '+ 設定') + '</div>';
+        
+        // For each date
+        dates.forEach(function(date, dateIdx) {
           var dateKey = getDateKey(date);
           var isWeekend = date.getDay() === 0 || date.getDay() === 6;
           initDateData(dateKey);
-          var tasks = data.tasks[dateKey][rmIdx] || [];
-          var cellHtml = '';
-
-          tasks.forEach(function(task, idx) {
-            if (shouldShowTask(task, date)) {
-              cellHtml += '<div class="task-item ' + (task.done ? 'done' : '') + '">' +
-                '<span class="checkbox" onclick="toggleTask(\'' + dateKey + '\', ' + rmIdx + ', ' + idx + ')">' + (task.done ? '✅' : '☐') + '</span>' +
-                '<span class="task-text">' + escapeHtml(task.text) + (task.url ? '<br><a href="' + escapeHtml(task.url) + '" target="_blank">🔗</a>' : '') + '</span>' +
-                '<div class="task-actions"><button onclick="editTask(\'' + dateKey + '\', ' + rmIdx + ', ' + idx + ')">✏️</button><button onclick="deleteTask(\'' + dateKey + '\', ' + rmIdx + ', ' + idx + ')">🗑️</button></div></div>';
-            }
-          });
-
-          var bgStyle = isWeekend ? 'background:#181828;' : '';
-          cellHtml += '<button class="add-task-btn" onclick="openAddTaskModal(\'' + dateKey + '\', ' + rmIdx + ')">+ 加入工作</button>';
-          html += '<div class="task-cell ' + (isWeekend ? 'weekend' : '') + '" style="' + bgStyle + '">' + cellHtml + '</div>';
+          
+          var slotData = data.tasks[dateKey][rmIdx];
+          var isDone = slotData ? slotData.done : false;
+          var tasks = slotData ? slotData.tasks : [];
+          
+          var slotBorderColor = RMS[rmIdx] ? RM_COLORS[rmIdx] : '#555';
+          
+          html += '<div class="date-cell ' + (isWeekend ? 'weekend' : '') + '">';
+          html += '<div class="rm-slot" style="border-left-color:' + slotBorderColor + '">';
+          
+          // RM slot header: name + checkbox + delete
+          html += '<div class="rm-slot-header">';
+          html += '<span class="rm-name ' + (RMS[rmIdx] ? '' : 'empty') + '" onclick="openRmNameModal(' + rmIdx + ')">' + 
+            (RMS[rmIdx] ? escapeHtml(RMS[rmIdx]) : '點此設定') + '</span>';
+          html += '<span class="slot-checkbox" onclick="toggleSlotDone(' + dateIdx + ',' + rmIdx + ')">' + (isDone ? '✅' : '☐') + '</span>';
+          html += '<span class="slot-delete" onclick="clearSlotTasks(' + dateIdx + ',' + rmIdx + ')">✕</span>';
+          html += '</div>';
+          
+          // Tasks list
+          if (tasks.length > 0) {
+            html += '<div class="task-list">';
+            tasks.forEach(function(task, taskIdx) {
+              html += '<div class="task-item-row ' + (task.done ? 'done' : '') + '">';
+              html += '<span class="task-check" onclick="toggleTaskDone(' + dateIdx + ',' + rmIdx + ',' + taskIdx + ')">' + (task.done ? '✅' : '☐') + '</span>';
+              html += '<span class="task-text">' + escapeHtml(task.text) + (task.url ? ' <a href="' + escapeHtml(task.url) + '" target="_blank">🔗</a>' : '') + '</span>';
+              html += '<span class="task-delete" onclick="deleteTask(' + dateIdx + ',' + rmIdx + ',' + taskIdx + ')">✕</span>';
+              html += '</div>';
+            });
+            html += '</div>';
+          }
+          
+          // Add task button
+          html += '<button class="add-task-btn" onclick="openAddTaskModal(' + dateIdx + ',' + rmIdx + ')">+ 加入工作</button>';
+          html += '</div></div>';
         });
-        html += '</div>';
       }
+      
       grid.innerHTML = html;
     }
 
@@ -277,119 +304,93 @@
       return div.innerHTML;
     }
 
-    function openAddTaskModal(dateKey, rmIdx) {
+    function openAddTaskModal(dateIdx, rmIdx) {
       document.getElementById('taskModalTitle').textContent = '加入工作';
-      document.getElementById('editTaskId').value = '';
-      document.getElementById('editRm').value = '';
+      document.getElementById('editDateIdx').value = dateIdx;
       document.getElementById('editRmIdx').value = rmIdx;
-      document.getElementById('editDate').value = dateKey;
-      document.getElementById('editIndex').value = '';
+      document.getElementById('editTaskIdx').value = '';
       document.getElementById('taskInput').value = '';
       document.getElementById('urlInput').value = '';
-      selectedSchedule = 'once';
-      document.querySelectorAll('#taskModal .schedule-option').forEach(function(opt) { opt.classList.remove('selected'); });
-      document.querySelector('#taskModal .schedule-option[data-value="once"]').classList.add('selected');
-      document.getElementById('taskModal').classList.add('active');
-      document.getElementById('taskInput').focus();
-    }
-
-    function editTask(dateKey, rmIdx, idx) {
-      var task = data.tasks[dateKey][rmIdx][idx];
-      if (!task) return;
-      document.getElementById('taskModalTitle').textContent = '編輯工作';
-      document.getElementById('editTaskId').value = task.id;
-      document.getElementById('editRm').value = '';
-      document.getElementById('editRmIdx').value = rmIdx;
-      document.getElementById('editDate').value = dateKey;
-      document.getElementById('editIndex').value = idx;
-      document.getElementById('taskInput').value = task.text;
-      document.getElementById('urlInput').value = task.url || '';
-      selectedSchedule = task.schedule || 'once';
-      document.querySelectorAll('#taskModal .schedule-option').forEach(function(opt) { opt.classList.toggle('selected', opt.dataset.value === selectedSchedule); });
       document.getElementById('taskModal').classList.add('active');
       document.getElementById('taskInput').focus();
     }
 
     function saveTask() {
-      var id = document.getElementById('editTaskId').value;
+      var dateIdx = parseInt(document.getElementById('editDateIdx').value);
       var rmIdx = parseInt(document.getElementById('editRmIdx').value);
-      var dateKey = document.getElementById('editDate').value;
+      var taskIdx = document.getElementById('editTaskIdx').value;
       var text = document.getElementById('taskInput').value.trim();
       var url = document.getElementById('urlInput').value.trim();
       if (!text) { alert('請輸入工作描述'); return; }
+      
+      var dates = getWeekDates();
+      var dateKey = getDateKey(dates[dateIdx]);
       initDateData(dateKey);
-      if (id) {
-        var taskIdx = data.tasks[dateKey][rmIdx].findIndex(function(t) { return t.id === id; });
-        if (taskIdx !== -1) {
-          data.tasks[dateKey][rmIdx][taskIdx].text = text;
-          data.tasks[dateKey][rmIdx][taskIdx].url = url;
-          data.tasks[dateKey][rmIdx][taskIdx].schedule = selectedSchedule;
-        }
+      
+      if (taskIdx !== '') {
+        data.tasks[dateKey][rmIdx].tasks[taskIdx].text = text;
+        data.tasks[dateKey][rmIdx].tasks[taskIdx].url = url;
       } else {
-        data.tasks[dateKey][rmIdx].push({ id: Date.now().toString(), text: text, url: url, done: false, schedule: selectedSchedule, date: dateKey });
+        data.tasks[dateKey][rmIdx].tasks.push({ text: text, url: url, done: false });
       }
+      
       saveData();
       closeTaskModal();
       renderGrid();
     }
 
-    function deleteTask(dateKey, rmIdx, idx) {
+    function deleteTask(dateIdx, rmIdx, taskIdx) {
       if (!confirm('確定刪除呢项工作？')) return;
-      data.tasks[dateKey][rmIdx].splice(idx, 1);
+      var dates = getWeekDates();
+      var dateKey = getDateKey(dates[dateIdx]);
+      data.tasks[dateKey][rmIdx].tasks.splice(taskIdx, 1);
       saveData();
       renderGrid();
     }
 
-    function toggleTask(dateKey, rmIdx, idx) {
-      data.tasks[dateKey][rmIdx][idx].done = !data.tasks[dateKey][rmIdx][idx].done;
+    function toggleTaskDone(dateIdx, rmIdx, taskIdx) {
+      var dates = getWeekDates();
+      var dateKey = getDateKey(dates[dateIdx]);
+      data.tasks[dateKey][rmIdx].tasks[taskIdx].done = !data.tasks[dateKey][rmIdx].tasks[taskIdx].done;
       saveData();
       renderGrid();
+    }
+
+    function toggleSlotDone(dateIdx, rmIdx) {
+      var dates = getWeekDates();
+      var dateKey = getDateKey(dates[dateIdx]);
+      initDateData(dateKey);
+      data.tasks[dateKey][rmIdx].done = !data.tasks[dateKey][rmIdx].done;
+      saveData();
+      renderGrid();
+    }
+
+    function clearSlotTasks(dateIdx, rmIdx) {
+      if (!confirm('確定清除這個格仔的所有工作？')) return;
+      var dates = getWeekDates();
+      var dateKey = getDateKey(dates[dateIdx]);
+      initDateData(dateKey);
+      data.tasks[dateKey][rmIdx].tasks = [];
+      data.tasks[dateKey][rmIdx].done = false;
+      saveData();
+      renderGrid();
+    }
+
+    function openRmNameModal(rmIdx) {
+      var name = prompt('請輸入 RM 名稱（第 ' + (rmIdx + 1) + ' 行）：', RMS[rmIdx] || '');
+      if (name !== null) {
+        RMS[rmIdx] = name.trim();
+        saveData();
+        renderGrid();
+      }
     }
 
     function closeTaskModal() {
       document.getElementById('taskModal').classList.remove('active');
     }
 
-    function openRmModal(rmIdx) {
-      document.getElementById('editRmIdx').value = rmIdx;
-      document.getElementById('rmPositionHint').textContent = rmIdx + 1;
-      document.getElementById('rmNameInput').value = RMS[rmIdx] || '';
-      document.getElementById('deleteRmBtn').style.display = RMS[rmIdx] ? 'block' : 'none';
-      document.getElementById('rmModal').classList.add('active');
-      document.getElementById('rmNameInput').focus();
-    }
-
-    function saveRm() {
-      var rmIdx = parseInt(document.getElementById('editRmIdx').value);
-      var name = document.getElementById('rmNameInput').value.trim();
-      RMS[rmIdx] = name;
-      saveData();
-      closeRmModal();
-      renderGrid();
-    }
-
-    function deleteRm() {
-      var rmIdx = parseInt(document.getElementById('editRmIdx').value);
-      if (!confirm('確定清除第 ' + (rmIdx + 1) + ' 行的 RM 名稱？')) return;
-      RMS[rmIdx] = '';
-      Object.keys(data.tasks).forEach(function(dateKey) {
-        data.tasks[dateKey][rmIdx] = [];
-      });
-      saveData();
-      closeRmModal();
-      renderGrid();
-    }
-
-    function closeRmModal() {
-      document.getElementById('rmModal').classList.remove('active');
-    }
-
     document.getElementById('taskModal').addEventListener('click', function(e) {
       if (e.target.classList.contains('modal-overlay')) closeTaskModal();
-    });
-
-    document.getElementById('rmModal').addEventListener('click', function(e) {
-      if (e.target.classList.contains('modal-overlay')) closeRmModal();
     });
 
     loadData();
