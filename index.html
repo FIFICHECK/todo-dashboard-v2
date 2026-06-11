@@ -19,52 +19,59 @@
     .week-chip:hover { background: #0f3460; color: #fff; }
     .week-chip.active { background: #e94560; color: #fff; }
 
-    .main-grid { display: grid; gap: 1px; background: #333; border-radius: 8px; overflow: auto; max-width: 100%; }
+    .main-table { width: 100%; border-collapse: collapse; background: #333; border-radius: 8px; overflow: hidden; }
     
-    .header-cell { background: #16213e; padding: 10px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.75rem; min-width: 60px; }
-    .header-cell.work-header { background: #e94560; min-width: 150px; text-align: left; padding-left: 12px; }
-    .header-cell.rm-header { color: #fff; }
-    .header-cell.weekend { background: #1a1a2e; color: #666; }
+    .header-row th { background: #16213e; padding: 12px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.85rem; }
+    .header-row th.work-col { background: #e94560; text-align: left; padding-left: 12px; min-width: 150px; }
+    .header-row th.date-col { min-width: 500px; }
     
-    .work-row { display: contents; }
+    .data-row td { background: #1f1f3a; padding: 10px; vertical-align: middle; border-bottom: 1px solid #333; }
+    .data-row td.work-col { background: #252540; text-align: left; cursor: pointer; min-width: 150px; border-left: 3px solid #555; }
+    .data-row td.work-col:hover { border-left-color: #e94560; }
+    .data-row td.date-col { text-align: center; }
     
-    .work-name { background: #252540; padding: 10px 12px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; min-width: 150px; border-left: 3px solid #555; }
-    .work-name:hover { border-left-color: #e94560; cursor: pointer; }
+    .work-name { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
     .work-name .work-text { flex: 1; }
-    .work-name .work-url { color: #4fc3f7; font-size: 0.75rem; text-decoration: none; }
+    .work-name .work-url { color: #4fc3f7; font-size: 0.8rem; text-decoration: none; }
     
-    .rm-cell { background: #1f1f3a; padding: 8px 4px; text-align: center; }
-    .rm-cell.weekend { background: #181828; }
-    
-    .rm-boxes { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+    .rm-checkboxes { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
     
     .rm-check { 
       display: flex; 
       flex-direction: column; 
       align-items: center; 
-      gap: 2px;
+      gap: 4px;
       cursor: pointer;
-      padding: 4px 6px;
-      border-radius: 6px;
-      min-width: 32px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: #252540;
+      min-width: 50px;
     }
     .rm-check:hover { background: #333; }
-    .rm-check .rm-label { font-size: 0.6rem; font-weight: bold; }
-    .rm-check .check-icon { font-size: 1.3rem; }
+    .rm-check.checked { background: #1f3a2e; }
+    
+    .rm-check .rm-label { font-size: 0.75rem; font-weight: bold; }
+    .rm-check .check-icon { font-size: 1.5rem; }
     .rm-check.checked .check-icon { color: #4ecca3; }
     .rm-check.unchecked .check-icon { color: #555; }
     
-    .add-work-row { background: #1f1f3a; padding: 10px; text-align: left; }
-    .add-work-btn { 
+    .add-row { background: #1f1f3a; padding: 12px; text-align: left; border-bottom: 1px solid #333; }
+    .add-btn { 
       background: transparent; 
       border: 1px dashed #444; 
       color: #666; 
-      padding: 8px 12px; 
+      padding: 8px 16px; 
       border-radius: 6px; 
       cursor: pointer; 
-      font-size: 0.85rem;
+      font-size: 0.9rem;
     }
-    .add-work-btn:hover { border-color: #e94560; color: #e94560; }
+    .add-btn:hover { border-color: #e94560; color: #e94560; }
+
+    .rm-settings { background: #16213e; }
+    .rm-settings td { padding: 10px; text-align: center; }
+    .rm-settings .work-col { background: #16213e; color: #888; font-size: 0.8rem; }
+    .rm-settings .rm-name { cursor: pointer; font-weight: bold; padding: 4px 8px; border-radius: 4px; }
+    .rm-settings .rm-name:hover { background: #333; }
 
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
     .modal-overlay.active { display: flex; }
@@ -81,7 +88,7 @@
 </head>
 <body>
   <h1>📋 Fiona Team To-Do Dashboard v2</h1>
-  <p class="subtitle">左方：工作 | 右方：7 個 RM 可剔選 ✅/☐</p>
+  <p class="subtitle">左方：工作 | 右方同一欄位：7 個 RM 可剔選 ✅/☐</p>
 
   <div class="date-controls">
     <div class="date-nav">
@@ -92,7 +99,8 @@
     <div class="week-chips" id="weekChips"></div>
   </div>
 
-  <div class="main-grid" id="mainGrid"></div>
+  <table class="main-table" id="mainTable">
+  </table>
 
   <div class="modal-overlay" id="workModal">
     <div class="modal">
@@ -127,7 +135,7 @@
     }
 
     function loadData() {
-      var saved = localStorage.getItem('todo_dashboard_v11');
+      var saved = localStorage.getItem('todo_dashboard_v12');
       if (saved) {
         var parsed = JSON.parse(saved);
         data = parsed.data || { works: [], checks: {} };
@@ -139,7 +147,7 @@
     }
 
     function saveData() {
-      localStorage.setItem('todo_dashboard_v11', JSON.stringify({ data: data, rms: RMS }));
+      localStorage.setItem('todo_dashboard_v12', JSON.stringify({ data: data, rms: RMS }));
     }
 
     function navigateWeek(direction) {
@@ -198,39 +206,40 @@
     }
 
     function renderGrid() {
-      var grid = document.getElementById('mainGrid');
+      var table = document.getElementById('mainTable');
       var dates = getWeekDates();
       document.getElementById('currentDateLabel').textContent = formatDateLabel();
       renderWeekChips();
 
       // Header row
-      var html = '<div class="header-cell work-header">工作</div>';
+      var html = '<tr class="header-row">';
+      html += '<th class="work-col">工作</th>';
       dates.forEach(function(date) {
-        var isWeekend = date.getDay() === 0 || date.getDay() === 6;
-        html += '<div class="header-cell rm-header ' + (isWeekend ? 'weekend' : '') + '">' + (date.getMonth() + 1) + '/' + date.getDate() + '</div>';
+        html += '<th class="date-col">' + (date.getMonth() + 1) + '/' + date.getDate() + '</th>';
       });
+      html += '</tr>';
 
       // Work rows
       data.works.forEach(function(work) {
-        html += '<div class="work-row">';
+        html += '<tr class="data-row">';
         
         // Work name cell
-        html += '<div class="work-name" onclick="openEditWork(\'' + work.id + '\')">';
+        html += '<td class="work-col" onclick="openEditWork(\'' + work.id + '\')">';
+        html += '<div class="work-name">';
         html += '<span class="work-text">' + escapeHtml(work.text) + '</span>';
         if (work.url) {
           html += '<a href="' + escapeHtml(work.url) + '" class="work-url" target="_blank" onclick="event.stopPropagation();">🔗</a>';
         }
         html += '</div>';
+        html += '</td>';
         
         // RM checkboxes for each date
         dates.forEach(function(date) {
           var dateKey = getDateKey(date);
-          var isWeekend = date.getDay() === 0 || date.getDay() === 6;
+          html += '<td class="date-col">';
+          html += '<div class="rm-checkboxes">';
           
-          html += '<div class="rm-cell ' + (isWeekend ? 'weekend' : '') + '">';
-          html += '<div class="rm-boxes">';
-          
-          // 7 RM checkboxes
+          // 7 RMs in the SAME column (horizontal)
           for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
             var checkKey = getCheckKey(dateKey, work.id, rmIdx);
             var isChecked = data.checks[checkKey] || false;
@@ -238,37 +247,35 @@
             var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
             
             html += '<div class="rm-check ' + (isChecked ? 'checked' : 'unchecked') + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + work.id + '\',' + rmIdx + ')" title="' + rmName + '">';
-            html += '<span class="rm-label" style="color:' + rmColor + ';">' + rmName.substring(0, 2) + '</span>';
+            html += '<span class="rm-label" style="color:' + rmColor + ';">' + escapeHtml(rmName.substring(0, 2)) + '</span>';
             html += '<span class="check-icon">' + (isChecked ? '✅' : '☐') + '</span>';
             html += '</div>';
           }
           
-          html += '</div></div>';
+          html += '</div>';
+          html += '</td>';
         });
         
-        html += '</div>';
+        html += '</tr>';
       });
 
       // Add work row
-      html += '<div class="add-work-row">';
-      html += '<button class="add-work-btn" onclick="openAddWork()">+ 新增工作</button>';
-      html += '</div>';
+      html += '<tr><td class="add-row" colspan="8"><button class="add-btn" onclick="openAddWork()">+ 新增工作</button></td></tr>';
 
-      // RM settings row at bottom
-      html += '<div class="work-row" style="margin-top:20px;">';
-      html += '<div class="header-cell work-header" style="background:#16213e;font-size:0.75rem;">RM 設定</div>';
+      // RM settings row
+      html += '<tr class="rm-settings"><td class="work-col">RM 設定</td>';
       dates.forEach(function(date) {
-        html += '<div class="header-cell" style="background:#16213e;font-size:0.7rem;color:#aaa;">';
+        html += '<td>';
         for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
           var rmColor = RM_COLORS[rmIdx];
           var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
-          html += '<span style="color:' + rmColor + ';cursor:pointer;margin:0 3px;" onclick="setRmName(' + rmIdx + ')">' + escapeHtml(rmName.substring(0, 2)) + '</span>';
+          html += '<span class="rm-name" style="color:' + rmColor + ';" onclick="setRmName(' + rmIdx + ')">' + escapeHtml(rmName.substring(0, 2)) + ' </span>';
         }
-        html += '</div>';
+        html += '</td>';
       });
-      html += '</div>';
+      html += '</tr>';
 
-      grid.innerHTML = html;
+      table.innerHTML = html;
     }
 
     function escapeHtml(text) {
