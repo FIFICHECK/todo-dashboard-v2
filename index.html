@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fiona Team To-Do Dashboard v2</title>
+  <title>Fiona Team SKU To-Do Dashboard</title>
   <style>
     * {
       box-sizing: border-box;
@@ -97,10 +97,60 @@
       text-align: center;
     }
 
-    /* Main Grid - Transposed */
+    /* SKU Controls */
+    .sku-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      justify-content: center;
+    }
+
+    .sku-controls button {
+      background: #0f3460;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .sku-controls button:hover {
+      background: #e94560;
+    }
+
+    .sku-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .sku-chip {
+      background: #252540;
+      border: 1px solid #333;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sku-chip:hover {
+      border-color: #e94560;
+    }
+
+    .sku-chip.active {
+      background: #e94560;
+      border-color: #e94560;
+      color: #fff;
+    }
+
+    /* Main Grid - SKU on left */
     .main-grid {
       display: grid;
-      grid-template-columns: 90px repeat(auto-fit, minmax(120px, 1fr));
+      grid-template-columns: 100px repeat(auto-fit, minmax(100px, 1fr));
       gap: 1px;
       background: #333;
       border-radius: 8px;
@@ -116,7 +166,7 @@
       font-weight: bold;
       color: #fff;
       font-size: 0.8rem;
-      min-width: 120px;
+      min-width: 100px;
     }
 
     .header-cell.date-header {
@@ -124,21 +174,22 @@
       color: #e94560;
     }
 
-    .rm-row {
+    .sku-row {
       display: contents;
     }
 
-    .rm-label {
+    .sku-label {
       background: #16213e;
       padding: 12px 8px;
       text-align: center;
       font-weight: bold;
       color: #e94560;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       display: flex;
       align-items: center;
       justify-content: center;
       writing-mode: horizontal-tb;
+      min-width: 100px;
     }
 
     .task-cell {
@@ -275,6 +326,18 @@
       box-sizing: border-box;
     }
 
+    .modal select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #252540;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #fff;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+
     .modal label {
       display: block;
       margin-bottom: 6px;
@@ -310,15 +373,6 @@
       color: #fff;
     }
 
-    .date-picker-wrapper {
-      display: none;
-      margin-bottom: 10px;
-    }
-
-    .date-picker-wrapper.visible {
-      display: block;
-    }
-
     .modal-buttons {
       display: flex;
       gap: 10px;
@@ -344,53 +398,25 @@
       color: #fff;
     }
 
-    /* Legend */
-    .legend {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 20px;
-      font-size: 0.75rem;
-      color: #888;
-      flex-wrap: wrap;
+    .modal-buttons .delete-btn {
+      background: #c0392b;
+      color: #fff;
+      margin-right: auto;
     }
 
-    .legend span {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .legend .dot {
-      width: 10px;
-      height: 10px;
+    /* SKU color dots */
+    .sku-dot {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-    }
-
-    .dot.parco { background: #e94560; }
-    .dot.fifi { background: #f39c12; }
-    .dot.cat { background: #3498db; }
-    .dot.jerry { background: #9b59b6; }
-    .dot.moses { background: #1abc9c; }
-    .dot.candy { background: #e74c3c; }
-
-    /* Schedule badges */
-    .schedule-badge {
-      font-size: 0.6rem;
-      padding: 1px 4px;
-      border-radius: 3px;
-      margin-right: 3px;
       display: inline-block;
+      margin-right: 6px;
     }
-    .badge-daily { background: #3498db; color: #fff; }
-    .badge-weekly { background: #9b59b6; color: #fff; }
-    .badge-yearly { background: #f39c12; color: #fff; }
-    .badge-specific { background: #1abc9c; color: #fff; }
   </style>
 </head>
 <body>
-  <h1>📋 Fiona Team To-Do Dashboard v2</h1>
-  <p class="subtitle">左方：RM 排列 | 頂部：日期篩選（週/月/年）</p>
+  <h1>📋 SKU To-Do Dashboard</h1>
+  <p class="subtitle">左方：SKU 級別 | 頂部：日期篩選（週/月/年）</p>
 
   <div class="view-controls">
     <div class="view-btn-group">
@@ -406,27 +432,30 @@
     </div>
   </div>
 
-  <div class="main-grid" id="mainGrid">
-    <!-- Grid will be rendered here -->
+  <div class="sku-controls">
+    <button onclick="openAddSkuModal()">+ 新增 SKU</button>
+    <div class="sku-list" id="skuList">
+      <!-- SKU chips rendered here -->
+    </div>
   </div>
 
-  <div class="legend">
-    <span><span class="dot parco"></span>Parco</span>
-    <span><span class="dot fifi"></span>Fi Fi</span>
-    <span><span class="dot cat"></span>Cat</span>
-    <span><span class="dot jerry"></span>Jerry</span>
-    <span><span class="dot moses"></span>Moses</span>
-    <span><span class="dot candy"></span>Candy</span>
+  <div class="main-grid" id="mainGrid">
+    <!-- Grid will be rendered here -->
   </div>
 
   <!-- Add/Edit Task Modal -->
   <div class="modal-overlay" id="taskModal">
     <div class="modal">
-      <h3 id="modalTitle">加入工作</h3>
+      <h3 id="taskModalTitle">加入工作</h3>
       <input type="hidden" id="editTaskId">
-      <input type="hidden" id="editRm">
+      <input type="hidden" id="editSku">
       <input type="hidden" id="editDate">
       <input type="hidden" id="editIndex">
+      
+      <label>SKU 級別</label>
+      <select id="skuSelect">
+        <!-- Options populated dynamically -->
+      </select>
       
       <label>工作描述</label>
       <input type="text" id="taskInput" placeholder="輸入工作內容...">
@@ -442,47 +471,67 @@
         <div class="schedule-option" data-value="yearly" onclick="selectSchedule(this)">每年</div>
       </div>
       
-      <div class="date-picker-wrapper" id="datePickerWrapper">
-        <label>指定日期</label>
-        <input type="date" id="specificDateInput">
-      </div>
-      
       <div class="modal-buttons">
-        <button class="cancel-btn" onclick="closeModal()">取消</button>
+        <button class="cancel-btn" onclick="closeTaskModal()">取消</button>
         <button class="save-btn" onclick="saveTask()">儲存</button>
       </div>
     </div>
   </div>
 
-  <script>
-    const RMS = ['parco', 'fifi', 'cat', 'jerry', 'moses', 'candy'];
-    const RM_NAMES = {
-      parco: 'Parco',
-      fififi: 'Fi Fi',
-      cat: 'Cat',
-      jerry: 'Jerry',
-      moses: 'Moses',
-      candy: 'Candy'
-    };
+  <!-- Add SKU Modal -->
+  <div class="modal-overlay" id="skuModal">
+    <div class="modal">
+      <h3 id="skuModalTitle">新增 SKU</h3>
+      <input type="hidden" id="editSkuId">
+      
+      <label>SKU 名稱</label>
+      <input type="text" id="skuNameInput" placeholder="例如：H000001">
+      
+      <label>顏色</label>
+      <select id="skuColorSelect">
+        <option value="#e94560">紅色</option>
+        <option value="#f39c12">橙色</option>
+        <option value="#3498db">藍色</option>
+        <option value="#9b59b6">紫色</option>
+        <option value="#1abc9c">青色</option>
+        <option value="#e74c3c">深紅</option>
+        <option value="#2ecc71">綠色</option>
+        <option value="#e91e63">粉紅</option>
+      </select>
+      
+      <div class="modal-buttons">
+        <button class="delete-btn" id="deleteSkuBtn" style="display:none;" onclick="deleteSku()">刪除</button>
+        <button class="cancel-btn" onclick="closeSkuModal()">取消</button>
+        <button class="save-btn" onclick="saveSku()">儲存</button>
+      </div>
+    </div>
+  </div>
 
-    let currentView = 'week'; // week, month, year
+  <script>
+    const COLORS = ['#e94560', '#f39c12', '#3498db', '#9b59b6', '#1abc9c', '#e74c3c', '#2ecc71', '#e91e63'];
+    
+    let currentView = 'week';
     let currentDate = new Date();
     let data = {};
     let selectedSchedule = 'once';
+    let skus = [];
 
     // Load data from localStorage
     function loadData() {
-      const saved = localStorage.getItem('todo_dashboard_v2');
+      const saved = localStorage.getItem('sku_todo_dashboard');
       if (saved) {
-        data = JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        data = parsed.data || {};
+        skus = parsed.skus || [];
       } else {
         data = { tasks: {} };
+        skus = [];
       }
     }
 
     // Save data to localStorage
     function saveData() {
-      localStorage.setItem('todo_dashboard_v2', JSON.stringify(data));
+      localStorage.setItem('sku_todo_dashboard', JSON.stringify({ data, skus }));
     }
 
     // Set view type
@@ -506,13 +555,12 @@
       renderGrid();
     }
 
-    // Get dates to display based on view
+    // Get dates to display
     function getDisplayDates() {
       const dates = [];
       const today = new Date(currentDate);
       
       if (currentView === 'week') {
-        // Get Mon-Sun of current week
         const day = today.getDay();
         const monday = new Date(today);
         monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
@@ -523,7 +571,6 @@
           dates.push(d);
         }
       } else if (currentView === 'month') {
-        // Get all days in current month
         const year = today.getFullYear();
         const month = today.getMonth();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -532,7 +579,6 @@
           dates.push(new Date(year, month, i));
         }
       } else {
-        // Get all months in current year
         for (let m = 0; m < 12; m++) {
           dates.push(new Date(today.getFullYear(), m, 1));
         }
@@ -541,12 +587,12 @@
       return dates;
     }
 
-    // Get date key for storage
+    // Get date key
     function getDateKey(date) {
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     }
 
-    // Format date for header
+    // Format date header
     function formatDateHeader(date) {
       if (currentView === 'year') {
         const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
@@ -555,11 +601,11 @@
         return `${date.getMonth() + 1}/${date.getDate()}`;
       } else {
         const days = ['日', '一', '二', '三', '四', '五', '六'];
-        return `${date.getMonth() + 1}/${date.getDate()}\n${days[date.getDay()]}`;
+        return `${date.getMonth() + 1}/${date.getDate()}${days[date.getDay()]}`;
       }
     }
 
-    // Format current date label
+    // Format date label
     function formatDateLabel() {
       if (currentView === 'week') {
         const day = currentDate.getDay();
@@ -580,13 +626,6 @@
       document.querySelectorAll('.schedule-option').forEach(opt => opt.classList.remove('selected'));
       el.classList.add('selected');
       selectedSchedule = el.dataset.value;
-      
-      const datePicker = document.getElementById('datePickerWrapper');
-      if (selectedSchedule === 'specific') {
-        datePicker.classList.add('visible');
-      } else {
-        datePicker.classList.remove('visible');
-      }
     }
 
     // Get schedule badge
@@ -600,38 +639,43 @@
       return badges[schedule] || '';
     }
 
-    // Check if task should show on this date
+    // Check if task should show
     function shouldShowTask(task, date) {
       if (currentView === 'year') {
-        // Show if same month/day
         const taskDate = new Date(task.date);
         return date.getMonth() === taskDate.getMonth() && date.getDate() === taskDate.getDate();
       } else if (currentView === 'month') {
-        // Show if matching schedule for this day
         if (task.schedule === 'daily') {
           return date.getDay() >= 1 && date.getDay() <= 5;
         } else if (task.schedule === 'weekly') {
-          return date.getDay() === 1; // Monday
+          return date.getDay() === 1;
         } else if (task.schedule === 'yearly') {
           const taskDate = new Date(task.date);
           return date.getMonth() === taskDate.getMonth() && date.getDate() === taskDate.getDate();
         } else {
-          // Once - show only on the exact date
           const taskDate = new Date(task.date);
           return date.toDateString() === taskDate.toDateString();
         }
-      } else {
-        // Week view - show all
-        return true;
       }
+      return true;
     }
 
-    // Initialize data for a date
+    // Init date data
     function initDateData(dateKey) {
       if (!data.tasks[dateKey]) {
         data.tasks[dateKey] = {};
-        RMS.forEach(rm => data.tasks[dateKey][rm] = []);
+        skus.forEach(sku => data.tasks[dateKey][sku.id] = []);
       }
+    }
+
+    // Render SKU chips
+    function renderSkuChips() {
+      const container = document.getElementById('skuList');
+      container.innerHTML = skus.map(sku => `
+        <div class="sku-chip" onclick="openEditSkuModal('${sku.id}')">
+          <span class="sku-dot" style="background:${sku.color}"></span>${sku.name}
+        </div>
+      `).join('');
     }
 
     // Render the grid
@@ -642,30 +686,30 @@
       document.getElementById('currentDateLabel').textContent = formatDateLabel();
 
       // Build header row
-      let html = '<div class="header-cell">RM</div>';
+      let html = '<div class="header-cell">SKU</div>';
       dates.forEach(date => {
         const isWeekend = date.getDay() === 0 || date.getDay() === 6;
         html += `<div class="header-cell date-header" style="${isWeekend ? 'background:#1a1a2e;color:#666;' : ''}">${formatDateHeader(date)}</div>`;
       });
 
-      // Build RM rows
-      RMS.forEach(rm => {
-        html += `<div class="rm-row">`;
-        html += `<div class="rm-label">${RM_NAMES[rm]}</div>`;
+      // Build SKU rows
+      skus.forEach(sku => {
+        html += `<div class="sku-row">`;
+        html += `<div class="sku-label"><span class="sku-dot" style="background:${sku.color}"></span>${sku.name}</div>`;
         
         dates.forEach(date => {
           const dateKey = getDateKey(date);
           const isWeekend = date.getDay() === 0 || date.getDay() === 6;
           initDateData(dateKey);
           
-          const tasks = data.tasks[dateKey][rm] || [];
+          const tasks = data.tasks[dateKey][sku.id] || [];
           let cellHtml = '';
           
           tasks.forEach((task, idx) => {
             if (shouldShowTask(task, date)) {
               cellHtml += `
-                <div class="task-item ${task.done ? 'done' : ''}" data-task-id="${task.id}">
-                  <span class="checkbox" onclick="toggleTask('${dateKey}', '${rm}', ${idx})">
+                <div class="task-item ${task.done ? 'done' : ''}">
+                  <span class="checkbox" onclick="toggleTask('${dateKey}', '${sku.id}', ${idx})">
                     ${task.done ? '✅' : '☐'}
                   </span>
                   <span class="task-text">
@@ -674,8 +718,8 @@
                     ${task.url ? `<br><a href="${escapeHtml(task.url)}" target="_blank">🔗</a>` : ''}
                   </span>
                   <div class="task-actions">
-                    <button onclick="editTask('${dateKey}', '${rm}', ${idx})">✏️</button>
-                    <button onclick="deleteTask('${dateKey}', '${rm}', ${idx})">🗑️</button>
+                    <button onclick="editTask('${dateKey}', '${sku.id}', ${idx})">✏️</button>
+                    <button onclick="deleteTask('${dateKey}', '${sku.id}', ${idx})">🗑️</button>
                   </div>
                 </div>
               `;
@@ -683,7 +727,7 @@
           });
           
           const bgStyle = isWeekend ? 'background:#181828;' : '';
-          cellHtml += `<button class="add-task-btn" onclick="openAddModal('${dateKey}', '${rm}')">+</button>`;
+          cellHtml += `<button class="add-task-btn" onclick="openAddTaskModal('${dateKey}', '${sku.id}')">+</button>`;
           
           html += `<div class="task-cell" style="${bgStyle}">${cellHtml}</div>`;
         });
@@ -691,7 +735,12 @@
         html += `</div>`;
       });
 
+      if (skus.length === 0) {
+        html = '<div style="padding:40px;text-align:center;color:#666;">請先點擊「+ 新增 SKU」新增 SKU 級別</div>';
+      }
+
       grid.innerHTML = html;
+      renderSkuChips();
     }
 
     // Escape HTML
@@ -701,49 +750,49 @@
       return div.innerHTML;
     }
 
-    // Open add modal
-    function openAddModal(dateKey, rm) {
-      document.getElementById('modalTitle').textContent = '加入工作';
+    // Open add task modal
+    function openAddTaskModal(dateKey, skuId) {
+      document.getElementById('taskModalTitle').textContent = '加入工作';
       document.getElementById('editTaskId').value = '';
-      document.getElementById('editRm').value = rm;
+      document.getElementById('editSku').value = skuId;
       document.getElementById('editDate').value = dateKey;
       document.getElementById('editIndex').value = '';
       document.getElementById('taskInput').value = '';
       document.getElementById('urlInput').value = '';
-      document.getElementById('specificDateInput').value = '';
+      
+      // Populate SKU select
+      const select = document.getElementById('skuSelect');
+      select.innerHTML = skus.map(s => `<option value="${s.id}" ${s.id === skuId ? 'selected' : ''}>${s.name}</option>`).join('');
       
       selectedSchedule = 'once';
       document.querySelectorAll('.schedule-option').forEach(opt => {
         opt.classList.toggle('selected', opt.dataset.value === 'once');
       });
-      document.getElementById('datePickerWrapper').classList.remove('visible');
       
       document.getElementById('taskModal').classList.add('active');
       document.getElementById('taskInput').focus();
     }
 
-    // Open edit modal
-    function editTask(dateKey, rm, idx) {
-      const task = data.tasks[dateKey][rm][idx];
+    // Open edit task modal
+    function editTask(dateKey, skuId, idx) {
+      const task = data.tasks[dateKey][skuId][idx];
       if (!task) return;
       
-      document.getElementById('modalTitle').textContent = '編輯工作';
+      document.getElementById('taskModalTitle').textContent = '編輯工作';
       document.getElementById('editTaskId').value = task.id;
-      document.getElementById('editRm').value = rm;
+      document.getElementById('editSku').value = skuId;
       document.getElementById('editDate').value = dateKey;
       document.getElementById('editIndex').value = idx;
       document.getElementById('taskInput').value = task.text;
       document.getElementById('urlInput').value = task.url || '';
       
+      const select = document.getElementById('skuSelect');
+      select.innerHTML = skus.map(s => `<option value="${s.id}" ${s.id === skuId ? 'selected' : ''}>${s.name}</option>`).join('');
+      
       selectedSchedule = task.schedule || 'once';
       document.querySelectorAll('.schedule-option').forEach(opt => {
         opt.classList.toggle('selected', opt.dataset.value === selectedSchedule);
       });
-      
-      if (selectedSchedule === 'specific') {
-        document.getElementById('datePickerWrapper').classList.add('visible');
-        document.getElementById('specificDateInput').value = task.specificDate || '';
-      }
       
       document.getElementById('taskModal').classList.add('active');
       document.getElementById('taskInput').focus();
@@ -752,9 +801,8 @@
     // Save task
     function saveTask() {
       const id = document.getElementById('editTaskId').value;
-      const rm = document.getElementById('editRm').value;
+      const skuId = document.getElementById('skuSelect').value;
       const dateKey = document.getElementById('editDate').value;
-      const idx = document.getElementById('editIndex').value;
       const text = document.getElementById('taskInput').value.trim();
       const url = document.getElementById('urlInput').value.trim();
 
@@ -766,16 +814,14 @@
       initDateData(dateKey);
 
       if (id) {
-        // Edit existing
-        const taskIdx = data.tasks[dateKey][rm].findIndex(t => t.id === id);
+        const taskIdx = data.tasks[dateKey][skuId].findIndex(t => t.id === id);
         if (taskIdx !== -1) {
-          data.tasks[dateKey][rm][taskIdx].text = text;
-          data.tasks[dateKey][rm][taskIdx].url = url;
-          data.tasks[dateKey][rm][taskIdx].schedule = selectedSchedule;
+          data.tasks[dateKey][skuId][taskIdx].text = text;
+          data.tasks[dateKey][skuId][taskIdx].url = url;
+          data.tasks[dateKey][skuId][taskIdx].schedule = selectedSchedule;
         }
       } else {
-        // Add new
-        data.tasks[dateKey][rm].push({
+        data.tasks[dateKey][skuId].push({
           id: Date.now().toString(),
           text: text,
           url: url,
@@ -786,35 +832,116 @@
       }
 
       saveData();
-      closeModal();
+      closeTaskModal();
       renderGrid();
     }
 
     // Delete task
-    function deleteTask(dateKey, rm, idx) {
+    function deleteTask(dateKey, skuId, idx) {
       if (!confirm('確定刪除呢项工作？')) return;
-      data.tasks[dateKey][rm].splice(idx, 1);
+      data.tasks[dateKey][skuId].splice(idx, 1);
       saveData();
       renderGrid();
     }
 
     // Toggle task done
-    function toggleTask(dateKey, rm, idx) {
-      data.tasks[dateKey][rm][idx].done = !data.tasks[dateKey][rm][idx].done;
+    function toggleTask(dateKey, skuId, idx) {
+      data.tasks[dateKey][skuId][idx].done = !data.tasks[dateKey][skuId][idx].done;
       saveData();
       renderGrid();
     }
 
-    // Close modal
-    function closeModal() {
+    // Close task modal
+    function closeTaskModal() {
       document.getElementById('taskModal').classList.remove('active');
     }
 
-    // Close modal on outside click
-    document.getElementById('taskModal').addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal-overlay')) {
-        closeModal();
+    // Open add SKU modal
+    function openAddSkuModal() {
+      document.getElementById('skuModalTitle').textContent = '新增 SKU';
+      document.getElementById('editSkuId').value = '';
+      document.getElementById('skuNameInput').value = '';
+      document.getElementById('skuColorSelect').value = COLORS[skus.length % COLORS.length];
+      document.getElementById('deleteSkuBtn').style.display = 'none';
+      document.getElementById('skuModal').classList.add('active');
+      document.getElementById('skuNameInput').focus();
+    }
+
+    // Open edit SKU modal
+    function openEditSkuModal(skuId) {
+      const sku = skus.find(s => s.id === skuId);
+      if (!sku) return;
+      
+      document.getElementById('skuModalTitle').textContent = '編輯 SKU';
+      document.getElementById('editSkuId').value = skuId;
+      document.getElementById('skuNameInput').value = sku.name;
+      document.getElementById('skuColorSelect').value = sku.color;
+      document.getElementById('deleteSkuBtn').style.display = 'block';
+      document.getElementById('skuModal').classList.add('active');
+      document.getElementById('skuNameInput').focus();
+    }
+
+    // Save SKU
+    function saveSku() {
+      const id = document.getElementById('editSkuId').value;
+      const name = document.getElementById('skuNameInput').value.trim();
+      const color = document.getElementById('skuColorSelect').value;
+
+      if (!name) {
+        alert('請輸入 SKU 名稱');
+        return;
       }
+
+      if (id) {
+        const sku = skus.find(s => s.id === id);
+        if (sku) {
+          sku.name = name;
+          sku.color = color;
+        }
+      } else {
+        skus.push({
+          id: Date.now().toString(),
+          name: name,
+          color: color
+        });
+      }
+
+      saveData();
+      closeSkuModal();
+      renderGrid();
+    }
+
+    // Delete SKU
+    function deleteSku() {
+      const id = document.getElementById('editSkuId').value;
+      if (!confirm('確定刪除呢個 SKU？所有相關工作都會被刪除！')) return;
+      
+      skus = skus.filter(s => s.id !== id);
+      
+      // Clean up tasks for this SKU
+      Object.keys(data.tasks).forEach(dateKey => {
+        if (data.tasks[dateKey][id]) {
+          delete data.tasks[dateKey][id];
+        }
+      });
+      
+      saveData();
+      closeSkuModal();
+      renderGrid();
+    }
+
+    // Close SKU modal
+    function closeSkuModal() {
+      document.getElementById('skuModal').classList.remove('active');
+    }
+
+    // Close modals on outside click
+    document.getElementById('taskModal').addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) closeTaskModal();
+    });
+
+    document.getElementById('skuModal').addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) closeSkuModal();
     });
 
     // Initialize
