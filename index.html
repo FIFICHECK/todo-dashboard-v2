@@ -21,71 +21,38 @@
 
     .main-grid { display: grid; gap: 1px; background: #333; border-radius: 8px; overflow: auto; max-width: 100%; }
     
-    .header-cell { background: #16213e; padding: 12px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.8rem; min-width: 100px; }
-    .header-cell.date-header { background: #0f3460; color: #e94560; }
-    .header-cell.work-pool-header { background: #e94560; color: #fff; min-width: 120px; }
+    .header-cell { background: #16213e; padding: 10px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.8rem; min-width: 80px; }
+    .header-cell.work-header { background: #e94560; min-width: 150px; text-align: left; padding-left: 12px; }
+    .header-cell.rm-header { color: #fff; }
     .header-cell.weekend { background: #1a1a2e; color: #666; }
     
-    .work-pool-col { background: #1f1f3a; padding: 8px; min-width: 120px; vertical-align: top; }
+    .work-row { display: contents; }
     
-    .date-col { background: #1f1f3a; padding: 4px; min-width: 100px; vertical-align: top; }
-    .date-col.weekend { background: #181828; }
+    .work-name { background: #252540; padding: 10px 12px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; min-width: 150px; border-left: 3px solid #555; }
+    .work-name:hover { border-left-color: #e94560; cursor: pointer; }
+    .work-name .work-text { flex: 1; }
+    .work-name .work-url { color: #4fc3f7; font-size: 0.75rem; text-decoration: none; }
     
-    .rm-block { 
-      background: #252540; 
-      border-radius: 6px; 
-      margin-bottom: 4px; 
-      border-left: 3px solid #555;
-      padding: 6px 8px;
-      min-height: 60px;
-    }
-    .rm-block.has-name { border-left-color: #e94560; }
+    .rm-cell { background: #1f1f3a; padding: 8px; text-align: center; }
+    .rm-cell.weekend { background: #181828; }
     
-    .rm-name { 
-      font-weight: bold; 
-      font-size: 0.7rem; 
-      color: #e94560; 
-      cursor: pointer;
-      margin-bottom: 4px;
-      display: block;
-    }
-    .rm-name:hover { text-decoration: underline; }
-    .rm-name.empty { color: #888; font-style: italic; }
+    .checkbox { cursor: pointer; font-size: 1.4rem; padding: 4px; display: inline-block; }
+    .checkbox:hover { transform: scale(1.2); }
+    .checkbox.checked { color: #4ecca3; }
+    .checkbox.unchecked { color: #555; }
     
-    .work-pool-item {
-      background: #252540;
-      border-radius: 6px;
-      padding: 6px 8px;
-      margin-bottom: 4px;
-      cursor: pointer;
-      font-size: 0.75rem;
-      border: 1px solid transparent;
-    }
-    .work-pool-item:hover { border-color: #e94560; }
-    .work-pool-item.selected { border-color: #4ecca3; background: #1f3a2e; }
-    
-    .work-item { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; padding: 2px 4px; background: #1a1a2e; border-radius: 4px; }
-    .work-item.done { opacity: 0.5; }
-    .work-item .work-text { flex: 1; font-size: 0.7rem; word-break: break-word; }
-    .work-item .work-text a { color: #4fc3f7; text-decoration: none; }
-    .work-item .btn { cursor: pointer; font-size: 0.8rem; padding: 1px; }
-    .work-item .btn:hover { transform: scale(1.2); }
-    .work-item .btn-clear { color: #666; font-size: 0.7rem; }
-    .work-item .btn-clear:hover { color: #e94560; }
-    
+    .add-work-row { background: #1f1f3a; padding: 10px; text-align: left; }
     .add-work-btn { 
       background: transparent; 
       border: 1px dashed #444; 
       color: #666; 
-      width: 100%; 
-      padding: 4px; 
-      border-radius: 4px; 
+      padding: 8px 12px; 
+      border-radius: 6px; 
       cursor: pointer; 
-      font-size: 0.7rem; 
-      margin-top: 4px;
+      font-size: 0.85rem;
     }
     .add-work-btn:hover { border-color: #e94560; color: #e94560; }
-    
+
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
     .modal-overlay.active { display: flex; }
     .modal { background: #1f1f3a; border-radius: 10px; padding: 24px; width: 400px; max-width: 90vw; }
@@ -96,11 +63,12 @@
     .modal-buttons button { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.9rem; }
     .modal-buttons .cancel-btn { background: #333; color: #fff; }
     .modal-buttons .save-btn { background: #e94560; color: #fff; }
+    .modal-buttons .delete-btn { background: #c0392b; color: #fff; margin-right: auto; }
   </style>
 </head>
 <body>
   <h1>📋 Fiona Team To-Do Dashboard v2</h1>
-  <p class="subtitle">左方：工作池（剔選工作）| 頂部：日期 | 每個日期：7個 RM 空格</p>
+  <p class="subtitle">左方：工作列表 | 同行右方：7 個 RM 可剔選 ✅/✕</p>
 
   <div class="date-controls">
     <div class="date-nav">
@@ -115,13 +83,14 @@
 
   <div class="modal-overlay" id="workModal">
     <div class="modal">
-      <h3 id="workModalTitle">加入工作</h3>
+      <h3 id="workModalTitle">新增工作</h3>
       <input type="hidden" id="editWorkId">
       <label>工作名稱</label>
       <input type="text" id="workNameInput" placeholder="輸入工作名稱...">
       <label>URL 連結（可選）</label>
       <input type="text" id="workUrlInput" placeholder="https://...">
       <div class="modal-buttons">
+        <button class="delete-btn" id="deleteWorkBtn" style="display:none;" onclick="deleteWork()">刪除</button>
         <button class="cancel-btn" onclick="closeWorkModal()">取消</button>
         <button class="save-btn" onclick="saveWork()">儲存</button>
       </div>
@@ -145,19 +114,19 @@
     }
 
     function loadData() {
-      var saved = localStorage.getItem('todo_dashboard_v10');
+      var saved = localStorage.getItem('todo_dashboard_v11');
       if (saved) {
         var parsed = JSON.parse(saved);
-        data = parsed.data || { works: [], assignments: {} };
+        data = parsed.data || { works: [], checks: {} };
         RMS = parsed.rms || ['', '', '', '', '', '', ''];
       } else {
-        data = { works: [], assignments: {} };
+        data = { works: [], checks: {} };
         RMS = ['', '', '', '', '', '', ''];
       }
     }
 
     function saveData() {
-      localStorage.setItem('todo_dashboard_v10', JSON.stringify({ data: data, rms: RMS }));
+      localStorage.setItem('todo_dashboard_v11', JSON.stringify({ data: data, rms: RMS }));
     }
 
     function navigateWeek(direction) {
@@ -204,39 +173,15 @@
       container.innerHTML = html;
     }
 
-    function getAssignmentKey(dateKey, rmIdx) {
-      return dateKey + '_' + rmIdx;
+    function getCheckKey(dateKey, workId, rmIdx) {
+      return dateKey + '_' + workId + '_' + rmIdx;
     }
 
-    function toggleWorkDone(dateKey, rmIdx, workId) {
-      var key = getAssignmentKey(dateKey, rmIdx);
-      if (!data.assignments[key]) return;
-      var work = data.assignments[key].find(function(w) { return w.id === workId; });
-      if (work) {
-        work.done = !work.done;
-        saveData();
-        renderGrid();
-      }
-    }
-
-    function removeWorkFromCell(dateKey, rmIdx, workId) {
-      var key = getAssignmentKey(dateKey, rmIdx);
-      if (!data.assignments[key]) return;
-      data.assignments[key] = data.assignments[key].filter(function(w) { return w.id !== workId; });
+    function toggleCheck(dateKey, workId, rmIdx) {
+      var key = getCheckKey(dateKey, workId, rmIdx);
+      data.checks[key] = !data.checks[key];
       saveData();
       renderGrid();
-    }
-
-    function addWorkToCell(dateKey, rmIdx, work) {
-      var key = getAssignmentKey(dateKey, rmIdx);
-      if (!data.assignments[key]) data.assignments[key] = [];
-      // Check if already added
-      var exists = data.assignments[key].some(function(w) { return w.id === work.id; });
-      if (!exists) {
-        data.assignments[key].push({ id: work.id, text: work.text, url: work.url, done: false });
-        saveData();
-        renderGrid();
-      }
     }
 
     function renderGrid() {
@@ -245,58 +190,73 @@
       document.getElementById('currentDateLabel').textContent = formatDateLabel();
       renderWeekChips();
 
-      // Header row: Work Pool + date columns
-      var html = '<div class="header-cell work-pool-header">工作池</div>';
+      // Header row
+      var html = '<div class="header-cell work-header">工作</div>';
       dates.forEach(function(date) {
-        html += '<div class="header-cell date-header">' + (date.getMonth() + 1) + '/' + date.getDate() + '</div>';
+        var isWeekend = date.getDay() === 0 || date.getDay() === 6;
+        html += '<div class="header-cell rm-header ' + (isWeekend ? 'weekend' : '') + '">' + (date.getMonth() + 1) + '/' + date.getDate() + '</div>';
       });
 
-      // Work pool column
-      html += '<div class="work-pool-col">';
+      // Work rows
       data.works.forEach(function(work) {
-        html += '<div class="work-pool-item" onclick="openEditWork(\'' + work.id + '\')">' + escapeHtml(work.text) + '</div>';
+        html += '<div class="work-row">';
+        
+        // Work name cell
+        html += '<div class="work-name" onclick="openEditWork(\'' + work.id + '\')">';
+        html += '<span class="work-text">' + escapeHtml(work.text) + '</span>';
+        if (work.url) {
+          html += '<a href="' + escapeHtml(work.url) + '" class="work-url" target="_blank" onclick="event.stopPropagation();">🔗</a>';
+        }
+        html += '</div>';
+        
+        // RM checkboxes for each date
+        dates.forEach(function(date) {
+          var dateKey = getDateKey(date);
+          var isWeekend = date.getDay() === 0 || date.getDay() === 6;
+          var key = getCheckKey(dateKey, work.id, 0); // Just for weekend check
+          
+          html += '<div class="rm-cell ' + (isWeekend ? 'weekend' : '') + '">';
+          
+          // Show all 7 RMs inline
+          for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
+            var checkKey = getCheckKey(dateKey, work.id, rmIdx);
+            var isChecked = data.checks[checkKey] || false;
+            var rmColor = RM_COLORS[rmIdx];
+            var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
+            
+            html += '<span class="checkbox ' + (isChecked ? 'checked' : 'unchecked') + '" ';
+            html += 'style="color:' + rmColor + ';cursor:pointer;font-size:0.9rem;margin:2px 4px;display:inline-block;" ';
+            html += 'onclick="toggleCheck(\'' + dateKey + '\',\'' + work.id + '\',' + rmIdx + ')" ';
+            html += 'title="' + rmName + '">';
+            html += isChecked ? '✅' : '☐';
+            html += '</span>';
+          }
+          
+          html += '</div>';
+        });
+        
+        html += '</div>';
       });
+
+      // Add work row
+      html += '<div class="add-work-row">';
       html += '<button class="add-work-btn" onclick="openAddWork()">+ 新增工作</button>';
       html += '</div>';
 
-      // RM rows
-      for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
-        var rmColor = RM_COLORS[rmIdx];
-        var rmName = RMS[rmIdx] || 'RM' + (rmIdx + 1);
-        
-        // RM header cell
-        html += '<div class="header-cell" style="background:#16213e;color:' + rmColor + ';border-top:3px solid ' + rmColor + ';cursor:pointer;" onclick="setRmName(' + rmIdx + ')">' + escapeHtml(rmName) + '</div>';
-        
-        // For each date
-        dates.forEach(function(date) {
-          var dateKey = getDateKey(date);
-          var key = getAssignmentKey(dateKey, rmIdx);
-          var assignedWorks = data.assignments[key] || [];
-          
-          html += '<div class="date-col">';
-          html += '<div class="rm-block ' + (RMS[rmIdx] ? 'has-name' : '') + '" style="border-left-color:' + (RMS[rmIdx] ? rmColor : '#555') + '">';
-          
-          // Show assigned works
-          assignedWorks.forEach(function(w) {
-            html += '<div class="work-item ' + (w.done ? 'done' : '') + '">';
-            html += '<span class="btn" onclick="toggleWorkDone(\'' + dateKey + '\',' + rmIdx + ',\'' + w.id + '\')">' + (w.done ? '✅' : '☐') + '</span>';
-            html += '<span class="work-text">' + escapeHtml(w.text) + (w.url ? ' <a href="' + escapeHtml(w.url) + '" target="_blank">🔗</a>' : '') + '</span>';
-            html += '<span class="btn-clear" onclick="removeWorkFromCell(\'' + dateKey + '\',' + rmIdx + ',\'' + w.id + '\')">✕</span>';
-            html += '</div>';
-          });
-          
-          // Work pool selector
-          html += '<div style="margin-top:4px;">';
-          data.works.forEach(function(work) {
-            var isAssigned = assignedWorks.some(function(w) { return w.id === work.id; });
-            html += '<div class="work-pool-item ' + (isAssigned ? 'selected' : '') + '" style="font-size:0.65rem;padding:4px 6px;margin-bottom:2px;" onclick="addWorkToCell(\'' + dateKey + '\',' + rmIdx + ',' + JSON.stringify(work).replace(/"/g, '&quot;') + ')">' + (isAssigned ? '✓ ' : '+ ') + escapeHtml(work.text) + '</div>';
-          });
-          html += '</div>';
-          
-          html += '</div></div>';
-        });
-      }
-      
+      // RM settings row at bottom
+      html += '<div class="work-row" style="margin-top:20px;">';
+      html += '<div class="header-cell work-header" style="background:#16213e;font-size:0.75rem;">RM 設定</div>';
+      dates.forEach(function(date) {
+        html += '<div class="header-cell" style="background:#16213e;font-size:0.7rem;color:#aaa;">';
+        for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
+          var rmColor = RM_COLORS[rmIdx];
+          var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
+          html += '<span style="color:' + rmColor + ';cursor:pointer;margin:0 2px;" onclick="setRmName(' + rmIdx + ')">' + escapeHtml(rmName.substring(0, 2)) + '</span>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+
       grid.innerHTML = html;
     }
 
@@ -308,7 +268,7 @@
     }
 
     function setRmName(rmIdx) {
-      var name = prompt('請輸入 RM 名稱（第 ' + (rmIdx + 1) + ' 行）：', RMS[rmIdx] || '');
+      var name = prompt('請輸入 RM' + (rmIdx + 1) + ' 的名稱：', RMS[rmIdx] || '');
       if (name !== null) {
         RMS[rmIdx] = name.trim();
         saveData();
@@ -321,6 +281,7 @@
       document.getElementById('editWorkId').value = '';
       document.getElementById('workNameInput').value = '';
       document.getElementById('workUrlInput').value = '';
+      document.getElementById('deleteWorkBtn').style.display = 'none';
       document.getElementById('workModal').classList.add('active');
       document.getElementById('workNameInput').focus();
     }
@@ -332,6 +293,7 @@
       document.getElementById('editWorkId').value = workId;
       document.getElementById('workNameInput').value = work.text;
       document.getElementById('workUrlInput').value = work.url || '';
+      document.getElementById('deleteWorkBtn').style.display = 'block';
       document.getElementById('workModal').classList.add('active');
       document.getElementById('workNameInput').focus();
     }
@@ -345,14 +307,24 @@
       
       if (id) {
         var work = data.works.find(function(w) { return w.id === id; });
-        if (work) {
-          work.text = text;
-          work.url = url;
-        }
+        if (work) { work.text = text; work.url = url; }
       } else {
         data.works.push({ id: Date.now().toString(), text: text, url: url });
       }
       
+      saveData();
+      closeWorkModal();
+      renderGrid();
+    }
+
+    function deleteWork() {
+      var id = document.getElementById('editWorkId').value;
+      if (!confirm('確定刪除呢项工作？')) return;
+      data.works = data.works.filter(function(w) { return w.id !== id; });
+      // Also remove all checks for this work
+      Object.keys(data.checks).forEach(function(key) {
+        if (key.indexOf(id) !== -1) delete data.checks[key];
+      });
       saveData();
       closeWorkModal();
       renderGrid();
