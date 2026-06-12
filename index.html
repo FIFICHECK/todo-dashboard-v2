@@ -327,10 +327,8 @@
         
         // Get works for this date - includes works that repeat to this date
         var dayWorks = data.works.filter(function(w) { 
-          // Direct match
-          if (w.dateKey === dateKey) return true;
-          // Check repeat type
-          var workDates = getWorkDates(dateKey, w.repeat, dates);
+          // Check if work appears on this date based on repeat type
+          var workDates = getWorkDates(w.dateKey, w.repeat, dates);
           return workDates.indexOf(dateKey) !== -1;
         });
         
