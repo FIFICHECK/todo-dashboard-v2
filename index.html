@@ -419,24 +419,46 @@
       renderGrid();
     }
 
+    function getFirstMondayOfYear(year) {
+      // Find the first Monday that falls within this year
+      // January 4 is always in the first week of the year
+      var jan4 = new Date(year, 0, 4);
+      return getMonday(jan4);
+    }
+
+    function getLastMondayOfYear(year) {
+      // Find the last Monday of this year
+      var dec31 = new Date(year, 11, 31);
+      var lastMonday = new Date(dec31);
+      var day = lastMonday.getDay();
+      // Subtract days to get to Monday (0=Sun, 1=Mon, ..., 6=Sat)
+      // If already Monday (day=1), stay. Otherwise go back (day - 1) days for Mon or (7 - (1-day)) for Mon
+      if (day === 0) {
+        lastMonday.setDate(lastMonday.getDate() - 6); // Sun -> previous Monday
+      } else if (day === 1) {
+        // Already Monday
+      } else {
+        lastMonday.setDate(lastMonday.getDate() - (day - 1)); // Go back to Monday
+      }
+      return lastMonday;
+    }
+
     function goToYearStart() {
       var year = currentWeekStart.getFullYear();
-      var jan1 = new Date(year, 0, 1);
-      currentWeekStart = getMonday(jan1);
+      currentWeekStart = getFirstMondayOfYear(year);
       renderGrid();
     }
 
     function goToYearEnd() {
       var year = currentWeekStart.getFullYear();
-      var dec31 = new Date(year, 11, 31);
-      currentWeekStart = getMonday(dec31);
+      currentWeekStart = getLastMondayOfYear(year);
       renderGrid();
     }
 
     function jumpToYear(year) {
       if (!year) return;
-      var jan1 = new Date(parseInt(year), 0, 1);
-      currentWeekStart = getMonday(jan1);
+      var y = parseInt(year);
+      currentWeekStart = getFirstMondayOfYear(y);
       renderGrid();
     }
 
