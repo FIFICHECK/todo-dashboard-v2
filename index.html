@@ -23,18 +23,16 @@
     
     .header-row th { background: #16213e; padding: 12px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.85rem; }
     .header-row th.work-col { background: #e94560; text-align: left; padding-left: 12px; min-width: 150px; }
-    .header-row th.date-col { min-width: 120px; }
+    .header-row th.date-col { min-width: 100px; }
     
     .data-row td { background: #1f1f3a; padding: 10px; vertical-align: middle; border-bottom: 1px solid #333; }
     .data-row td.work-col { background: #252540; text-align: left; cursor: pointer; min-width: 150px; border-left: 3px solid #555; }
     .data-row td.work-col:hover { border-left-color: #e94560; }
     .data-row td.date-col { text-align: center; }
     
-    /* Sub-row for 6/9 and 6/10 - stacked under 6/8 */
-    .sub-row td { background: #1a1a30; padding: 6px 10px; vertical-align: middle; border-bottom: 1px solid #2a2a40; }
-    .sub-row td.work-col { background: #1f1f35; border-left: 3px solid #444; font-size: 0.8rem; color: #888; text-align: center; }
-    .sub-row td.work-col:hover { border-left-color: #e94560; }
-    .sub-row td.date-col { text-align: center; }
+    /* Sub-header for 6/9 and 6/10 section */
+    .sub-header-row td { background: #1a1a30; padding: 8px 10px; text-align: center; font-weight: bold; color: #e94560; font-size: 0.85rem; border-bottom: 1px solid #2a2a40; }
+    .sub-header-row td.work-col { background: #1f1f35; color: #888; text-align: center; }
     
     .work-name { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
     .work-name .work-text { flex: 1; }
@@ -95,7 +93,7 @@
 </head>
 <body>
   <h1>📋 To-Do Dashboard v2</h1>
-  <p class="subtitle">左方：工作 | 右方：6/8 及其下 6/9、6/10 為主，其他日子橫向</p>
+  <p class="subtitle">每行獨立工作 | 6/8、6/9、6/10 各自一行，其他日子橫向</p>
 
   <div class="date-controls">
     <div class="date-nav">
@@ -142,7 +140,7 @@
     }
 
     function loadData() {
-      var saved = localStorage.getItem('todo_dashboard_v13');
+      var saved = localStorage.getItem('todo_dashboard_v14');
       if (saved) {
         var parsed = JSON.parse(saved);
         data = parsed.data || { works: [], checks: {} };
@@ -154,7 +152,7 @@
     }
 
     function saveData() {
-      localStorage.setItem('todo_dashboard_v13', JSON.stringify({ data: data, rms: RMS }));
+      localStorage.setItem('todo_dashboard_v14', JSON.stringify({ data: data, rms: RMS }));
     }
 
     function navigateWeek(direction) {
@@ -235,9 +233,9 @@
       document.getElementById('currentDateLabel').textContent = formatDateLabel();
       renderWeekChips();
 
-      // Find 6/8, 6/9, 6/10 indices and the remaining dates
-      var mainDateIndices = []; // indices for 6/8, 6/11, 6/12, 6/13, 6/14
-      var subDateIndices = [];  // indices for 6/9, 6/10
+      // Find indices for 6/8, 6/9, 6/10, and other dates
+      var mainDateIndices = []; // 6/8, 6/11, 6/12, 6/13, 6/14
+      var subDateIndices = [];  // 6/9, 6/10
       
       dates.forEach(function(date, idx) {
         var month = date.getMonth() + 1;
@@ -249,23 +247,37 @@
         }
       });
 
-      // Header row: 工作 + main dates (6/8, 6/11, 6/12, 6/13, 6/14)
+      // Header row
       var html = '<tr class="header-row">';
       html += '<th class="work-col" style="cursor:pointer;" onclick="openAddWork()">+ 新增工作</th>';
+      
+      // First header cell for "6/8 area" that spans 3 rows
+      html += '<th class="date-col" style="cursor:pointer;" onclick="openAddWork()">6/8<br><span style="font-size:0.7rem;color:#aaa;">星期二</span></th>';
+      
+      // Headers for other dates (6/11-6/14)
       mainDateIndices.forEach(function(idx) {
-        var date = dates[idx];
-        var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-        html += '<th class="date-col" style="cursor:pointer;" onclick="openAddWork()">' + (date.getMonth() + 1) + '/' + date.getDate() + '<br><span style="font-size:0.7rem;color:#aaa;">星期' + dayNames[date.getDay()] + '</span></th>';
+        if (idx > 0) { // skip 6/8 which is already added
+          var date = dates[idx];
+          var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+          html += '<th class="date-col" style="cursor:pointer;" onclick="openAddWork()">' + (date.getMonth() + 1) + '/' + date.getDate() + '<br><span style="font-size:0.7rem;color:#aaa;">星期' + dayNames[date.getDay()] + '</span></th>';
+        }
       });
       html += '</tr>';
 
-      // Work rows
+      // Sub-header for 6/9 and 6/10
+      html += '<tr class="sub-header-row">';
+      html += '<td class="work-col">6/9</td>';
+      html += '<td class="date-col" style="background:#1a1a30;">6/10</td>';
+      for (var i = 1; i < mainDateIndices.length; i++) {
+        html += '<td class="date-col"></td>';
+      }
+      html += '</tr>';
+
+      // Work rows - each work creates 3 rows: 6/8, 6/9, 6/10
       data.works.forEach(function(work) {
-        // Row 1: Main row with 6/8 + other main dates
+        // Row 1: 6/8
         html += '<tr class="data-row">';
-        
-        // Work name cell (rowspan=3 for the stacked sub-rows)
-        html += '<td class="work-col" rowspan="3" onclick="openEditWork(\'' + work.id + '\')">';
+        html += '<td class="work-col" onclick="openEditWork(\'' + work.id + '\')">';
         html += '<div class="work-name">';
         html += '<span class="work-text">' + escapeHtml(work.text) + '</span>';
         if (work.url) {
@@ -274,41 +286,55 @@
         html += '</div>';
         html += '</td>';
         
-        // Main date columns (6/8, 6/11, 6/12, 6/13, 6/14)
-        mainDateIndices.forEach(function(idx) {
-          var date = dates[idx];
-          var dateKey = getDateKey(date);
-          html += '<td class="date-col">' + renderRmChecks(dateKey, work.id) + '</td>';
-        });
+        // 6/8 checks
+        var date8 = dates[mainDateIndices[0]];
+        html += '<td class="date-col">' + renderRmChecks(getDateKey(date8), work.id) + '</td>';
+        
+        // Empty cells for 6/11-6/14
+        for (var i = 1; i < mainDateIndices.length; i++) {
+          html += '<td class="date-col"></td>';
+        }
         html += '</tr>';
 
-        // Row 2: 6/9 sub-row
-        if (subDateIndices.length >= 1) {
-          var date9 = dates[subDateIndices[0]];
-          var dateKey9 = getDateKey(date9);
-          html += '<tr class="sub-row">';
-          html += '<td class="work-col" onclick="openEditWork(\'' + work.id + '\')">6/9</td>';
-          // Only one cell for 6/9 in the "6/8 column" position
-          html += '<td class="date-col">' + renderRmChecks(dateKey9, work.id) + '</td>';
-          // Empty cells for remaining main dates
-          for (var i = 1; i < mainDateIndices.length; i++) {
-            html += '<td class="date-col"></td>';
-          }
-          html += '</tr>';
+        // Row 2: 6/9
+        html += '<tr class="data-row">';
+        html += '<td class="work-col" onclick="openEditWork(\'' + work.id + '\')">';
+        html += '<div class="work-name">';
+        html += '<span class="work-text">' + escapeHtml(work.text) + '</span>';
+        if (work.url) {
+          html += '<a href="' + escapeHtml(work.url) + '" class="work-url" target="_blank" onclick="event.stopPropagation();">🔗</a>';
         }
+        html += '</div>';
+        html += '</td>';
+        
+        // 6/9 checks
+        var date9 = dates[subDateIndices[0]];
+        html += '<td class="date-col">' + renderRmChecks(getDateKey(date9), work.id) + '</td>';
+        
+        for (var i = 1; i < mainDateIndices.length; i++) {
+          html += '<td class="date-col"></td>';
+        }
+        html += '</tr>';
 
-        // Row 3: 6/10 sub-row
-        if (subDateIndices.length >= 2) {
-          var date10 = dates[subDateIndices[1]];
-          var dateKey10 = getDateKey(date10);
-          html += '<tr class="sub-row">';
-          html += '<td class="work-col" onclick="openEditWork(\'' + work.id + '\')">6/10</td>';
-          html += '<td class="date-col">' + renderRmChecks(dateKey10, work.id) + '</td>';
-          for (var i = 1; i < mainDateIndices.length; i++) {
-            html += '<td class="date-col"></td>';
-          }
-          html += '</tr>';
+        // Row 3: 6/10
+        html += '<tr class="data-row">';
+        html += '<td class="work-col" onclick="openEditWork(\'' + work.id + '\')">';
+        html += '<div class="work-name">';
+        html += '<span class="work-text">' + escapeHtml(work.text) + '</span>';
+        if (work.url) {
+          html += '<a href="' + escapeHtml(work.url) + '" class="work-url" target="_blank" onclick="event.stopPropagation();">🔗</a>';
         }
+        html += '</div>';
+        html += '</td>';
+        
+        // 6/10 checks
+        var date10 = dates[subDateIndices[1]];
+        html += '<td class="date-col">' + renderRmChecks(getDateKey(date10), work.id) + '</td>';
+        
+        for (var i = 1; i < mainDateIndices.length; i++) {
+          html += '<td class="date-col"></td>';
+        }
+        html += '</tr>';
       });
 
       table.innerHTML = html;
