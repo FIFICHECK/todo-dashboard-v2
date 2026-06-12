@@ -238,23 +238,59 @@
         // RM checkboxes for each date
         dates.forEach(function(date) {
           var dateKey = getDateKey(date);
-          html += '<td class="date-col">';
-          html += '<div class="rm-checkboxes">';
+          var month = date.getMonth() + 1;
+          var day = date.getDate();
+          // 6/9 and 6/10: split into 2 rows (4 + 3)
+          var isSplitLayout = (month === 6 && (day === 9 || day === 10));
           
-          // 7 RMs in the SAME column (horizontal)
-          for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
-            var checkKey = getCheckKey(dateKey, work.id, rmIdx);
-            var isChecked = data.checks[checkKey] || false;
-            var rmColor = RM_COLORS[rmIdx];
-            var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
-            
-            html += '<div class="rm-check ' + (isChecked ? 'checked' : 'unchecked') + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + work.id + '\',' + rmIdx + ')" title="' + rmName + '">';
-            html += '<span class="rm-label" style="color:#fff;background:' + rmColor + ';border-radius:3px;white-space:nowrap;">' + escapeHtml(rmName) + '</span>';
-            html += '<span class="check-icon">' + (isChecked ? '✅' : '☐') + '</span>';
+          html += '<td class="date-col">';
+          
+          if (isSplitLayout) {
+            // First row: RM1-4
+            html += '<div class="rm-checkboxes">';
+            for (var rmIdx = 0; rmIdx < 4; rmIdx++) {
+              var checkKey = getCheckKey(dateKey, work.id, rmIdx);
+              var isChecked = data.checks[checkKey] || false;
+              var rmColor = RM_COLORS[rmIdx];
+              var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
+              
+              html += '<div class="rm-check ' + (isChecked ? 'checked' : 'unchecked') + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + work.id + '\',' + rmIdx + ')" title="' + rmName + '">';
+              html += '<span class="rm-label" style="color:#fff;background:' + rmColor + ';border-radius:3px;white-space:nowrap;">' + escapeHtml(rmName) + '</span>';
+              html += '<span class="check-icon">' + (isChecked ? '✅' : '☐') + '</span>';
+              html += '</div>';
+            }
+            html += '</div>';
+            // Second row: RM5-7
+            html += '<div class="rm-checkboxes" style="margin-top:4px;">';
+            for (var rmIdx = 4; rmIdx < MAX_RMS; rmIdx++) {
+              var checkKey = getCheckKey(dateKey, work.id, rmIdx);
+              var isChecked = data.checks[checkKey] || false;
+              var rmColor = RM_COLORS[rmIdx];
+              var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
+              
+              html += '<div class="rm-check ' + (isChecked ? 'checked' : 'unchecked') + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + work.id + '\',' + rmIdx + ')" title="' + rmName + '">';
+              html += '<span class="rm-label" style="color:#fff;background:' + rmColor + ';border-radius:3px;white-space:nowrap;">' + escapeHtml(rmName) + '</span>';
+              html += '<span class="check-icon">' + (isChecked ? '✅' : '☐') + '</span>';
+              html += '</div>';
+            }
+            html += '</div>';
+          } else {
+            // Normal: all 7 RMs in one row
+            html += '<div class="rm-checkboxes">';
+            for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
+              var checkKey = getCheckKey(dateKey, work.id, rmIdx);
+              var isChecked = data.checks[checkKey] || false;
+              var rmColor = RM_COLORS[rmIdx];
+              var rmName = RMS[rmIdx] || 'R' + (rmIdx + 1);
+              
+              html += '<div class="rm-check ' + (isChecked ? 'checked' : 'unchecked') + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + work.id + '\',' + rmIdx + ')" title="' + rmName + '">';
+              html += '<span class="rm-label" style="color:#fff;background:' + rmColor + ';border-radius:3px;white-space:nowrap;">' + escapeHtml(rmName) + '</span>';
+              html += '<span class="check-icon">' + (isChecked ? '✅' : '☐') + '</span>';
+              html += '</div>';
+            }
             html += '</div>';
           }
           
-          html += '</div>';
           html += '</td>';
         });
         
