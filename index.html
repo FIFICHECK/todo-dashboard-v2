@@ -9,51 +9,53 @@
     body { 
       font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; 
       background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-      color: #e0e0e0; font-weight: 500; 
+      color: #e0e0e0; 
       min-height: 100vh; 
       padding: 20px; 
     }
     h1 { text-align: center; color: #fff; margin-bottom: 10px; font-size: 1.8rem; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
     .subtitle { text-align: center; color: #888; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
+    .loading { text-align: center; color: #4fc3f7; font-size: 1.2rem; padding: 40px; }
+    .setup-container { max-width: 500px; margin: 50px auto; background: #1a1a2e; border-radius: 20px; padding: 30px; border: 1px solid #333; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .setup-container h2 { color: #4fc3f7; margin-bottom: 20px; font-weight: 700; }
+    .setup-container p { color: #888; margin-bottom: 15px; line-height: 1.6; }
+    .setup-container input { width: 100%; padding: 12px; margin-bottom: 15px; background: #151525; border: 1px solid #333; border-radius: 10px; color: #fff; font-size: 1rem; box-sizing: border-box; }
+    .setup-container button { width: 100%; padding: 12px; background: #4fc3f7; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    .setup-container button:hover { background: #3db8e8; }
     .date-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
     .date-nav { display: flex; align-items: center; gap: 10px; }
-    .date-nav button { background: #1a1a2e; color: #fff; border: 1px solid #333; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.3s; }
-    .date-nav button:hover { background: #252545; box-shadow: 0 0 15px rgba(233,69,96,0.3); border-color: #4fc3f7; }
-    .date-nav .current-date { color: #4fc3f7; font-weight: 700; min-width: 200px; text-align: center; font-size: 1.1rem; text-shadow: 0 0 10px rgba(233,69,96,0.5); }
+    .date-nav button { background: #1a1a2e; color: #fff; border: 1px solid #333; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.3s; font-weight: 700; }
+    .date-nav button:hover { background: #252545; box-shadow: 0 0 15px rgba(79,195,247,0.3); border-color: #4fc3f7; }
+    .date-nav .current-date { color: #4fc3f7; font-weight: 700; min-width: 200px; text-align: center; font-size: 1.1rem; text-shadow: 0 0 10px rgba(79,195,247,0.5); }
     .week-chips { display: flex; gap: 8px; background: #1a1a2e; border-radius: 10px; padding: 8px; border: 1px solid #333; }
     .week-chip { padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; color: #888; background: transparent; font-weight: 600; }
     .week-chip:hover { background: #252545; color: #fff; }
-    .week-chip.active { background: linear-gradient(135deg, #4fc3f7 0%, #c73e54 100%); color: #fff; box-shadow: 0 0 15px rgba(233,69,96,0.4); }
+    .week-chip.active { background: linear-gradient(135deg, #4fc3f7 0%, #4fc3f7 100%); color: #fff; box-shadow: 0 0 15px rgba(79,195,247,0.4); }
 
     .main-table { width: 100%; border-collapse: separate; border-spacing: 0; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); border: 1px solid #333; }
     
     .header-row th { background: linear-gradient(135deg, #1a1a2e 0%, #252545 100%); padding: 14px 12px; text-align: center; font-weight: 700; color: #fff; font-size: 0.85rem; border-bottom: 1px solid #333; }
     .header-row th.date-col { min-width: 120px; }
-    .header-row th.work-col { min-width: 200px; background: linear-gradient(135deg, #4fc3f7 0%, #c73e54 100%); color: #fff; text-align: left; padding-left: 16px; border-bottom: none; }
+    .header-row th.work-col { min-width: 200px; background: linear-gradient(135deg, #4fc3f7 0%, #4fc3f7 100%); color: #fff; text-align: left; padding-left: 16px; border-bottom: none; }
     .header-row th.rm-col { min-width: 400px; }
     
     .data-row td { background: #1f1f3a; padding: 12px; vertical-align: middle; border-bottom: 1px solid #2a2a40; transition: all 0.2s; }
     .data-row:hover td { background: #252545; }
     .data-row:last-child td { border-bottom: none; }
     .data-row td.date-col { background: #1f1f3a; text-align: center; font-weight: 700; color: #4fc3f7; min-width: 120px; border-left: 4px solid #333; }
-    .data-row td.work-col { background: #1f1f3a; text-align: left; cursor: pointer; min-width: 200px; color: #ddd; transition: all 0.2s; }
+    .data-row td.work-col { background: #1f1f3a; text-align: left; cursor: pointer; min-width: 200px; color: #ddd; transition: all 0.2s; font-weight: 600; }
     .data-row td.work-col:hover { color: #4fc3f7; }
     .data-row td.work-col.urgent { background: linear-gradient(135deg, #3a3520 0%, #4a4530 100%); border-left: 4px solid #ffcc00; }
     .data-row td.work-col.urgent:hover { color: #ffcc00; }
-    
-    /* Weekend - disabled state */
-    .data-row td.weekend { opacity: 0.4; pointer-events: none; cursor: not-allowed; }
-    .data-row td.weekend-date { color: #666 !important; background: #2a2a3a !important; }
-    .data-row td.weekend-add { color: #555 !important; background: #252535 !important; }
     .data-row td.rm-col { background: #1f1f3a; text-align: center; }
     
     .add-work-row td { background: #151525; padding: 10px 12px; border-bottom: none; }
     .add-work-row td.date-col { background: #151525; }
-    .add-work-row td.work-col { background: #151525; text-align: left; cursor: pointer; color: #666; font-size: 0.9rem; transition: all 0.2s; }
+    .add-work-row td.work-col { background: #151525; text-align: left; cursor: pointer; color: #666; font-size: 0.9rem; transition: all 0.2s; font-weight: 600; }
     .add-work-row td.work-col:hover { color: #4fc3f7; background: #1a1a2e; }
     .add-work-row td.rm-col { background: #151525; }
     
-    .section-separator td { background: linear-gradient(90deg, #4fc3f7, #c73e54, #4fc3f7); height: 3px !important; padding: 0 !important; border: none !important; }
+    .section-separator td { background: linear-gradient(90deg, #4fc3f7, #4fc3f7, #4fc3f7); height: 3px !important; padding: 0 !important; border: none !important; }
     
     .work-name { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; color: #ccc; font-weight: 600; }
     .work-name .work-text { flex: 1; }
@@ -76,7 +78,7 @@
       transition: all 0.2s;
       border: 1px solid #333;
     }
-    .rm-check:hover { background: #333; box-shadow: 0 0 15px rgba(233,69,96,0.3); transform: translateY(-2px); border-color: #4fc3f7; }
+    .rm-check:hover { background: #333; box-shadow: 0 0 15px rgba(79,195,247,0.3); transform: translateY(-2px); border-color: #4fc3f7; }
     .rm-check.checked { background: linear-gradient(135deg, #1f3a2e 0%, #2a4a3e 100%); border-color: #4ecca3; }
     .rm-check.checked:hover { box-shadow: 0 0 15px rgba(78,204,163,0.3); }
     .rm-check.crossed { background: linear-gradient(135deg, #3a1f1f 0%, #4a2a2a 100%); border-color: #e74c3c; }
@@ -98,7 +100,7 @@
       border: none; 
       cursor: pointer; 
       font-size: 0.85rem; 
-      font-weight: 600;
+      font-weight: 700;
       color: #fff;
       transition: all 0.3s;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
@@ -109,25 +111,37 @@
     .modal-overlay.active { display: flex; }
     .modal { background: linear-gradient(135deg, #1a1a2e 0%, #252545 100%); border-radius: 20px; padding: 28px; width: 420px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1px solid #444; }
     .modal h3 { color: #fff; margin-bottom: 16px; font-weight: 700; }
-    .modal input[type="text"] { width: 100%; padding: 12px 14px; margin-bottom: 10px; background: #151525; border: 1px solid #333; border-radius: 10px; color: #fff; font-family: inherit; box-sizing: border-box; transition: all 0.3s; }
-    .modal input[type="text"]:focus { outline: none; border-color: #4fc3f7; box-shadow: 0 0 0 3px rgba(233,69,96,0.2); }
-    .modal select { width: 100%; padding: 12px 14px; margin-bottom: 10px; background: #151525; border: 1px solid #333; border-radius: 10px; color: #fff; font-family: inherit; box-sizing: border-box; }
+    .modal input[type="text"] { width: 100%; padding: 12px 14px; margin-bottom: 10px; background: #151525; border: 1px solid #333; border-radius: 10px; color: #fff; font-family: inherit; box-sizing: border-box; transition: all 0.3s; font-weight: 600; }
+    .modal input[type="text"]:focus { outline: none; border-color: #4fc3f7; box-shadow: 0 0 0 3px rgba(79,195,247,0.2); }
+    .modal select { width: 100%; padding: 12px 14px; margin-bottom: 10px; background: #151525; border: 1px solid #333; border-radius: 10px; color: #fff; font-family: inherit; box-sizing: border-box; font-weight: 600; }
     .modal label { display: block; margin-bottom: 6px; color: #888; font-size: 0.85rem; font-weight: 600; }
     .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
     .modal-buttons button { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.9rem; font-weight: 700; transition: all 0.3s; }
     .modal-buttons .cancel-btn { background: #333; color: #fff; }
     .modal-buttons .cancel-btn:hover { background: #444; }
-    .modal-buttons .save-btn { background: linear-gradient(135deg, #4fc3f7 0%, #c73e54 100%); color: #fff; box-shadow: 0 4px 15px rgba(233,69,96,0.3); }
-    .modal-buttons .save-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
+    .modal-buttons .save-btn { background: linear-gradient(135deg, #4fc3f7 0%, #4fc3f7 100%); color: #fff; box-shadow: 0 4px 15px rgba(79,195,247,0.3); }
+    .modal-buttons .save-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79,195,247,0.4); }
     .modal-buttons .delete-btn { background: linear-gradient(135deg, #c0392b 0%, #96281b 100%); color: #fff; margin-right: auto; }
     .modal-buttons .delete-btn:hover { background: #e74c3c; }
   </style>
 </head>
 <body>
   <h1>📋 To-Do-List Dashboard</h1>
-  <p class="subtitle">每個日子獨立新增工作 | 點擊 RM 名稱可編輯</p>
+  <p class="subtitle">每個日子獨立新增工作 | 點擊 RM 名稱可編輯 | 數據同步至 Airtable</p>
+  
+  <!-- Setup Screen -->
+  <div id="setupScreen" class="setup-container">
+    <h2>🔗 首次設定 Airtable 連接</h2>
+    <p>請輸入你嘅 Airtable API Key 與 Base ID（只需設定一次）</p>
+    <input type="text" id="setupApiKey" placeholder="API Key (pat...)">
+    <input type="text" id="setupBaseId" placeholder="Base ID (app...)" value="appQrncWYHHMh1iXf">
+    <p style="font-size:0.8rem;color:#666;">API Key 會安全地儲存喺你瀏覽器嘅 localStorage</p>
+    <button onclick="saveSetup()">連接 Airtable</button>
+  </div>
 
-  <div class="date-controls">
+  <div id="loading" class="loading" style="display:none;">⏳ 載入數據中...</div>
+
+  <div class="date-controls" id="dateControls" style="display:none;">
     <div class="date-nav">
       <button onclick="navigateWeek(-1)">◀ 上一週</button>
       <span class="current-date" id="currentDateLabel">-</span>
@@ -136,10 +150,10 @@
     <div class="week-chips" id="weekChips"></div>
   </div>
 
-  <table class="main-table" id="mainTable">
+  <table class="main-table" id="mainTable" style="display:none;">
   </table>
 
-  <div class="rm-settings">
+  <div class="rm-settings" id="rmSettings" style="display:none;">
     <h3>RM 名稱設定（點擊編輯）</h3>
     <div class="rm-settings-list" id="rmSettingsList"></div>
   </div>
@@ -153,7 +167,7 @@
       <label>URL 連結（可選）</label>
       <input type="text" id="workUrlInput" placeholder="https://...">
       <label>重複頻率</label>
-      <select id="workRepeatInput" style="width:100%;padding:10px;margin-bottom:10px;background:#151525;border:1px solid #333;border-radius:10px;color:#fff;font-family:inherit;">
+      <select id="workRepeatInput" style="width:100%;padding:10px;margin-bottom:10px;background:#151525;border:1px solid #333;border-radius:10px;color:#fff;font-family:inherit;font-weight:600;">
         <option value="none">不重複</option>
         <option value="day">每日重複 (DAY)</option>
         <option value="week">每週重複 (WEEK)</option>
@@ -172,14 +186,19 @@
   </div>
 
   <script>
+    var AIRTABLE_API_KEY = '';
+    var AIRTABLE_BASE_ID = '';
+    var AIRTABLE_BASE_URL = '';
+    
     var MAX_RMS = 7;
     var RM_COLORS = ['#4fc3f7', '#f39c12', '#9b59b6', '#3498db', '#1abc9c', '#e74c3c', '#2ecc71'];
     var currentWeekStart = getMonday(new Date());
     var currentModalDateKey = '';
-    var data = {};
+    var works = [];
+    var checks = {};
     var RMS = ['', '', '', '', '', '', ''];
+    var isLoading = true;
 
-    // Repeat types
     var REPEAT_NONE = 'none';
     var REPEAT_DAY = 'day';
     var REPEAT_WEEK = 'week';
@@ -194,60 +213,14 @@
       return date;
     }
 
-    function loadData() {
-      var saved = localStorage.getItem('todo_dashboard_v20');
-      if (saved) {
-        var parsed = JSON.parse(saved);
-        data = parsed.data || { works: [], checks: {} };
-        RMS = parsed.rms || ['', '', '', '', '', '', ''];
-      } else {
-        data = { works: [], checks: {} };
-        RMS = ['', '', '', '', '', '', ''];
-      }
+    function getDateKey(date) {
+      return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
     }
 
-    // Calculate which dates a work should appear on based on repeat type
-    function getWorkDates(workDateKey, repeatType, weekDates) {
-      if (repeatType === REPEAT_NONE) {
-        return [workDateKey];
-      }
-      
-      var dates = [];
-      var workDate = new Date(workDateKey);
-      var workDay = workDate.getDate();
-      var workMonth = workDate.getMonth();
-      var workDayOfWeek = workDate.getDay();
-      
-      weekDates.forEach(function(date) {
-        var dateKey = getDateKey(date);
-        if (repeatType === REPEAT_DAY) {
-          dates.push(dateKey);
-        } else if (repeatType === REPEAT_WEEK) {
-          if (date.getDay() === workDayOfWeek) {
-            dates.push(dateKey);
-          }
-        } else if (repeatType === REPEAT_MONTH) {
-          if (date.getDate() === workDay) {
-            dates.push(dateKey);
-          }
-        }
-      });
-      
-      return dates;
-    }
-
-    function saveData() {
-      localStorage.setItem('todo_dashboard_v20', JSON.stringify({ data: data, rms: RMS }));
-    }
-
-    function navigateWeek(direction) {
-      currentWeekStart.setDate(currentWeekStart.getDate() + (direction * 7));
-      renderGrid();
-    }
-
-    function jumpToWeek(dateStr) {
-      currentWeekStart = getMonday(new Date(dateStr));
-      renderGrid();
+    function formatDateLabel() {
+      var weekEnd = new Date(currentWeekStart);
+      weekEnd.setDate(currentWeekStart.getDate() + 6);
+      return (currentWeekStart.getMonth() + 1) + '/' + currentWeekStart.getDate() + ' - ' + (weekEnd.getMonth() + 1) + '/' + weekEnd.getDate();
     }
 
     function getWeekDates() {
@@ -260,14 +233,149 @@
       return dates;
     }
 
-    function getDateKey(date) {
-      return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+    async function fetchAirtable(table, filterByFormula) {
+      var url = AIRTABLE_BASE_URL + '/' + encodeURIComponent(table);
+      if (filterByFormula) {
+        url += '?filterByFormula=' + encodeURIComponent(filterByFormula);
+      }
+      var response = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + AIRTABLE_API_KEY }
+      });
+      var data = await response.json();
+      return data.records || [];
     }
 
-    function formatDateLabel() {
-      var weekEnd = new Date(currentWeekStart);
-      weekEnd.setDate(currentWeekStart.getDate() + 6);
-      return (currentWeekStart.getMonth() + 1) + '/' + currentWeekStart.getDate() + ' - ' + (weekEnd.getMonth() + 1) + '/' + weekEnd.getDate();
+    async function createAirtableRecord(table, fields) {
+      var response = await fetch(AIRTABLE_BASE_URL + '/' + encodeURIComponent(table), {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + AIRTABLE_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fields: fields })
+      });
+      return await response.json();
+    }
+
+    async function updateAirtableRecord(table, recordId, fields) {
+      var response = await fetch(AIRTABLE_BASE_URL + '/' + encodeURIComponent(table) + '/' + recordId, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': 'Bearer ' + AIRTABLE_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fields: fields })
+      });
+      return await response.json();
+    }
+
+    async function deleteAirtableRecord(table, recordId) {
+      await fetch(AIRTABLE_BASE_URL + '/' + encodeURIComponent(table) + '/' + recordId, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + AIRTABLE_API_KEY }
+      });
+    }
+
+    async function loadData() {
+      try {
+        var worksRecords = await fetchAirtable('Works');
+        works = worksRecords.map(function(r) {
+          return {
+            id: r.id,
+            text: r.fields.Name || '',
+            url: r.fields.URL || '',
+            dateKey: r.fields.DateKey || '',
+            repeat: r.fields.Repeat || 'none',
+            urgent: r.fields.Urgent || false
+          };
+        });
+
+        var checksRecords = await fetchAirtable('Checks');
+        checks = {};
+        checksRecords.forEach(function(r) {
+          if (r.fields.CheckKey && r.fields.State !== undefined) {
+            checks[r.fields.CheckKey] = r.fields.State;
+          }
+        });
+
+        var settingsRecords = await fetchAirtable('Settings');
+        settingsRecords.forEach(function(r) {
+          if (r.fields.Name && r.fields.Value) {
+            if (r.fields.Name.startsWith('RM')) {
+              var idx = parseInt(r.fields.Name.replace('RM', '')) - 1;
+              if (idx >= 0 && idx < 7) {
+                RMS[idx] = r.fields.Value;
+              }
+            }
+          }
+        });
+
+        isLoading = false;
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('dateControls').style.display = 'flex';
+        document.getElementById('mainTable').style.display = 'table';
+        document.getElementById('rmSettings').style.display = 'block';
+        renderGrid();
+        renderRmSettings();
+      } catch (error) {
+        console.error('Error loading data:', error);
+        document.getElementById('loading').textContent = '❌ 載入失敗，請檢查 API Key 或網絡連接';
+      }
+    }
+
+    async function saveWorksToAirtable() {
+      var existingWorks = await fetchAirtable('Works');
+      for (var i = 0; i < existingWorks.length; i++) {
+        await deleteAirtableRecord('Works', existingWorks[i].id);
+      }
+      for (var j = 0; j < works.length; j++) {
+        await createAirtableRecord('Works', {
+          'Name': works[j].text,
+          'URL': works[j].url || '',
+          'DateKey': works[j].dateKey,
+          'Repeat': works[j].repeat || 'none',
+          'Urgent': works[j].urgent || false
+        });
+      }
+    }
+
+    async function saveChecksToAirtable() {
+      var existingChecks = await fetchAirtable('Checks');
+      for (var i = 0; i < existingChecks.length; i++) {
+        await deleteAirtableRecord('Checks', existingChecks[i].id);
+      }
+      var checkKeys = Object.keys(checks);
+      for (var j = 0; j < checkKeys.length; j++) {
+        await createAirtableRecord('Checks', {
+          'CheckKey': checkKeys[j],
+          'State': checks[checkKeys[j]]
+        });
+      }
+    }
+
+    async function saveRMStoAirtable() {
+      var existingSettings = await fetchAirtable('Settings');
+      for (var i = 0; i < existingSettings.length; i++) {
+        await deleteAirtableRecord('Settings', existingSettings[i].id);
+      }
+      for (var j = 0; j < RMS.length; j++) {
+        if (RMS[j]) {
+          await createAirtableRecord('Settings', {
+            'Name': 'RM' + (j + 1),
+            'Value': RMS[j]
+          });
+        }
+      }
+    }
+
+    function navigateWeek(direction) {
+      currentWeekStart.setDate(currentWeekStart.getDate() + (direction * 7));
+      renderGrid();
+    }
+
+    function jumpToWeek(dateStr) {
+      currentWeekStart = getMonday(new Date(dateStr));
+      renderGrid();
     }
 
     function renderWeekChips() {
@@ -289,37 +397,33 @@
       var html = '';
       for (var i = 0; i < MAX_RMS; i++) {
         var rmName = RMS[i] || 'RM' + (i + 1);
-        html += '<button class="rm-name-btn" style="background:' + RM_COLORS[i] + ';color:#fff;" onclick="setRmName(' + i + ')">' + escapeHtml(rmName) + '</button>';
+        html += '<button class="rm-name-btn" style="background:' + RM_COLORS[i] + ';" onclick="setRmName(' + i + ')">' + escapeHtml(rmName) + '</button>';
       }
       container.innerHTML = html;
     }
 
-    function setRmName(rmIdx) {
+    async function setRmName(rmIdx) {
       var name = prompt('請輸入 RM' + (rmIdx + 1) + ' 的名稱：', RMS[rmIdx] || '');
       if (name !== null) {
         RMS[rmIdx] = name.trim();
-        saveData();
+        await saveRMStoAirtable();
         renderGrid();
         renderRmSettings();
       }
     }
 
+    var STATE_NAMES = ['☐', '✅', '✕'];
+    
     function getCheckKey(dateKey, workId, rmIdx) {
       return dateKey + '_' + workId + '_' + rmIdx;
     }
 
-    // States: 0 = empty, 1 = checked, 2 = crossed
-    var STATE_EMPTY = 0;
-    var STATE_CHECKED = 1;
-    var STATE_CROSSED = 2;
-    var STATE_NAMES = ['☐', '✅', '✕'];
-    
     function toggleCheck(dateKey, workId, rmIdx) {
       var key = getCheckKey(dateKey, workId, rmIdx);
-      var current = data.checks[key] || 0;
+      var current = checks[key] || 0;
       var next = (current + 1) % 3;
-      data.checks[key] = next;
-      saveData();
+      checks[key] = next;
+      saveChecksToAirtable();
       renderGrid();
     }
 
@@ -327,7 +431,7 @@
       var html = '<div class="rm-checkboxes">';
       for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
         var checkKey = getCheckKey(dateKey, workId, rmIdx);
-        var state = data.checks[checkKey] || 0;
+        var state = checks[checkKey] || 0;
         var rmColor = RM_COLORS[rmIdx];
         var rmName = RMS[rmIdx] || 'RM' + (rmIdx + 1);
         var icon = STATE_NAMES[state];
@@ -342,47 +446,69 @@
       return html;
     }
 
+    function getWorkDates(workDateKey, repeatType, weekDates) {
+      if (repeatType === REPEAT_NONE) {
+        return [workDateKey];
+      }
+      
+      var dates = [];
+      var workDate = new Date(workDateKey);
+      var workDay = workDate.getDate();
+      var workDayOfWeek = workDate.getDay();
+      
+      weekDates.forEach(function(date) {
+        var dateKey = getDateKey(date);
+        if (repeatType === REPEAT_DAY) {
+          dates.push(dateKey);
+        } else if (repeatType === REPEAT_WEEK) {
+          if (date.getDay() === workDayOfWeek) {
+            dates.push(dateKey);
+          }
+        } else if (repeatType === REPEAT_MONTH) {
+          if (date.getDate() === workDay) {
+            dates.push(dateKey);
+          }
+        }
+      });
+      
+      return dates;
+    }
+
     function renderGrid() {
+      if (isLoading) return;
+      
       var table = document.getElementById('mainTable');
       var dates = getWeekDates();
       document.getElementById('currentDateLabel').textContent = formatDateLabel();
       renderWeekChips();
-      renderRmSettings();
 
       var html = '';
 
-      // Each date is a section with header, works, and add button
       dates.forEach(function(date, dateIdx) {
         var dateKey = getDateKey(date);
         var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
         var dateLabel = (date.getMonth() + 1) + '/' + date.getDate() + ' 星期' + dayNames[date.getDay()];
         
-        // Get works for this date - includes works that repeat to this date
-        var dayWorks = data.works.filter(function(w) { 
-          // Check if work appears on this date based on repeat type
+        var dayWorks = works.filter(function(w) { 
           var workDates = getWorkDates(w.dateKey, w.repeat, dates);
           return workDates.indexOf(dateKey) !== -1;
         });
         
-        // Section separator between dates (except first)
-        if (dateIdx > 0) {
-          html += '<tr class="section-separator"><td colspan="3" style="background:#4fc3f7;height:4px;padding:0;"></td></tr>';
-        }
-        
-        // Check if weekend
         var isWeekend = date.getDay() === 0 || date.getDay() === 6;
         var weekendClass = isWeekend ? ' weekend' : '';
         var weekendDateClass = isWeekend ? ' weekend-date' : '';
         var weekendDayLabel = isWeekend ? '（休息日）' : '';
         
-        // Mini header for this date section
+        if (dateIdx > 0) {
+          html += '<tr class="section-separator"><td colspan="3" style="background:#4fc3f7;height:4px;padding:0;"></td></tr>';
+        }
+        
         html += '<tr class="header-row">';
         html += '<th class="date-col' + weekendDateClass + '" style="background:#4fc3f7;">' + dateLabel + weekendDayLabel + '</th>';
         html += '<th class="work-col">工作名稱</th>';
         html += '<th class="rm-col">RM 工作清單</th>';
         html += '</tr>';
         
-        // Works for this date
         if (dayWorks.length === 0) {
           var weekendTdClass = isWeekend ? ' weekend' : '';
           html += '<tr class="data-row">';
@@ -410,7 +536,6 @@
           });
         }
         
-        // Add work button for this date
         var weekendAddClass = isWeekend ? ' weekend-add' : '';
         html += '<tr class="add-work-row">';
         html += '<td class="date-col' + weekendAddClass + '">' + dateLabel + '</td>';
@@ -434,7 +559,6 @@
     }
 
     function openAddWork() {
-      // This opens the modal without a pre-selected date
       document.getElementById('workModalTitle').textContent = '新增工作';
       document.getElementById('editWorkId').value = '';
       currentModalDateKey = '';
@@ -461,7 +585,7 @@
     }
 
     function openEditWork(workId) {
-      var work = data.works.find(function(w) { return w.id === workId; });
+      var work = works.find(function(w) { return w.id === workId; });
       if (!work) return;
       document.getElementById('workModalTitle').textContent = '編輯工作';
       document.getElementById('editWorkId').value = workId;
@@ -475,7 +599,7 @@
       document.getElementById('workNameInput').focus();
     }
 
-    function saveWork() {
+    async function saveWork() {
       var id = document.getElementById('editWorkId').value;
       var text = document.getElementById('workNameInput').value.trim();
       var url = document.getElementById('workUrlInput').value.trim();
@@ -485,26 +609,35 @@
       if (!text) { alert('請輸入工作名稱'); return; }
       
       if (id) {
-        var work = data.works.find(function(w) { return w.id === id; });
-        if (work) { work.text = text; work.url = url; work.repeat = repeat; work.urgent = urgent; }
+        var work = works.find(function(w) { return w.id === id; });
+        if (work) { 
+          work.text = text; 
+          work.url = url; 
+          work.repeat = repeat; 
+          work.urgent = urgent; 
+        }
       } else {
         if (!currentModalDateKey) { alert('請選擇日子'); return; }
-        data.works.push({ id: Date.now().toString(), text: text, url: url, dateKey: currentModalDateKey, repeat: repeat, urgent: urgent });
+        works.push({ 
+          id: 'new_' + Date.now(), 
+          text: text, 
+          url: url, 
+          dateKey: currentModalDateKey, 
+          repeat: repeat, 
+          urgent: urgent 
+        });
       }
       
-      saveData();
+      await saveWorksToAirtable();
       closeWorkModal();
       renderGrid();
     }
 
-    function deleteWork() {
+    async function deleteWork() {
       var id = document.getElementById('editWorkId').value;
       if (!confirm('確定刪除呢项工作？')) return;
-      data.works = data.works.filter(function(w) { return w.id !== id; });
-      Object.keys(data.checks).forEach(function(key) {
-        if (key.indexOf(id) !== -1) delete data.checks[key];
-      });
-      saveData();
+      works = works.filter(function(w) { return w.id !== id; });
+      await saveWorksToAirtable();
       closeWorkModal();
       renderGrid();
     }
@@ -518,8 +651,47 @@
       if (e.target.classList.contains('modal-overlay')) closeWorkModal();
     });
 
-    loadData();
-    renderGrid();
+    function saveSetup() {
+      var apiKey = document.getElementById('setupApiKey').value.trim();
+      var baseId = document.getElementById('setupBaseId').value.trim();
+      
+      if (!apiKey || !baseId) {
+        alert('請輸入 API Key 和 Base ID');
+        return;
+      }
+      
+      localStorage.setItem('airtable_api_key', apiKey);
+      localStorage.setItem('airtable_base_id', baseId);
+      
+      AIRTABLE_API_KEY = apiKey;
+      AIRTABLE_BASE_ID = baseId;
+      AIRTABLE_BASE_URL = 'https://api.airtable.com/v0/' + AIRTABLE_BASE_ID;
+      
+      document.getElementById('setupScreen').style.display = 'none';
+      document.getElementById('loading').style.display = 'block';
+      
+      loadData();
+    }
+
+    // Initialize
+    function init() {
+      var savedApiKey = localStorage.getItem('airtable_api_key');
+      var savedBaseId = localStorage.getItem('airtable_base_id');
+      
+      if (savedApiKey && savedBaseId) {
+        AIRTABLE_API_KEY = savedApiKey;
+        AIRTABLE_BASE_ID = savedBaseId;
+        AIRTABLE_BASE_URL = 'https://api.airtable.com/v0/' + AIRTABLE_BASE_ID;
+        document.getElementById('setupScreen').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+        loadData();
+      } else {
+        document.getElementById('setupScreen').style.display = 'block';
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+    
+    init();
   </script>
 </body>
 </html>
