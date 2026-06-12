@@ -18,35 +18,35 @@
     .date-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
     .date-nav { display: flex; align-items: center; gap: 10px; }
     .date-nav button { background: #1a1a2e; color: #fff; border: 1px solid #333; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.3s; }
-    .date-nav button:hover { background: #252545; box-shadow: 0 0 15px rgba(233,69,96,0.3); border-color: #e94560; }
-    .date-nav .current-date { color: #e94560; font-weight: 600; min-width: 200px; text-align: center; font-size: 1.1rem; text-shadow: 0 0 10px rgba(233,69,96,0.5); }
+    .date-nav button:hover { background: #252545; box-shadow: 0 0 15px rgba(233,69,96,0.3); border-color: #4fc3f7; }
+    .date-nav .current-date { color: #4fc3f7; font-weight: 600; min-width: 200px; text-align: center; font-size: 1.1rem; text-shadow: 0 0 10px rgba(233,69,96,0.5); }
     .week-chips { display: flex; gap: 8px; background: #1a1a2e; border-radius: 10px; padding: 8px; border: 1px solid #333; }
     .week-chip { padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.3s; color: #888; background: transparent; }
     .week-chip:hover { background: #252545; color: #fff; }
-    .week-chip.active { background: linear-gradient(135deg, #e94560 0%, #c73e54 100%); color: #fff; box-shadow: 0 0 15px rgba(233,69,96,0.4); }
+    .week-chip.active { background: linear-gradient(135deg, #4fc3f7 0%, #c73e54 100%); color: #fff; box-shadow: 0 0 15px rgba(233,69,96,0.4); }
 
     .main-table { width: 100%; border-collapse: separate; border-spacing: 0; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); border: 1px solid #333; }
     
     .header-row th { background: linear-gradient(135deg, #1a1a2e 0%, #252545 100%); padding: 14px 12px; text-align: center; font-weight: 600; color: #fff; font-size: 0.85rem; border-bottom: 1px solid #333; }
     .header-row th.date-col { min-width: 120px; }
-    .header-row th.work-col { min-width: 200px; background: linear-gradient(135deg, #e94560 0%, #c73e54 100%); color: #fff; text-align: left; padding-left: 16px; border-bottom: none; }
+    .header-row th.work-col { min-width: 200px; background: linear-gradient(135deg, #4fc3f7 0%, #c73e54 100%); color: #fff; text-align: left; padding-left: 16px; border-bottom: none; }
     .header-row th.rm-col { min-width: 400px; }
     
     .data-row td { background: #1f1f3a; padding: 12px; vertical-align: middle; border-bottom: 1px solid #2a2a40; transition: all 0.2s; }
     .data-row:hover td { background: #252545; }
     .data-row:last-child td { border-bottom: none; }
-    .data-row td.date-col { background: #1f1f3a; text-align: center; font-weight: 600; color: #e94560; min-width: 120px; border-left: 4px solid #333; }
+    .data-row td.date-col { background: #1f1f3a; text-align: center; font-weight: 600; color: #4fc3f7; min-width: 120px; border-left: 4px solid #333; }
     .data-row td.work-col { background: #1f1f3a; text-align: left; cursor: pointer; min-width: 200px; color: #ddd; }
-    .data-row td.work-col:hover { color: #e94560; }
+    .data-row td.work-col:hover { color: #4fc3f7; }
     .data-row td.rm-col { background: #1f1f3a; text-align: center; }
     
     .add-work-row td { background: #151525; padding: 10px 12px; border-bottom: none; }
     .add-work-row td.date-col { background: #151525; }
     .add-work-row td.work-col { background: #151525; text-align: left; cursor: pointer; color: #666; font-size: 0.9rem; transition: all 0.2s; }
-    .add-work-row td.work-col:hover { color: #e94560; background: #1a1a2e; }
+    .add-work-row td.work-col:hover { color: #4fc3f7; background: #1a1a2e; }
     .add-work-row td.rm-col { background: #151525; }
     
-    .section-separator td { background: linear-gradient(90deg, #e94560, #c73e54, #e94560); height: 3px !important; padding: 0 !important; border: none !important; }
+    .section-separator td { background: linear-gradient(90deg, #4fc3f7, #c73e54, #4fc3f7); height: 3px !important; padding: 0 !important; border: none !important; }
     
     .work-name { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; color: #ccc; }
     .work-name .work-text { flex: 1; }
@@ -69,7 +69,7 @@
       transition: all 0.2s;
       border: 1px solid #333;
     }
-    .rm-check:hover { background: #333; box-shadow: 0 0 15px rgba(233,69,96,0.3); transform: translateY(-2px); border-color: #e94560; }
+    .rm-check:hover { background: #333; box-shadow: 0 0 15px rgba(233,69,96,0.3); transform: translateY(-2px); border-color: #4fc3f7; }
     .rm-check.checked { background: linear-gradient(135deg, #1f3a2e 0%, #2a4a3e 100%); border-color: #4ecca3; }
     .rm-check.checked:hover { box-shadow: 0 0 15px rgba(78,204,163,0.3); }
     .rm-check.crossed { background: linear-gradient(135deg, #3a1f1f 0%, #4a2a2a 100%); border-color: #e74c3c; }
@@ -103,14 +103,14 @@
     .modal { background: linear-gradient(135deg, #1a1a2e 0%, #252545 100%); border-radius: 20px; padding: 28px; width: 420px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1px solid #444; }
     .modal h3 { color: #fff; margin-bottom: 16px; font-weight: 600; }
     .modal input[type="text"] { width: 100%; padding: 12px 14px; margin-bottom: 10px; background: #151525; border: 1px solid #333; border-radius: 10px; color: #fff; font-family: inherit; box-sizing: border-box; transition: all 0.3s; }
-    .modal input[type="text"]:focus { outline: none; border-color: #e94560; box-shadow: 0 0 0 3px rgba(233,69,96,0.2); }
+    .modal input[type="text"]:focus { outline: none; border-color: #4fc3f7; box-shadow: 0 0 0 3px rgba(233,69,96,0.2); }
     .modal select { width: 100%; padding: 12px 14px; margin-bottom: 10px; background: #151525; border: 1px solid #333; border-radius: 10px; color: #fff; font-family: inherit; box-sizing: border-box; }
     .modal label { display: block; margin-bottom: 6px; color: #888; font-size: 0.85rem; font-weight: 500; }
     .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
     .modal-buttons button { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.3s; }
     .modal-buttons .cancel-btn { background: #333; color: #fff; }
     .modal-buttons .cancel-btn:hover { background: #444; }
-    .modal-buttons .save-btn { background: linear-gradient(135deg, #e94560 0%, #c73e54 100%); color: #fff; box-shadow: 0 4px 15px rgba(233,69,96,0.3); }
+    .modal-buttons .save-btn { background: linear-gradient(135deg, #4fc3f7 0%, #c73e54 100%); color: #fff; box-shadow: 0 4px 15px rgba(233,69,96,0.3); }
     .modal-buttons .save-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(233,69,96,0.4); }
     .modal-buttons .delete-btn { background: linear-gradient(135deg, #c0392b 0%, #96281b 100%); color: #fff; margin-right: auto; }
     .modal-buttons .delete-btn:hover { background: #e74c3c; }
@@ -162,7 +162,7 @@
 
   <script>
     var MAX_RMS = 7;
-    var RM_COLORS = ['#e94560', '#f39c12', '#9b59b6', '#3498db', '#1abc9c', '#e74c3c', '#2ecc71'];
+    var RM_COLORS = ['#4fc3f7', '#f39c12', '#9b59b6', '#3498db', '#1abc9c', '#e74c3c', '#2ecc71'];
     var currentWeekStart = getMonday(new Date());
     var currentModalDateKey = '';
     var data = {};
@@ -355,12 +355,12 @@
         
         // Section separator between dates (except first)
         if (dateIdx > 0) {
-          html += '<tr class="section-separator"><td colspan="3" style="background:#e94560;height:4px;padding:0;"></td></tr>';
+          html += '<tr class="section-separator"><td colspan="3" style="background:#4fc3f7;height:4px;padding:0;"></td></tr>';
         }
         
         // Mini header for this date section
         html += '<tr class="header-row">';
-        html += '<th class="date-col" style="background:#e94560;">' + dateLabel + '</th>';
+        html += '<th class="date-col" style="background:#4fc3f7;">' + dateLabel + '</th>';
         html += '<th class="work-col">工作名稱</th>';
         html += '<th class="rm-col">RM 工作清單</th>';
         html += '</tr>';
