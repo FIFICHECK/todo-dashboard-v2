@@ -324,32 +324,69 @@
     }
 
     async function saveWorksToAirtable() {
-      var existingWorks = await fetchAirtable('Works');
-      for (var i = 0; i < existingWorks.length; i++) {
-        await deleteAirtableRecord('Works', existingWorks[i].id);
-      }
-      for (var j = 0; j < works.length; j++) {
-        await createAirtableRecord('Works', {
-          'Name': works[j].text,
-          'URL': works[j].url || '',
-          'DateKey': works[j].dateKey,
-          'Repeat': works[j].repeat || 'none',
-          'Urgent': works[j].urgent || false
-        });
+      try {
+        var existingWorks = await fetchAirtable('Works');
+        // First, collect all existing records to potentially restore
+        var existingIds = existingWorks.map(function(r) { return r.id; });
+        
+        // Delete all existing
+        for (var i = 0; i < existingWorks.length; i++) {
+          await deleteAirtableRecord('Works', existingWorks[i].id);
+        }
+        
+        // Create all current works
+        var newWorks = [];
+        for (var j = 0; j < works.length; j++) {
+          var result = await createAirtableRecord('Works', {
+            'Name': works[j].text,
+            'URL': works[j].url || '',
+            'DateKey': works[j].dateKey,
+            'Repeat': works[j].repeat || 'none',
+            'Urgent': works[j].urgent || false
+          });
+          newWorks.push(result);
+        }
+        
+        // If we got here, all saves succeeded
+        console.log('Works saved successfully:', works.length, 'records');
+      } catch (e) {
+        console.error('Failed to save works:', e);
+        // Reload data to restore state
+        await loadData();
+        alert('儲存工作失敗，數據已恢復。請稍後再試。');
       }
     }
 
     async function saveChecksToAirtable() {
-      var existingChecks = await fetchAirtable('Checks');
-      for (var i = 0; i < existingChecks.length; i++) {
-        await deleteAirtableRecord('Checks', existingChecks[i].id);
-      }
-      var checkKeys = Object.keys(checks);
-      for (var j = 0; j < checkKeys.length; j++) {
-        await createAirtableRecord('Checks', {
-          'CheckKey': checkKeys[j],
-          'State': checks[checkKeys[j]]
+      try {
+        var existingChecks = await fetchAirtable('Checks');
+        
+        // Delete all existing
+        for (var i = 0; i < existingChecks.length; i++) {
+          await deleteAirtableRecord('Checks', existingChecks[i].id);
+        }
+        
+        var checkKeys = Object.keys(checks);
+        for (var j = 0; j < checkKeys.length; j++) {
+          await createAirtableRecord('Checks', {
+            'CheckKey': checkKeys[j],
+            'State': checks[checkKeys[j]]
+          });
+        }
+        
+        console.log('Checks saved successfully:', checkKeys.length, 'records');
+      } catch (e) {
+        console.error('Failed to save checks:', e);
+        // Reload checks from Airtable to restore state
+        var checksRecords = await fetchAirtable('Checks');
+        checks = {};
+        checksRecords.forEach(function(r) {
+          if (r.fields.CheckKey && r.fields.State !== undefined) {
+            checks[r.fields.CheckKey] = r.fields.State;
+          }
         });
+        renderGrid();
+        alert('儲存勾選狀態失敗，數據已恢復。請稍後再試。');
       }
     }
 
@@ -418,13 +455,18 @@
       return dateKey + '_' + workId + '_' + rmIdx;
     }
 
-    function toggleCheck(dateKey, workId, rmIdx) {
+    async function toggleCheck(dateKey, workId, rmIdx) {
       var key = getCheckKey(dateKey, workId, rmIdx);
       var current = checks[key] || 0;
       var next = (current + 1) % 3;
       checks[key] = next;
-      saveChecksToAirtable();
       renderGrid();
+      try {
+        await saveChecksToAirtable();
+      } catch (e) {
+        console.error('Save check failed:', e);
+        alert('儲存失敗，請稍後再試');
+      }
     }
 
     function renderRmChecks(dateKey, workId) {
