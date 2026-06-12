@@ -489,10 +489,15 @@
         var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
         var dateLabel = (date.getMonth() + 1) + '/' + date.getDate() + ' 星期' + dayNames[date.getDay()];
         
-        var isWeekend = date.getDay() === 0 || date.getDay() === 6;
+        var dayWorks = works.filter(function(w) { 
+          var workDates = getWorkDates(w.dateKey, w.repeat, dates);
+          return workDates.indexOf(dateKey) !== -1;
+        });
         
-        // Skip weekends entirely
-        if (isWeekend) return;
+        var isWeekend = date.getDay() === 0 || date.getDay() === 6;
+        var weekendClass = isWeekend ? ' weekend' : '';
+        var weekendDateClass = isWeekend ? ' weekend-date' : '';
+        var weekendDayLabel = isWeekend ? '（休息日）' : '';
         
         if (dateIdx > 0) {
           html += '<tr class="section-separator"><td colspan="3" style="background:#4fc3f7;height:4px;padding:0;"></td></tr>';
