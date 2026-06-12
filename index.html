@@ -40,6 +40,11 @@
     .data-row td.work-col:hover { color: #4fc3f7; }
     .data-row td.work-col.urgent { background: linear-gradient(135deg, #3a3520 0%, #4a4530 100%); border-left: 4px solid #ffcc00; }
     .data-row td.work-col.urgent:hover { color: #ffcc00; }
+    
+    /* Weekend - disabled state */
+    .data-row td.weekend { opacity: 0.4; pointer-events: none; cursor: not-allowed; }
+    .data-row td.weekend-date { color: #666 !important; background: #2a2a3a !important; }
+    .data-row td.weekend-add { color: #555 !important; background: #252535 !important; }
     .data-row td.rm-col { background: #1f1f3a; text-align: center; }
     
     .add-work-row td { background: #151525; padding: 10px 12px; border-bottom: none; }
@@ -364,27 +369,35 @@
           html += '<tr class="section-separator"><td colspan="3" style="background:#4fc3f7;height:4px;padding:0;"></td></tr>';
         }
         
+        // Check if weekend
+        var isWeekend = date.getDay() === 0 || date.getDay() === 6;
+        var weekendClass = isWeekend ? ' weekend' : '';
+        var weekendDateClass = isWeekend ? ' weekend-date' : '';
+        var weekendDayLabel = isWeekend ? '（休息日）' : '';
+        
         // Mini header for this date section
         html += '<tr class="header-row">';
-        html += '<th class="date-col" style="background:#4fc3f7;">' + dateLabel + '</th>';
+        html += '<th class="date-col' + weekendDateClass + '" style="background:#4fc3f7;">' + dateLabel + weekendDayLabel + '</th>';
         html += '<th class="work-col">工作名稱</th>';
         html += '<th class="rm-col">RM 工作清單</th>';
         html += '</tr>';
         
         // Works for this date
         if (dayWorks.length === 0) {
+          var weekendTdClass = isWeekend ? ' weekend' : '';
           html += '<tr class="data-row">';
-          html += '<td class="date-col">' + dateLabel + '</td>';
-          html += '<td class="work-col" style="color:#555;font-style:italic;">（暫無工作）</td>';
-          html += '<td class="rm-col"></td>';
+          html += '<td class="date-col' + weekendTdClass + '">' + dateLabel + '</td>';
+          html += '<td class="work-col' + weekendTdClass + '" style="color:#555;font-style:italic;">（暫無工作）</td>';
+          html += '<td class="rm-col' + weekendTdClass + '"></td>';
           html += '</tr>';
         } else {
           dayWorks.forEach(function(work) {
             var urgentClass = work.urgent ? ' urgent' : '';
             var urgentBadge = work.urgent ? ' <span style="background:#ffcc00;color:#000;padding:2px 6px;border-radius:4px;font-size:0.75rem;font-weight:bold;margin-left:5px;">⚡ URGENT</span>' : '';
+            var weekendTdClass = isWeekend ? ' weekend' : '';
             html += '<tr class="data-row">';
-            html += '<td class="date-col">' + dateLabel + '</td>';
-            html += '<td class="work-col' + urgentClass + '" onclick="openEditWork(\'' + work.id + '\')">';
+            html += '<td class="date-col' + weekendTdClass + '">' + dateLabel + '</td>';
+            html += '<td class="work-col' + urgentClass + weekendTdClass + '" onclick="openEditWork(\'' + work.id + '\')">';
             html += '<div class="work-name">';
             html += '<span class="work-text">' + escapeHtml(work.text) + urgentBadge + '</span>';
             if (work.url) {
@@ -392,16 +405,21 @@
             }
             html += '</div>';
             html += '</td>';
-            html += '<td class="rm-col">' + renderRmChecks(dateKey, work.id) + '</td>';
+            html += '<td class="rm-col' + weekendTdClass + '">' + renderRmChecks(dateKey, work.id) + '</td>';
             html += '</tr>';
           });
         }
         
         // Add work button for this date
+        var weekendAddClass = isWeekend ? ' weekend-add' : '';
         html += '<tr class="add-work-row">';
-        html += '<td class="date-col">' + dateLabel + '</td>';
-        html += '<td class="work-col" onclick="openAddWorkForDate(\'' + dateKey + '\')">+ 新增工作（' + dateLabel + '）</td>';
-        html += '<td class="rm-col"></td>';
+        html += '<td class="date-col' + weekendAddClass + '">' + dateLabel + '</td>';
+        if (isWeekend) {
+          html += '<td class="work-col' + weekendAddClass + '" style="color:#555;cursor:not-allowed;">（休息日）</td>';
+        } else {
+          html += '<td class="work-col' + weekendAddClass + '" onclick="openAddWorkForDate(\'' + dateKey + '\')">+ 新增工作（' + dateLabel + '）</td>';
+        }
+        html += '<td class="rm-col' + weekendAddClass + '"></td>';
         html += '</tr>';
       });
 
