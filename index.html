@@ -495,9 +495,9 @@
         });
         
         var isWeekend = date.getDay() === 0 || date.getDay() === 6;
-        var weekendClass = isWeekend ? ' weekend' : '';
-        var weekendDateClass = isWeekend ? ' weekend-date' : '';
-        var weekendDayLabel = isWeekend ? '（休息日）' : '';
+        
+        // Skip weekends completely - do not render anything for Sat/Sun
+        if (isWeekend) return;
         
         if (dateIdx > 0) {
           html += '<tr class="section-separator"><td colspan="3" style="background:#4fc3f7;height:4px;padding:0;"></td></tr>';
