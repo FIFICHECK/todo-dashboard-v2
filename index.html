@@ -60,6 +60,8 @@
     }
     .rm-check:hover { background: #444; }
     .rm-check.checked { background: #1f3a2e; }
+    .rm-check.crossed { background: #3a1f1f; }
+    .rm-check.crossed .check-icon { color: #e74c3c; }
     
     .rm-check .rm-label { font-size: 0.85rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; cursor: pointer; }
     .rm-check .rm-label:hover { opacity: 0.8; }
@@ -231,9 +233,17 @@
       return dateKey + '_' + workId + '_' + rmIdx;
     }
 
+    // States: 0 = empty, 1 = checked, 2 = crossed
+    var STATE_EMPTY = 0;
+    var STATE_CHECKED = 1;
+    var STATE_CROSSED = 2;
+    var STATE_NAMES = ['☐', '✅', '✕'];
+    
     function toggleCheck(dateKey, workId, rmIdx) {
       var key = getCheckKey(dateKey, workId, rmIdx);
-      data.checks[key] = !data.checks[key];
+      var current = data.checks[key] || 0;
+      var next = (current + 1) % 3;
+      data.checks[key] = next;
       saveData();
       renderGrid();
     }
@@ -242,13 +252,15 @@
       var html = '<div class="rm-checkboxes">';
       for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
         var checkKey = getCheckKey(dateKey, workId, rmIdx);
-        var isChecked = data.checks[checkKey] || false;
+        var state = data.checks[checkKey] || 0;
         var rmColor = RM_COLORS[rmIdx];
         var rmName = RMS[rmIdx] || 'RM' + (rmIdx + 1);
+        var icon = STATE_NAMES[state];
+        var bgClass = state === 1 ? 'checked' : (state === 2 ? 'crossed' : 'unchecked');
         
-        html += '<div class="rm-check ' + (isChecked ? 'checked' : 'unchecked') + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + workId + '\',' + rmIdx + ')">';
+        html += '<div class="rm-check ' + bgClass + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + workId + '\',' + rmIdx + ')">';
         html += '<span class="rm-label" style="color:#fff;background:' + rmColor + ';border-radius:3px;white-space:nowrap;" title="點擊編輯名稱" onclick="event.stopPropagation();setRmName(' + rmIdx + ')">' + escapeHtml(rmName) + '</span>';
-        html += '<span class="check-icon">' + (isChecked ? '✅' : '☐') + '</span>';
+        html += '<span class="check-icon">' + icon + '</span>';
         html += '</div>';
       }
       html += '</div>';
