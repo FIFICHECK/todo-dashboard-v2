@@ -32,6 +32,14 @@
     .data-row td.work-col:hover { background: #2a2a45; }
     .data-row td.rm-col { background: #1f1f3a; text-align: center; }
     
+    .add-work-row td { background: #1a1a30; padding: 8px 10px; border-bottom: 2px solid #e94560; }
+    .add-work-row td.date-col { background: #1a1a30; }
+    .add-work-row td.work-col { background: #1a1a30; text-align: left; cursor: pointer; color: #666; font-style: italic; }
+    .add-work-row td.work-col:hover { color: #e94560; background: #1a1a35; }
+    .add-work-row td.rm-col { background: #1a1a30; }
+    
+    .section-separator { height: 8px; background: #e94560; }
+    
     .work-name { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
     .work-name .work-text { flex: 1; }
     .work-name .work-url { color: #4fc3f7; font-size: 0.8rem; text-decoration: none; }
@@ -59,30 +67,6 @@
     .rm-check.checked .check-icon { color: #4ecca3; }
     .rm-check.unchecked .check-icon { color: #555; }
     
-    .add-row { background: #1f1f3a; padding: 12px; text-align: left; border-bottom: 1px solid #333; }
-    .add-btn { 
-      background: transparent; 
-      border: 1px dashed #444; 
-      color: #666; 
-      padding: 8px 16px; 
-      border-radius: 6px; 
-      cursor: pointer; 
-      font-size: 0.9rem;
-    }
-    .add-btn:hover { border-color: #e94560; color: #e94560; }
-
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-overlay.active { display: flex; }
-    .modal { background: #1f1f3a; border-radius: 10px; padding: 24px; width: 400px; max-width: 90vw; }
-    .modal h3 { color: #fff; margin-bottom: 16px; }
-    .modal input[type="text"] { width: 100%; padding: 10px; margin-bottom: 10px; background: #252540; border: 1px solid #333; border-radius: 6px; color: #fff; font-family: inherit; box-sizing: border-box; }
-    .modal label { display: block; margin-bottom: 6px; color: #aaa; font-size: 0.85rem; }
-    .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
-    .modal-buttons button { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.9rem; }
-    .modal-buttons .cancel-btn { background: #333; color: #fff; }
-    .modal-buttons .save-btn { background: #e94560; color: #fff; }
-    .modal-buttons .delete-btn { background: #c0392b; color: #fff; margin-right: auto; }
-    
     .rm-settings { margin-top: 20px; background: #16213e; border-radius: 8px; padding: 15px; }
     .rm-settings h3 { color: #fff; margin-bottom: 10px; font-size: 1rem; }
     .rm-settings-list { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -95,11 +79,23 @@
       font-weight: bold;
     }
     .rm-name-btn:hover { opacity: 0.8; }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #1f1f3a; border-radius: 10px; padding: 24px; width: 400px; max-width: 90vw; }
+    .modal h3 { color: #fff; margin-bottom: 16px; }
+    .modal input[type="text"] { width: 100%; padding: 10px; margin-bottom: 10px; background: #252540; border: 1px solid #333; border-radius: 6px; color: #fff; font-family: inherit; box-sizing: border-box; }
+    .modal label { display: block; margin-bottom: 6px; color: #aaa; font-size: 0.85rem; }
+    .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+    .modal-buttons button { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.9rem; }
+    .modal-buttons .cancel-btn { background: #333; color: #fff; }
+    .modal-buttons .save-btn { background: #e94560; color: #fff; }
+    .modal-buttons .delete-btn { background: #c0392b; color: #fff; margin-right: auto; }
   </style>
 </head>
 <body>
   <h1>📋 To-Do Dashboard v2</h1>
-  <p class="subtitle">每個日子可加多個工作 | 點擊 RM 名稱可編輯</p>
+  <p class="subtitle">每個日子獨立新增工作 | 點擊 RM 名稱可編輯</p>
 
   <div class="date-controls">
     <div class="date-nav">
@@ -122,8 +118,6 @@
     <div class="modal">
       <h3 id="workModalTitle">新增工作</h3>
       <input type="hidden" id="editWorkId">
-      <label>日子</label>
-      <input type="text" id="workDateInput" placeholder="例如：6/8 或 6/9" style="margin-bottom:10px;">
       <label>工作名稱</label>
       <input type="text" id="workNameInput" placeholder="輸入工作名稱...">
       <label>URL 連結（可選）</label>
@@ -140,6 +134,7 @@
     var MAX_RMS = 7;
     var RM_COLORS = ['#e94560', '#f39c12', '#9b59b6', '#3498db', '#1abc9c', '#e74c3c', '#2ecc71'];
     var currentWeekStart = getMonday(new Date());
+    var currentModalDateKey = '';
     var data = {};
     var RMS = ['', '', '', '', '', '', ''];
 
@@ -153,7 +148,7 @@
     }
 
     function loadData() {
-      var saved = localStorage.getItem('todo_dashboard_v18');
+      var saved = localStorage.getItem('todo_dashboard_v19');
       if (saved) {
         var parsed = JSON.parse(saved);
         data = parsed.data || { works: [], checks: {} };
@@ -165,7 +160,7 @@
     }
 
     function saveData() {
-      localStorage.setItem('todo_dashboard_v18', JSON.stringify({ data: data, rms: RMS }));
+      localStorage.setItem('todo_dashboard_v19', JSON.stringify({ data: data, rms: RMS }));
     }
 
     function navigateWeek(direction) {
@@ -267,43 +262,38 @@
       renderWeekChips();
       renderRmSettings();
 
-      // Header row
-      var html = '<tr class="header-row">';
-      html += '<th class="date-col">日子</th>';
-      html += '<th class="work-col" style="cursor:pointer;" onclick="openAddWork()">+ 新增工作</th>';
-      html += '<th class="rm-col">7 個 RM 剔選（點擊名稱編輯）</th>';
-      html += '</tr>';
+      var html = '';
 
-      // Group works by dateKey
-      var worksByDate = {};
-      dates.forEach(function(date) {
-        var dateKey = getDateKey(date);
-        worksByDate[dateKey] = data.works.filter(function(w) { return w.dateKey === dateKey; });
-      });
-
-      // Each date section
-      dates.forEach(function(date) {
+      // Each date is a section with header, works, and add button
+      dates.forEach(function(date, dateIdx) {
         var dateKey = getDateKey(date);
         var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
         var dateLabel = (date.getMonth() + 1) + '/' + date.getDate() + ' 星期' + dayNames[date.getDay()];
-        var dayWorks = worksByDate[dateKey] || [];
+        var dayWorks = data.works.filter(function(w) { return w.dateKey === dateKey; });
         
+        // Section separator between dates (except first)
+        if (dateIdx > 0) {
+          html += '<tr class="section-separator"><td colspan="3" style="background:#e94560;height:4px;padding:0;"></td></tr>';
+        }
+        
+        // Mini header for this date section
+        html += '<tr class="header-row">';
+        html += '<th class="date-col" style="background:#e94560;">' + dateLabel + '</th>';
+        html += '<th class="work-col">工作名稱</th>';
+        html += '<th class="rm-col">7 個 RM 剔選</th>';
+        html += '</tr>';
+        
+        // Works for this date
         if (dayWorks.length === 0) {
-          // Empty row
           html += '<tr class="data-row">';
           html += '<td class="date-col">' + dateLabel + '</td>';
-          html += '<td class="work-col" style="color:#666;font-style:italic;" onclick="openAddWorkForDate(\'' + dateKey + '\')">+ 新增工作（' + dateLabel + '）</td>';
+          html += '<td class="work-col" style="color:#555;font-style:italic;">（暫無工作）</td>';
           html += '<td class="rm-col"></td>';
           html += '</tr>';
         } else {
-          // Each work for this date
           dayWorks.forEach(function(work) {
             html += '<tr class="data-row">';
-            
-            // Date cell
             html += '<td class="date-col">' + dateLabel + '</td>';
-            
-            // Work name cell
             html += '<td class="work-col" onclick="openEditWork(\'' + work.id + '\')">';
             html += '<div class="work-name">';
             html += '<span class="work-text">' + escapeHtml(work.text) + '</span>';
@@ -312,13 +302,17 @@
             }
             html += '</div>';
             html += '</td>';
-            
-            // RM checks cell
             html += '<td class="rm-col">' + renderRmChecks(dateKey, work.id) + '</td>';
-            
             html += '</tr>';
           });
         }
+        
+        // Add work button for this date
+        html += '<tr class="add-work-row">';
+        html += '<td class="date-col">' + dateLabel + '</td>';
+        html += '<td class="work-col" onclick="openAddWorkForDate(\'' + dateKey + '\')">+ 新增工作（' + dateLabel + '）</td>';
+        html += '<td class="rm-col"></td>';
+        html += '</tr>';
       });
 
       table.innerHTML = html;
@@ -332,10 +326,10 @@
     }
 
     function openAddWork() {
+      // This opens the modal without a pre-selected date
       document.getElementById('workModalTitle').textContent = '新增工作';
       document.getElementById('editWorkId').value = '';
-      document.getElementById('workDateInput').value = '';
-      document.getElementById('workDateInput').placeholder = '例如：6/8';
+      currentModalDateKey = '';
       document.getElementById('workNameInput').value = '';
       document.getElementById('workUrlInput').value = '';
       document.getElementById('deleteWorkBtn').style.display = 'none';
@@ -346,7 +340,7 @@
     function openAddWorkForDate(dateKey) {
       document.getElementById('workModalTitle').textContent = '新增工作';
       document.getElementById('editWorkId').value = '';
-      document.getElementById('workDateInput').value = dateKey;
+      currentModalDateKey = dateKey;
       document.getElementById('workNameInput').value = '';
       document.getElementById('workUrlInput').value = '';
       document.getElementById('deleteWorkBtn').style.display = 'none';
@@ -359,7 +353,7 @@
       if (!work) return;
       document.getElementById('workModalTitle').textContent = '編輯工作';
       document.getElementById('editWorkId').value = workId;
-      document.getElementById('workDateInput').value = work.dateKey || '';
+      currentModalDateKey = work.dateKey || '';
       document.getElementById('workNameInput').value = work.text;
       document.getElementById('workUrlInput').value = work.url || '';
       document.getElementById('deleteWorkBtn').style.display = 'block';
@@ -369,18 +363,17 @@
 
     function saveWork() {
       var id = document.getElementById('editWorkId').value;
-      var dateKey = document.getElementById('workDateInput').value.trim();
       var text = document.getElementById('workNameInput').value.trim();
       var url = document.getElementById('workUrlInput').value.trim();
       
       if (!text) { alert('請輸入工作名稱'); return; }
-      if (!dateKey) { alert('請輸入日子'); return; }
       
       if (id) {
         var work = data.works.find(function(w) { return w.id === id; });
-        if (work) { work.text = text; work.url = url; work.dateKey = dateKey; }
+        if (work) { work.text = text; work.url = url; }
       } else {
-        data.works.push({ id: Date.now().toString(), text: text, url: url, dateKey: dateKey });
+        if (!currentModalDateKey) { alert('請選擇日子'); return; }
+        data.works.push({ id: Date.now().toString(), text: text, url: url, dateKey: currentModalDateKey });
       }
       
       saveData();
@@ -402,6 +395,7 @@
 
     function closeWorkModal() {
       document.getElementById('workModal').classList.remove('active');
+      currentModalDateKey = '';
     }
 
     document.getElementById('workModal').addEventListener('click', function(e) {
