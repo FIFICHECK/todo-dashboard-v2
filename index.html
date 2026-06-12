@@ -22,11 +22,11 @@
     .main-table { width: 100%; border-collapse: collapse; background: #333; border-radius: 8px; overflow: hidden; }
     
     .header-row th { background: #16213e; padding: 12px 8px; text-align: center; font-weight: bold; color: #fff; font-size: 0.85rem; }
-    .header-row th.work-col { background: #e94560; text-align: left; padding-left: 12px; min-width: 150px; }
+    .header-row th.work-col { background: #e94560; text-align: left; padding-left: 12px; min-width: 200px; }
     .header-row th.date-col { min-width: 100px; }
     
     .data-row td { background: #1f1f3a; padding: 10px; vertical-align: middle; border-bottom: 1px solid #333; }
-    .data-row td.work-col { background: #252540; text-align: left; cursor: pointer; min-width: 150px; border-left: 3px solid #555; }
+    .data-row td.work-col { background: #252540; text-align: left; cursor: pointer; min-width: 200px; border-left: 3px solid #555; }
     .data-row td.work-col:hover { border-left-color: #e94560; }
     .data-row td.date-col { text-align: center; }
     
@@ -56,6 +56,9 @@
     .rm-check.checked .check-icon { color: #4ecca3; }
     .rm-check.unchecked .check-icon { color: #555; }
     
+    .date-header { background: #1a1a30 !important; font-weight: bold; color: #e94560; cursor: pointer; }
+    .date-header:hover { background: #2a2a45 !important; }
+    
     .add-row { background: #1f1f3a; padding: 12px; text-align: left; border-bottom: 1px solid #333; }
     .add-btn { 
       background: transparent; 
@@ -83,7 +86,7 @@
 </head>
 <body>
   <h1>📋 To-Do Dashboard v2</h1>
-  <p class="subtitle">每日一行：工作名稱 + 7 個 RM 剔選</p>
+  <p class="subtitle">每個日子獨立一行工作 + RM 剔選</p>
 
   <div class="date-controls">
     <div class="date-nav">
@@ -101,6 +104,7 @@
     <div class="modal">
       <h3 id="workModalTitle">新增工作</h3>
       <input type="hidden" id="editWorkId">
+      <input type="hidden" id="editWorkDate">
       <label>工作名稱</label>
       <input type="text" id="workNameInput" placeholder="輸入工作名稱...">
       <label>URL 連結（可選）</label>
@@ -130,7 +134,7 @@
     }
 
     function loadData() {
-      var saved = localStorage.getItem('todo_dashboard_v15');
+      var saved = localStorage.getItem('todo_dashboard_v16');
       if (saved) {
         var parsed = JSON.parse(saved);
         data = parsed.data || { works: [], checks: {} };
@@ -142,7 +146,7 @@
     }
 
     function saveData() {
-      localStorage.setItem('todo_dashboard_v15', JSON.stringify({ data: data, rms: RMS }));
+      localStorage.setItem('todo_dashboard_v16', JSON.stringify({ data: data, rms: RMS }));
     }
 
     function navigateWeek(direction) {
@@ -223,36 +227,61 @@
       document.getElementById('currentDateLabel').textContent = formatDateLabel();
       renderWeekChips();
 
-      // Header row
+      // Header row - each day is a column header
       var html = '<tr class="header-row">';
-      html += '<th class="work-col" style="cursor:pointer;" onclick="openAddWork()">+ 新增工作</th>';
+      html += '<th class="work-col">日子 / 工作</th>';
       dates.forEach(function(date) {
         var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-        html += '<th class="date-col" style="cursor:pointer;" onclick="openAddWork()">' + (date.getMonth() + 1) + '/' + date.getDate() + '<br><span style="font-size:0.7rem;color:#aaa;">星期' + dayNames[date.getDay()] + '</span></th>';
+        var dateKey = getDateKey(date);
+        html += '<th class="date-header" onclick="openAddWorkForDate(\'' + dateKey + '\')">' + (date.getMonth() + 1) + '/' + date.getDate() + '<br><span style="font-size:0.7rem;color:#aaa;">星期' + dayNames[date.getDay()] + '</span></th>';
       });
       html += '</tr>';
 
-      // Work rows - each work is ONE row, 7 days as columns
-      data.works.forEach(function(work) {
-        html += '<tr class="data-row">';
+      // For each date, show all works for that date
+      dates.forEach(function(date) {
+        var dateKey = getDateKey(date);
+        var dayWorks = data.works.filter(function(w) { return w.dateKey === dateKey; });
         
-        // Work name cell
-        html += '<td class="work-col" onclick="openEditWork(\'' + work.id + '\')">';
-        html += '<div class="work-name">';
-        html += '<span class="work-text">' + escapeHtml(work.text) + '</span>';
-        if (work.url) {
-          html += '<a href="' + escapeHtml(work.url) + '" class="work-url" target="_blank" onclick="event.stopPropagation();">🔗</a>';
+        if (dayWorks.length === 0) {
+          // Empty row for this date
+          html += '<tr class="data-row">';
+          html += '<td class="work-col" style="color:#666;font-style:italic;" onclick="openAddWorkForDate(\'' + dateKey + '\')">+ 新增工作</td>';
+          dates.forEach(function(d, idx) {
+            if (idx === 0) return; // first col is work name
+            if (getDateKey(d) === dateKey) {
+              html += '<td class="date-col"></td>';
+            } else {
+              html += '<td class="date-col" style="background:#1a1a25;"></td>';
+            }
+          });
+          html += '</tr>';
+        } else {
+          // Show works for this date
+          dayWorks.forEach(function(work, workIdx) {
+            html += '<tr class="data-row">';
+            
+            // Work name cell
+            html += '<td class="work-col" onclick="openEditWork(\'' + work.id + '\')">';
+            html += '<div class="work-name">';
+            html += '<span class="work-text">' + escapeHtml(work.text) + '</span>';
+            if (work.url) {
+              html += '<a href="' + escapeHtml(work.url) + '" class="work-url" target="_blank" onclick="event.stopPropagation();">🔗</a>';
+            }
+            html += '</div>';
+            html += '</td>';
+            
+            // Show RM checks only in the column for this date
+            dates.forEach(function(d) {
+              if (getDateKey(d) === dateKey) {
+                html += '<td class="date-col">' + renderRmChecks(dateKey, work.id) + '</td>';
+              } else {
+                html += '<td class="date-col" style="background:#1a1a25;"></td>';
+              }
+            });
+            
+            html += '</tr>';
+          });
         }
-        html += '</div>';
-        html += '</td>';
-        
-        // RM checkboxes for each date
-        dates.forEach(function(date) {
-          var dateKey = getDateKey(date);
-          html += '<td class="date-col">' + renderRmChecks(dateKey, work.id) + '</td>';
-        });
-        
-        html += '</tr>';
       });
 
       table.innerHTML = html;
@@ -265,18 +294,10 @@
       return div.innerHTML;
     }
 
-    function setRmName(rmIdx) {
-      var name = prompt('請輸入 RM' + (rmIdx + 1) + ' 的名稱：', RMS[rmIdx] || '');
-      if (name !== null) {
-        RMS[rmIdx] = name.trim();
-        saveData();
-        renderGrid();
-      }
-    }
-
-    function openAddWork() {
+    function openAddWorkForDate(dateKey) {
       document.getElementById('workModalTitle').textContent = '新增工作';
       document.getElementById('editWorkId').value = '';
+      document.getElementById('editWorkDate').value = dateKey;
       document.getElementById('workNameInput').value = '';
       document.getElementById('workUrlInput').value = '';
       document.getElementById('deleteWorkBtn').style.display = 'none';
@@ -289,6 +310,7 @@
       if (!work) return;
       document.getElementById('workModalTitle').textContent = '編輯工作';
       document.getElementById('editWorkId').value = workId;
+      document.getElementById('editWorkDate').value = work.dateKey || '';
       document.getElementById('workNameInput').value = work.text;
       document.getElementById('workUrlInput').value = work.url || '';
       document.getElementById('deleteWorkBtn').style.display = 'block';
@@ -298,16 +320,18 @@
 
     function saveWork() {
       var id = document.getElementById('editWorkId').value;
+      var dateKey = document.getElementById('editWorkDate').value;
       var text = document.getElementById('workNameInput').value.trim();
       var url = document.getElementById('workUrlInput').value.trim();
       
       if (!text) { alert('請輸入工作名稱'); return; }
+      if (!dateKey) { alert('請選擇日子'); return; }
       
       if (id) {
         var work = data.works.find(function(w) { return w.id === id; });
-        if (work) { work.text = text; work.url = url; }
+        if (work) { work.text = text; work.url = url; work.dateKey = dateKey; }
       } else {
-        data.works.push({ id: Date.now().toString(), text: text, url: url });
+        data.works.push({ id: Date.now().toString(), text: text, url: url, dateKey: dateKey });
       }
       
       saveData();
