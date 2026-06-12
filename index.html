@@ -458,12 +458,11 @@
 
     function renderWeekChips() {
       var container = document.getElementById('weekChips');
-      var today = new Date();
-      var todayMonday = getMonday(today);
+      var baseMonday = new Date(currentWeekStart);
       var html = '';
       for (var w = -4; w <= 4; w++) {
-        var monday = new Date(todayMonday);
-        monday.setDate(todayMonday.getDate() + (w * 7));
+        var monday = new Date(baseMonday);
+        monday.setDate(baseMonday.getDate() + (w * 7));
         var isActive = monday.getTime() === currentWeekStart.getTime();
         html += '<div class="week-chip ' + (isActive ? 'active' : '') + '" onclick="jumpToWeek(\'' + monday.toISOString() + '\')">' + (monday.getMonth() + 1) + '/' + monday.getDate() + '</div>';
       }
