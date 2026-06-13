@@ -329,11 +329,9 @@
 
         var checksRecords = await fetchAirtable('Checks');
         checks = {};
-        console.log('DEBUG: Loaded', checksRecords.length, 'check records from Airtable');
         checksRecords.forEach(function(r) {
           if (r.fields.CheckKey && r.fields.State !== undefined) {
             checks[r.fields.CheckKey] = r.fields.State;
-            console.log('DEBUG: Set check', r.fields.CheckKey, '=', r.fields.State);
           }
         });
 
@@ -400,74 +398,38 @@
     }
 
     async function saveChecksToAirtable() {
-      console.log('SAVE: saveChecksToAirtable started');
       try {
         var existingChecks = await fetchAirtable('Checks');
-        console.log('SAVE: Fetched', existingChecks.length, 'existing checks');
-        var existingMap = {};
+        
+        // Delete all existing
         for (var i = 0; i < existingChecks.length; i++) {
-          var rec = existingChecks[i];
-          if (rec.fields.CheckKey) {
-            existingMap[rec.fields.CheckKey] = rec.id;
-          }
+          await deleteAirtableRecord('Checks', existingChecks[i].id);
         }
         
         var checkKeys = Object.keys(checks);
-        console.log('SAVE: About to save', checkKeys.length, 'checks');
-        
-        var delay = function(ms) { return new Promise(function(res) { setTimeout(res, ms); }); };
-        
-        async function saveWithRetry(fn, maxRetries) {
-          for (var attempt = 0; attempt <= maxRetries; attempt++) {
-            try {
-              await fn();
-              return true;
-            } catch (e) {
-              if (e.status === 429 && attempt < maxRetries) {
-                var waitMs = Math.pow(2, attempt) * 500;
-                console.log('SAVE: Rate limited, retry ' + (attempt+1) + ' in ' + waitMs + 'ms');
-                await delay(waitMs);
-              } else {
-                throw e;
-              }
-            }
-          }
-          return false;
-        }
-        
         for (var j = 0; j < checkKeys.length; j++) {
-          var key = checkKeys[j];
-          var state = checks[key];
-          var op = existingMap[key] ? 'PATCH' : 'CREATE';
-          console.log('SAVE:', op, key, '=', state);
-          
-          var success = false;
-          if (existingMap[key]) {
-            success = await saveWithRetry(async function() {
-              await updateAirtableRecord('Checks', existingMap[key], { 'State': state });
-            }, 3);
-          } else {
-            success = await saveWithRetry(async function() {
-              await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
-            }, 3);
-          }
-          console.log('SAVE:', op, key, 'success =', success);
-          
-          if (!success) {
-            throw new Error('Failed to save ' + key);
-          }
-          
-          if (j < checkKeys.length - 1) await delay(300);
+          await createAirtableRecord('Checks', {
+            'CheckKey': checkKeys[j],
+            'State': checks[checkKeys[j]]
+          });
         }
         
-        console.log('SAVE: All checks saved successfully');
-        showToast(true, '✅ 狀態已儲存 (' + checkKeys.length + ' 記錄)');
+        console.log('Checks saved successfully:', checkKeys.length, 'records');
+        showToast(true, '✅ 狀態已儲存');
       } catch (e) {
-        console.error('SAVE ERROR:', e);
+        console.error('Failed to save checks:', e);
+        // Reload checks from Airtable to restore state
+        var checksRecords = await fetchAirtable('Checks');
+        checks = {};
+        checksRecords.forEach(function(r) {
+          if (r.fields.CheckKey && r.fields.State !== undefined) {
+            checks[r.fields.CheckKey] = r.fields.State;
+          }
+        });
+        renderGrid();
+        alert('儲存勾選狀態失敗，數據已恢復。請稍後再試。');
         showToast(false, '❌ 狀態儲存失敗');
       }
-    }
-
     }
 
     async function saveRMStoAirtable() {
@@ -871,37 +833,6 @@
       loadData();
     }
 
-    // Background save queue - stores pending saves before page unload
-    var pendingSaveQueue = [];
-    
-    // Flush all pending saves
-    function flushPendingSaves() {
-      if (pendingSaveQueue.length === 0) return;
-      console.log('Background: Flushing', pendingSaveQueue.length, 'pending saves...');
-      // Use synchronous XHR for reliable background save (works better than sendBeacon for Airtable)
-      pendingSaveQueue.forEach(function(data) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', AIRTABLE_BASE_URL + '/' + encodeURIComponent(data.table), false); // sync=false is important!
-        xhr.setRequestHeader('Authorization', 'Bearer ' + AIRTABLE_API_KEY);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.send(JSON.stringify({ fields: data.fields }));
-      });
-      pendingSaveQueue = [];
-      console.log('Background: All pending saves completed');
-    }
-    
-    // Listen for page visibility changes - save when user leaves
-    document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'hidden') {
-        flushPendingSaves();
-      }
-    });
-    
-    // Also save on beforeunload
-    window.addEventListener('beforeunload', function() {
-      flushPendingSaves();
-    });
-    
     // Initialize
     function init() {
       // 每次進入頁面自動去當日嗰週
@@ -923,7 +854,7 @@
         document.getElementById('loading').style.display = 'none';
       }
     }
-
+    
 
     function showToast(success, message) {
       var toast = document.getElementById('toast');
