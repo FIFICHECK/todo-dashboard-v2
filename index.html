@@ -863,6 +863,20 @@
 
     function showToast(success, message) {
       var toast = document.getElementById('toast');
+      if (!toast) {
+        // Fallback: show in current date label
+        var label = document.getElementById('currentDateLabel');
+        if (label) {
+          label.textContent = message;
+          label.style.color = success ? '#2ecc71' : '#e74c3c';
+          setTimeout(function() {
+            label.textContent = formatDateLabel();
+            label.style.color = '#4fc3f7';
+          }, 2500);
+        }
+        console.log('Toast fallback:', message);
+        return;
+      }
       toast.textContent = message;
       toast.className = 'toast ' + (success ? 'success' : 'error') + ' show';
       setTimeout(function() {
