@@ -359,52 +359,38 @@
     }
     
     async function loadDataSmart() {
-      // Calculate date range: current week + 3 weeks before + 2 weeks after = 6 weeks total
-      var range = getDateRangeForLoading(currentWeekStart, 3, 2);
-      console.log('LOAD SMART: Fetching checks from', range.start, 'to', range.end);
+      console.log('LOAD SMART: Starting background sync...');
       
-      var records = [];
       try {
-        // Try fetching all records and filter client-side (avoid Airtable filter formula errors)
-        records = await fetchAirtable('Checks');
-        console.log('LOAD SMART: Fetched', records.length, 'total records');
+        // Fetch all checks from Airtable (no filter to avoid 422 errors)
+        var records = await fetchAirtable('Checks');
+        console.log('LOAD SMART: Fetched', records.length, 'records from Airtable');
         
-        // Filter records by CheckKey date prefix (CheckKey format: YYYY-MM-DD_workId_slot)
-        var filteredCount = 0;
+        // Update checks object with all records
+        var updatedCount = 0;
         records.forEach(function(r) {
           if (r.fields.CheckKey && r.fields.State !== undefined) {
-            var keyDate = r.fields.CheckKey.substring(0, 10); // Extract YYYY-MM-DD from CheckKey
-            if (keyDate >= range.start && keyDate <= range.end) {
-              checks[r.fields.CheckKey] = r.fields.State;
-              filteredCount++;
-            }
+            checks[r.fields.CheckKey] = r.fields.State;
+            updatedCount++;
           }
         });
-        console.log('LOAD SMART: Filtered to', filteredCount, 'records in date range');
-      } catch (e) {
-        console.error('LOAD SMART: Fetch failed, trying full load:', e);
-        // Fallback: load all records
+        console.log('LOAD SMART: Updated', updatedCount, 'checks in memory');
+        
+        // Update localStorage cache
         try {
-          records = await fetchAirtable('Checks');
-          records.forEach(function(r) {
-            if (r.fields.CheckKey && r.fields.State !== undefined) {
-              checks[r.fields.CheckKey] = r.fields.State;
-            }
-          });
-          console.log('LOAD SMART: Fallback loaded', Object.keys(checks).length, 'total checks');
-        } catch (e2) {
-          console.error('LOAD SMART: Fallback also failed:', e2);
+          localStorage.setItem('checks_cache', JSON.stringify(checks));
+          localStorage.setItem('checks_cache_timestamp', Date.now().toString());
+          console.log('LOAD SMART: Cache updated');
+        } catch(e) {
+          console.log('LOAD SMART: Cache save failed (quota exceeded)');
         }
+        
+        renderGrid();
+        showToast(true, '✅ 已同步 ' + updatedCount + ' 記錄');
+      } catch (e) {
+        console.error('LOAD SMART: Failed:', e);
+        showToast(false, '❌ 同步失敗');
       }
-      
-      // Update cache with new data
-      try {
-        localStorage.setItem('checks_cache', JSON.stringify(checks));
-        localStorage.setItem('checks_cache_timestamp', Date.now().toString());
-        console.log('LOAD SMART: Updated localStorage cache');
-      } catch(e) {}
-      
-      renderGrid();
     }
     
     async function loadData() {
@@ -1133,6 +1119,14 @@ async function saveRMStoAirtable() {
       loadData();
       showToast(true, '🔄 正在同步...');
     }
+    
+    // Auto-sync when page becomes visible again (e.g., switch from another tab/app)
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible' && !isLoading) {
+        console.log('SYNC: Page became visible, triggering background sync...');
+        loadDataSmart();
+      }
+    });
     
     // Initialize
     function init() {
