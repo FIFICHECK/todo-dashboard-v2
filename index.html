@@ -369,8 +369,14 @@
           if (r.fields.CheckKey && r.fields.State !== undefined) {
             checks[r.fields.CheckKey] = r.fields.State;
             loadedCount++;
+            // Debug: log the specific key we're looking for
+            if (r.fields.CheckKey === '2026-06-08_recQ8Nxn606CD8GGS_0') {
+              console.log('LOAD DEBUG: Found target key! State =', r.fields.State);
+            }
           }
         });
+        // Debug: check if target key exists in checks
+        console.log('LOAD DEBUG: checks["2026-06-08_recQ8Nxn606CD8GGS_0"] =', checks["2026-06-08_recQ8Nxn606CD8GGS_0"]);
         console.log('LOAD: Loaded', loadedCount, 'check records into memory');
 
         var settingsRecords = await fetchAirtable('Settings');
