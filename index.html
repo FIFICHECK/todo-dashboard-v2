@@ -706,6 +706,11 @@ async function saveRMStoAirtable() {
       renderGrid();
       try {
         await saveSingleCheckToAirtable(key);
+        // Debug alert showing what was saved
+        var work = works.find(w => w.id === workId);
+        var rmName = RMS[rmIdx] || 'RM' + (rmIdx + 1);
+        var stateName = ['', '✅', '❌'][next];
+        alert('已保存！\n\n工作: ' + (work ? work.text : workId) + '\nRM: ' + rmName + '\nState: ' + current + ' → ' + next + ' (' + stateName + ')\nKey: ' + key);
       } catch (e) {
         console.error('Save check failed:', e);
         alert('儲存失敗，請稍後再試');
