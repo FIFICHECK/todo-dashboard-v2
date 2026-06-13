@@ -713,6 +713,11 @@ async function saveRMStoAirtable() {
     }
 
     function renderRmChecks(dateKey, workId) {
+      // Debug: log the checkKey for rmIdx=0
+      var debugCheckKey = getCheckKey(dateKey, workId, 0);
+      if (dateKey === '2026-06-08' && debugCheckKey.includes('recQ8Nxn606CD8GGS')) {
+        console.log('RENDER DEBUG: dateKey=', dateKey, 'workId=', workId, 'checkKey=', debugCheckKey, 'checks[checkKey]=', checks[debugCheckKey]);
+      }
       var html = '<div class="rm-checkboxes">';
       for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
         var checkKey = getCheckKey(dateKey, workId, rmIdx);
