@@ -400,9 +400,10 @@
     }
 
     async function saveChecksToAirtable() {
+      console.log('SAVE: saveChecksToAirtable started');
       try {
-        // Upsert mode: fetch existing, update or create individually
         var existingChecks = await fetchAirtable('Checks');
+        console.log('SAVE: Fetched', existingChecks.length, 'existing checks');
         var existingMap = {};
         for (var i = 0; i < existingChecks.length; i++) {
           var rec = existingChecks[i];
@@ -411,10 +412,11 @@
           }
         }
         
-        // Helper to add delay between API calls
-        var delay = function(ms) { return new Promise(function(resolve) { setTimeout(resolve, ms); }); };
+        var checkKeys = Object.keys(checks);
+        console.log('SAVE: About to save', checkKeys.length, 'checks');
         
-        // Retry helper for API calls with exponential backoff
+        var delay = function(ms) { return new Promise(function(res) { setTimeout(res, ms); }); };
+        
         async function saveWithRetry(fn, maxRetries) {
           for (var attempt = 0; attempt <= maxRetries; attempt++) {
             try {
@@ -423,7 +425,7 @@
             } catch (e) {
               if (e.status === 429 && attempt < maxRetries) {
                 var waitMs = Math.pow(2, attempt) * 500;
-                console.log('Rate limited (attempt ' + (attempt+1) + '), waiting ' + waitMs + 'ms...');
+                console.log('SAVE: Rate limited, retry ' + (attempt+1) + ' in ' + waitMs + 'ms');
                 await delay(waitMs);
               } else {
                 throw e;
@@ -433,41 +435,39 @@
           return false;
         }
         
-        var checkKeys = Object.keys(checks);
-        var savedCount = 0;
-        
         for (var j = 0; j < checkKeys.length; j++) {
           var key = checkKeys[j];
           var state = checks[key];
+          var op = existingMap[key] ? 'PATCH' : 'CREATE';
+          console.log('SAVE:', op, key, '=', state);
           
+          var success = false;
           if (existingMap[key]) {
-            // Update existing record
-            console.log('DEBUG: PATCH', key, '=', state);
-            await saveWithRetry(async function() {
-              await updateAirtableRecord('Checks', existingMap[key], {
-                'State': state
-              });
+            success = await saveWithRetry(async function() {
+              await updateAirtableRecord('Checks', existingMap[key], { 'State': state });
             }, 3);
           } else {
-            // Create new record
-            console.log('DEBUG: POST', key, '=', state);
-            await saveWithRetry(async function() {
-              await createAirtableRecord('Checks', {
-                'CheckKey': key,
-                'State': state
-              });
+            success = await saveWithRetry(async function() {
+              await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
             }, 3);
           }
-          savedCount++;
-          if (j < checkKeys.length - 1) await delay(300); // 300ms between requests
+          console.log('SAVE:', op, key, 'success =', success);
+          
+          if (!success) {
+            throw new Error('Failed to save ' + key);
+          }
+          
+          if (j < checkKeys.length - 1) await delay(300);
         }
         
-        console.log('Checks saved successfully:', savedCount, 'records');
-        showToast(true, '✅ 狀態已儲存 (' + savedCount + ' 記錄)');
+        console.log('SAVE: All checks saved successfully');
+        showToast(true, '✅ 狀態已儲存 (' + checkKeys.length + ' 記錄)');
       } catch (e) {
-        console.error('Failed to save checks:', e.status || 'network error');
-        showToast(false, '❌ 狀態儲存失敗 (' + (e.status || 'Network') + ')');
+        console.error('SAVE ERROR:', e);
+        showToast(false, '❌ 狀態儲存失敗');
       }
+    }
+
     }
 
     async function saveRMStoAirtable() {
@@ -616,19 +616,14 @@
       var current = checks[key] || 0;
       var next = (current + 1) % 3;
       checks[key] = next;
-      saveInProgress = true;
       renderGrid();
       try {
         await saveChecksToAirtable();
       } catch (e) {
         console.error('Save check failed:', e);
         alert('儲存失敗，請稍後再試');
-      } finally {
-        saveInProgress = false;
       }
     }
-
-
 
     function renderRmChecks(dateKey, workId) {
       var html = '<div class="rm-checkboxes">';
