@@ -362,16 +362,39 @@
       var range = getDateRangeForLoading(currentWeekStart, 3, 2);
       console.log('LOAD SMART: Fetching checks from', range.start, 'to', range.end);
       
-      // Build Airtable filter formula for date range
-      var formula = "AND(IS_AFTER(DateKey, '" + range.start + "'), IS_BEFORE(DateKey, '" + range.end + "'))";
-      var records = await fetchAirtable('Checks', formula);
-      console.log('LOAD SMART: Fetched', records.length, 'checks in date range');
-      
-      records.forEach(function(r) {
-        if (r.fields.CheckKey && r.fields.State !== undefined) {
-          checks[r.fields.CheckKey] = r.fields.State;
+      var records = [];
+      try {
+        // Try fetching all records and filter client-side (avoid Airtable filter formula errors)
+        records = await fetchAirtable('Checks');
+        console.log('LOAD SMART: Fetched', records.length, 'total records');
+        
+        // Filter records by CheckKey date prefix (CheckKey format: YYYY-MM-DD_workId_slot)
+        var filteredCount = 0;
+        records.forEach(function(r) {
+          if (r.fields.CheckKey && r.fields.State !== undefined) {
+            var keyDate = r.fields.CheckKey.substring(0, 10); // Extract YYYY-MM-DD from CheckKey
+            if (keyDate >= range.start && keyDate <= range.end) {
+              checks[r.fields.CheckKey] = r.fields.State;
+              filteredCount++;
+            }
+          }
+        });
+        console.log('LOAD SMART: Filtered to', filteredCount, 'records in date range');
+      } catch (e) {
+        console.error('LOAD SMART: Fetch failed, trying full load:', e);
+        // Fallback: load all records
+        try {
+          records = await fetchAirtable('Checks');
+          records.forEach(function(r) {
+            if (r.fields.CheckKey && r.fields.State !== undefined) {
+              checks[r.fields.CheckKey] = r.fields.State;
+            }
+          });
+          console.log('LOAD SMART: Fallback loaded', Object.keys(checks).length, 'total checks');
+        } catch (e2) {
+          console.error('LOAD SMART: Fallback also failed:', e2);
         }
-      });
+      }
       
       // Update cache with new data
       try {
