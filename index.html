@@ -1143,7 +1143,7 @@ async function saveRMStoAirtable() {
           console.log('SYNC: Polling for updates...');
           loadDataSmart();
         }
-      }, 3000); // 10 seconds
+      }, 1000); // 10 seconds
     }
     function stopPolling() {
       if (syncInterval) {
