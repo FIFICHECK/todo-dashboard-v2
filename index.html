@@ -401,38 +401,60 @@
       try {
         var existingChecks = await fetchAirtable('Checks');
         
-        // Delete all existing
+        // Build a map of existing records by CheckKey
+        var existingMap = {};
         for (var i = 0; i < existingChecks.length; i++) {
-          await deleteAirtableRecord('Checks', existingChecks[i].id);
+          var rec = existingChecks[i];
+          if (rec.fields.CheckKey) {
+            existingMap[rec.fields.CheckKey] = rec.id;
+          }
         }
         
+        // UPSERT: PATCH existing, POST new
         var checkKeys = Object.keys(checks);
+        var delay = 300;
+        
         for (var j = 0; j < checkKeys.length; j++) {
-          await createAirtableRecord('Checks', {
-            'CheckKey': checkKeys[j],
-            'State': checks[checkKeys[j]]
-          });
+          var key = checkKeys[j];
+          var state = checks[key];
+          
+          try {
+            if (existingMap[key]) {
+              // PATCH existing record
+              await updateAirtableRecord('Checks', existingMap[key], { 'State': state });
+            } else {
+              // POST new record
+              await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
+            }
+          } catch (err) {
+            // Retry once on rate limit
+            if (err.message && err.message.includes('429')) {
+              await new Promise(function(res) { setTimeout(res, 1000); });
+              if (existingMap[key]) {
+                await updateAirtableRecord('Checks', existingMap[key], { 'State': state });
+              } else {
+                await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
+              }
+            } else {
+              throw err;
+            }
+          }
+          
+          // Delay between requests to avoid rate limit
+          if (j < checkKeys.length - 1) {
+            await new Promise(function(res) { setTimeout(res, delay); });
+          }
         }
         
         console.log('Checks saved successfully:', checkKeys.length, 'records');
         showToast(true, '✅ 狀態已儲存');
       } catch (e) {
         console.error('Failed to save checks:', e);
-        // Reload checks from Airtable to restore state
-        var checksRecords = await fetchAirtable('Checks');
-        checks = {};
-        checksRecords.forEach(function(r) {
-          if (r.fields.CheckKey && r.fields.State !== undefined) {
-            checks[r.fields.CheckKey] = r.fields.State;
-          }
-        });
-        renderGrid();
-        alert('儲存勾選狀態失敗，數據已恢復。請稍後再試。');
-        showToast(false, '❌ 狀態儲存失敗');
+        showToast(false, '❌ 狀態儲存失敗: ' + e.message);
       }
     }
 
-    async function saveRMStoAirtable() {
+async function saveRMStoAirtable() {
       var existingSettings = await fetchAirtable('Settings');
       for (var i = 0; i < existingSettings.length; i++) {
         await deleteAirtableRecord('Settings', existingSettings[i].id);
