@@ -347,6 +347,22 @@
 
     async function loadData() {
       console.log('LOAD: loadData started');
+      
+      // Try to load checks from localStorage first (instant)
+      var cachedChecks = localStorage.getItem('checks_cache');
+      var cachedTimestamp = localStorage.getItem('checks_cache_timestamp');
+      var isStaleCache = !cachedTimestamp || (Date.now() - parseInt(cachedTimestamp)) > 5 * 60 * 1000; // 5 min stale
+      
+      if (cachedChecks) {
+        try {
+          var parsed = JSON.parse(cachedChecks);
+          checks = parsed;
+          console.log('LOAD: Loaded', Object.keys(checks).length, 'checks from localStorage cache');
+        } catch(e) {
+          console.log('LOAD: Cache parse failed, fetching from Airtable');
+        }
+      }
+      
       try {
         var worksRecords = await fetchAirtable('Works');
         console.log('LOAD: Fetched', worksRecords.length, 'works records');
@@ -399,6 +415,15 @@
         initYearPicker();
         renderGrid();
         renderRmSettings();
+        
+        // Save checks to localStorage cache
+        try {
+          localStorage.setItem('checks_cache', JSON.stringify(checks));
+          localStorage.setItem('checks_cache_timestamp', Date.now().toString());
+          console.log('LOAD: Saved checks to localStorage cache');
+        } catch(e) {
+          console.log('LOAD: localStorage cache save failed (quota exceeded?)');
+        }
       } catch (error) {
         console.error('Error loading data:', error);
         document.getElementById('loading').textContent = '❌ 載入失敗，請檢查 API Key 或網絡連接';
