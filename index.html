@@ -420,11 +420,13 @@
           
           if (existingMap[key]) {
             // Update existing record
+            console.log('DEBUG: PATCH', key, '=', state);
             await updateAirtableRecord('Checks', existingMap[key], {
               'State': state
             });
           } else {
             // Create new record
+            console.log('DEBUG: POST', key, '=', state);
             await createAirtableRecord('Checks', {
               'CheckKey': key,
               'State': state
@@ -434,10 +436,10 @@
         }
         
         console.log('Checks saved successfully:', savedCount, 'records');
-        showToast(true, '✅ 狀態已儲存');
+        showToast(true, '✅ 狀態已儲存 (' + savedCount + ' 記錄)');
       } catch (e) {
-        console.error('Failed to save checks:', e);
-        showToast(false, '❌ 狀態儲存失敗');
+        console.error('Failed to save checks:', e.status, e.statusText, e.response);
+        showToast(false, '❌ 狀態儲存失敗 (' + (e.status || 'Network') + ')');
       }
     }
     async function saveRMStoAirtable() {
