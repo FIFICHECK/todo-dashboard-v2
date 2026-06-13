@@ -123,6 +123,35 @@
     .modal-buttons .save-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(79,195,247,0.4); }
     .modal-buttons .delete-btn { background: linear-gradient(135deg, #c0392b 0%, #96281b 100%); color: #fff; margin-right: auto; }
     .modal-buttons .delete-btn:hover { background: #e74c3c; }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .toast.success {
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(46,204,113,0.4);
+    }
+    .toast.error {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(231,76,60,0.4);
+    }
   </style>
 </head>
 <body>
@@ -358,11 +387,12 @@
         
         // If we got here, all saves succeeded
         console.log('Works saved successfully:', works.length, 'records');
+        showToast(true, '✅ 工作已儲存');
       } catch (e) {
         console.error('Failed to save works:', e);
         // Reload data to restore state
         await loadData();
-        alert('儲存工作失敗，數據已恢復。請稍後再試。');
+        showToast(false, '❌ 儲存失敗');
       }
     }
 
@@ -384,6 +414,7 @@
         }
         
         console.log('Checks saved successfully:', checkKeys.length, 'records');
+        showToast(true, '✅ 狀態已儲存');
       } catch (e) {
         console.error('Failed to save checks:', e);
         // Reload checks from Airtable to restore state
@@ -395,22 +426,28 @@
           }
         });
         renderGrid();
-        alert('儲存勾選狀態失敗，數據已恢復。請稍後再試。');
+        showToast(false, '❌ 狀態儲存失敗');
       }
     }
 
     async function saveRMStoAirtable() {
-      var existingSettings = await fetchAirtable('Settings');
-      for (var i = 0; i < existingSettings.length; i++) {
-        await deleteAirtableRecord('Settings', existingSettings[i].id);
-      }
-      for (var j = 0; j < RMS.length; j++) {
-        if (RMS[j]) {
-          await createAirtableRecord('Settings', {
-            'Name': 'RM' + (j + 1),
-            'Value': RMS[j]
-          });
+      try {
+        var existingSettings = await fetchAirtable('Settings');
+        for (var i = 0; i < existingSettings.length; i++) {
+          await deleteAirtableRecord('Settings', existingSettings[i].id);
         }
+        for (var j = 0; j < RMS.length; j++) {
+          if (RMS[j]) {
+            await createAirtableRecord('Settings', {
+              'Name': 'RM' + (j + 1),
+              'Value': RMS[j]
+            });
+          }
+        }
+        showToast(true, '✅ RM 名稱已儲存');
+      } catch (e) {
+        console.error('Failed to save RMS:', e);
+        showToast(false, '❌ RM 名稱儲存失敗');
       }
     }
 
@@ -823,6 +860,16 @@
     }
     
     init();
+
+    function showToast(success, message) {
+      var toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast ' + (success ? 'success' : 'error') + ' show';
+      setTimeout(function() {
+        toast.classList.remove('show');
+      }, 2500);
+    }
   </script>
+  <div id="toast" class="toast"></div>
 </body>
 </html>
