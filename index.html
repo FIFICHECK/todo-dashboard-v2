@@ -415,7 +415,28 @@
     }
 
     function navigateWeek(direction) {
-      currentWeekStart.setDate(currentWeekStart.getDate() + (direction * 7));
+      var currentYear = currentWeekStart.getFullYear();
+      var firstMonday = getFirstMondayOfYear(currentYear);
+      var lastMonday = getLastMondayOfYear(currentYear);
+      
+      if (direction === -1) {
+        // 上一週：檢查是否已經係該年第一週
+        var currentMondayStr = currentWeekStart.toISOString().split('T')[0];
+        var firstMondayStr = firstMonday.toISOString().split('T')[0];
+        if (currentMondayStr === firstMondayStr) {
+          return; // 已經係第一週，唔郁
+        }
+        currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+      } else if (direction === 1) {
+        // 下一週：檢查是否已經係該年最後一週
+        var currentMondayStr = currentWeekStart.toISOString().split('T')[0];
+        var lastMondayStr = lastMonday.toISOString().split('T')[0];
+        if (currentMondayStr === lastMondayStr) {
+          return; // 已經係最後一週，唔郁
+        }
+        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      }
+      
       renderGrid();
     }
 
@@ -458,7 +479,9 @@
     function jumpToYear(year) {
       if (!year) return;
       var y = parseInt(year);
-      currentWeekStart = getFirstMondayOfYear(y);
+      // 計算 6月8日 喺邊個星期，跳去該星期嘅星期一
+      var june8 = new Date(y, 5, 8); // month is 0-indexed, so 5 = June
+      currentWeekStart = getMonday(june8);
       renderGrid();
     }
 
@@ -779,6 +802,10 @@
 
     // Initialize
     function init() {
+      // 每次進入頁面自動去當日嗰週
+      currentWeekStart = getMonday(new Date());
+      renderGrid();
+      
       var savedApiKey = localStorage.getItem('airtable_api_key');
       var savedBaseId = localStorage.getItem('airtable_base_id');
       
