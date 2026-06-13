@@ -455,6 +455,34 @@
       }, 100);
     }
 
+    // Save a single work to Airtable (PATCH if exists, POST if new)
+    async function saveSingleWorkToAirtable(work) {
+      try {
+        var fields = {
+          'Name': work.text,
+          'URL': work.url || '',
+          'DateKey': work.dateKey,
+          'Repeat': work.repeat || 'none',
+          'Urgent': work.urgent || false
+        };
+        
+        if (work.id && work.id.startsWith('rec')) {
+          // Existing record - PATCH
+          var result = await updateAirtableRecord('Works', work.id, fields);
+          console.log('Work PATCHED:', work.text);
+        } else {
+          // New record - POST
+          var result = await createAirtableRecord('Works', fields);
+          work.id = result.id;
+          console.log('Work POSTED:', work.text);
+        }
+        showToast(true, '✅ 工作已儲存');
+      } catch (e) {
+        console.error('Failed to save work:', e);
+        showToast(false, '❌ 儲存失敗');
+      }
+    }
+    
     async function saveWorksToAirtable() {
       try {
         var existingWorks = await fetchAirtable('Works');
@@ -995,20 +1023,21 @@ async function saveRMStoAirtable() {
           work.url = url; 
           work.repeat = repeat; 
           work.urgent = urgent; 
+          await saveSingleWorkToAirtable(work);
         }
       } else {
         if (!currentModalDateKey) { alert('請選擇日子'); return; }
-        works.push({ 
+        var newWork = { 
           id: 'new_' + Date.now(), 
           text: text, 
           url: url, 
           dateKey: currentModalDateKey, 
           repeat: repeat, 
           urgent: urgent 
-        });
+        };
+        works.push(newWork);
+        await saveSingleWorkToAirtable(newWork);
       }
-      
-      await saveWorksToAirtable();
       closeWorkModal();
       renderGrid();
     }
