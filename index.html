@@ -392,6 +392,7 @@
         console.error('Failed to save works:', e);
         // Reload data to restore state
         await loadData();
+        alert('儲存工作失敗，數據已恢復。請稍後再試。');
         showToast(false, '❌ 儲存失敗');
       }
     }
@@ -426,28 +427,23 @@
           }
         });
         renderGrid();
+        alert('儲存勾選狀態失敗，數據已恢復。請稍後再試。');
         showToast(false, '❌ 狀態儲存失敗');
       }
     }
 
     async function saveRMStoAirtable() {
-      try {
-        var existingSettings = await fetchAirtable('Settings');
-        for (var i = 0; i < existingSettings.length; i++) {
-          await deleteAirtableRecord('Settings', existingSettings[i].id);
+      var existingSettings = await fetchAirtable('Settings');
+      for (var i = 0; i < existingSettings.length; i++) {
+        await deleteAirtableRecord('Settings', existingSettings[i].id);
+      }
+      for (var j = 0; j < RMS.length; j++) {
+        if (RMS[j]) {
+          await createAirtableRecord('Settings', {
+            'Name': 'RM' + (j + 1),
+            'Value': RMS[j]
+          });
         }
-        for (var j = 0; j < RMS.length; j++) {
-          if (RMS[j]) {
-            await createAirtableRecord('Settings', {
-              'Name': 'RM' + (j + 1),
-              'Value': RMS[j]
-            });
-          }
-        }
-        showToast(true, '✅ RM 名稱已儲存');
-      } catch (e) {
-        console.error('Failed to save RMS:', e);
-        showToast(false, '❌ RM 名稱儲存失敗');
       }
     }
 
@@ -859,7 +855,6 @@
       }
     }
     
-    init();
 
     function showToast(success, message) {
       var toast = document.getElementById('toast');
@@ -883,6 +878,7 @@
         toast.classList.remove('show');
       }, 2500);
     }
+    init();
   </script>
   <div id="toast" class="toast"></div>
 </body>
