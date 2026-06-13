@@ -390,16 +390,26 @@
       try {
         var worksRecords = await fetchAirtable('Works');
         console.log('LOAD: Fetched', worksRecords.length, 'works records');
-        works = worksRecords.map(function(r) {
-          return {
-            id: r.id,
-            text: r.fields.Name || '',
-            url: r.fields.URL || '',
-            dateKey: r.fields.DateKey || '',
-            repeat: r.fields.Repeat || 'none',
-            urgent: r.fields.Urgent || false
-          };
-        });
+        
+        // Deduplicate by ID (remove duplicates with same id)
+        var seenIds = {};
+        var uniqueWorks = [];
+        for (var wi = 0; wi < worksRecords.length; wi++) {
+          var rec = worksRecords[wi];
+          if (!seenIds[rec.id]) {
+            seenIds[rec.id] = true;
+            uniqueWorks.push({
+              id: rec.id,
+              text: rec.fields.Name || '',
+              url: rec.fields.URL || '',
+              dateKey: rec.fields.DateKey || '',
+              repeat: rec.fields.Repeat || 'none',
+              urgent: rec.fields.Urgent || false
+            });
+          }
+        }
+        console.log('LOAD: Deduplicated to', uniqueWorks.length, 'unique works');
+        works = uniqueWorks;
 
         var settingsRecords = await fetchAirtable('Settings');
         settingsRecords.forEach(function(r) {
