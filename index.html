@@ -233,6 +233,7 @@
     var currentModalDateKey = '';
     var works = [];
     var checks = {};
+    var isSaving = false;
     var RMS = ['', '', '', '', '', '', ''];
     var isLoading = true;
 
@@ -435,6 +436,11 @@
     }
 
     async function saveChecksToAirtable() {
+      if (isSaving) {
+        console.log('SAVE: Skipped - already saving');
+        return;
+      }
+      isSaving = true;
       console.log('SAVE: saveChecksToAirtable started');
       console.log('SAVE: checks to save:', JSON.stringify(checks));
       try {
@@ -498,6 +504,8 @@
       } catch (e) {
         console.error('SAVE: Fatal error:', e);
         showToast(false, '❌ 狀態儲存失敗: ' + (e.message || e));
+      } finally {
+        isSaving = false;
       }
     }
 
