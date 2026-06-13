@@ -458,37 +458,44 @@
     async function saveWorksToAirtable() {
       try {
         var existingWorks = await fetchAirtable('Works');
-        // First, collect all existing records to potentially restore
-        var existingIds = existingWorks.map(function(r) { return r.id; });
-        
-        // Delete all existing
+        // Build map of existing records by Name+DateKey (composite key)
+        var existingMap = {};
         for (var i = 0; i < existingWorks.length; i++) {
-          await deleteAirtableRecord('Works', existingWorks[i].id);
+          var rec = existingWorks[i];
+          var key = (rec.fields.Name || '') + '|' + (rec.fields.DateKey || '');
+          existingMap[key] = { id: rec.id, rec: rec };
         }
         
-        // Create all current works
-        var newWorks = [];
+        // Upsert each work: PATCH if exists, POST if new
         for (var j = 0; j < works.length; j++) {
-          var result = await createAirtableRecord('Works', {
-            'Name': works[j].text,
-            'URL': works[j].url || '',
-            'DateKey': works[j].dateKey,
-            'Repeat': works[j].repeat || 'none',
-            'Urgent': works[j].urgent || false
-          });
-          // Update local work.id to match the new Airtable record id
-          works[j].id = result.id;
-          newWorks.push(result);
+          var work = works[j];
+          var key = work.text + '|' + work.dateKey;
+          var fields = {
+            'Name': work.text,
+            'URL': work.url || '',
+            'DateKey': work.dateKey,
+            'Repeat': work.repeat || 'none',
+            'Urgent': work.urgent || false
+          };
+          
+          if (existingMap[key]) {
+            // Update existing record
+            var result = await updateAirtableRecord('Works', existingMap[key].id, fields);
+            work.id = result.id;
+            console.log('Works: PATCHED', work.text);
+          } else {
+            // Create new record
+            var result = await createAirtableRecord('Works', fields);
+            work.id = result.id;
+            console.log('Works: POSTED', work.text);
+          }
         }
         
-        // If we got here, all saves succeeded
         console.log('Works saved successfully:', works.length, 'records');
         showToast(true, '✅ 工作已儲存');
       } catch (e) {
         console.error('Failed to save works:', e);
-        // Reload data to restore state
-        await loadData();
-        alert('儲存工作失敗，數據已恢復。請稍後再試。');
+        alert('儲存工作失敗，請稍後再試。');
         showToast(false, '❌ 儲存失敗');
       }
     }
