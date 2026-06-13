@@ -437,8 +437,10 @@
 
 async function saveSingleCheckToAirtable(key) {
       console.log('SAVE SINGLE: Starting for key:', key);
+      console.log('SAVE SINGLE: current checks[key]:', checks[key]);
       try {
         var existingChecks = await fetchAirtable('Checks');
+        console.log('SAVE SINGLE: Fetched', existingChecks.length, 'existing checks');
         var existingMap = {};
         for (var i = 0; i < existingChecks.length; i++) {
           var rec = existingChecks[i];
@@ -446,23 +448,30 @@ async function saveSingleCheckToAirtable(key) {
             existingMap[rec.fields.CheckKey] = rec.id;
           }
         }
+        console.log('SAVE SINGLE: existingMap has', Object.keys(existingMap).length, 'entries');
+        console.log('SAVE SINGLE: key in existingMap?', existingMap.hasOwnProperty(key));
         
         var state = checks[key];
-        console.log('SAVE SINGLE: state for', key, '=', state);
+        console.log('SAVE SINGLE: state to save:', state);
         
+        var result;
         if (existingMap[key]) {
-          console.log('SAVE SINGLE: PATCH existing record');
-          await updateAirtableRecord('Checks', existingMap[key], { 'State': state });
+          console.log('SAVE SINGLE: PATCH existing record ID:', existingMap[key]);
+          result = await updateAirtableRecord('Checks', existingMap[key], { 'State': state });
+          console.log('SAVE SINGLE: PATCH result:', JSON.stringify(result));
         } else {
-          console.log('SAVE SINGLE: POST new record');
-          await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
+          console.log('SAVE SINGLE: POST new record with CheckKey:', key, 'State:', state);
+          result = await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
+          console.log('SAVE SINGLE: POST result:', JSON.stringify(result));
         }
         
         console.log('SAVE SINGLE: Done for', key);
         showToast(true, '✅ 已儲存');
       } catch (e) {
         console.error('SAVE SINGLE: Error:', e);
-        showToast(false, '❌ 儲存失敗');
+        console.error('SAVE SINGLE: Error status:', e.status);
+        console.error('SAVE SINGLE: Error data:', JSON.stringify(e.data));
+        showToast(false, '❌ 儲存失敗: ' + (e.message || '未知錯誤'));
       }
     }
 
