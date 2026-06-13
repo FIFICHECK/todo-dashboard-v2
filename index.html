@@ -291,7 +291,14 @@
         },
         body: JSON.stringify({ fields: fields })
       });
-      return await response.json();
+      var data = await response.json();
+      if (!response.ok) {
+        var error = new Error(data.error?.message || 'Airtable API error');
+        error.status = response.status;
+        error.data = data;
+        throw error;
+      }
+      return data;
     }
 
     async function updateAirtableRecord(table, recordId, fields) {
@@ -303,7 +310,14 @@
         },
         body: JSON.stringify({ fields: fields })
       });
-      return await response.json();
+      var data = await response.json();
+      if (!response.ok) {
+        var error = new Error(data.error?.message || 'Airtable API error');
+        error.status = response.status;
+        error.data = data;
+        throw error;
+      }
+      return data;
     }
 
     async function deleteAirtableRecord(table, recordId) {
