@@ -837,7 +837,7 @@
     function init() {
       // 每次進入頁面自動去當日嗰週
       currentWeekStart = getMonday(new Date());
-      renderGrid();
+      // renderGrid() 會在 loadData() 完成後才調用，避免 race condition
       
       var savedApiKey = localStorage.getItem('airtable_api_key');
       var savedBaseId = localStorage.getItem('airtable_base_id');
