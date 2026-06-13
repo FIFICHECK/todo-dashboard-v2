@@ -345,24 +345,48 @@
       });
     }
 
+    // Calculate date range for smart loading: current week ± weeks
+    function getDateRangeForLoading(baseWeekStart, weeksBefore, weeksAfter) {
+      var start = new Date(baseWeekStart);
+      start.setDate(start.getDate() - weeksBefore * 7);
+      var end = new Date(baseWeekStart);
+      end.setDate(end.getDate() + weeksAfter * 7);
+      return {
+        start: getDateKey(start),
+        end: getDateKey(end)
+      };
+    }
+    
+    async function loadDataSmart() {
+      // Calculate date range: current week + 3 weeks before + 2 weeks after = 6 weeks total
+      var range = getDateRangeForLoading(currentWeekStart, 3, 2);
+      console.log('LOAD SMART: Fetching checks from', range.start, 'to', range.end);
+      
+      // Build Airtable filter formula for date range
+      var formula = "AND(IS_AFTER(DateKey, '" + range.start + "'), IS_BEFORE(DateKey, '" + range.end + "'))";
+      var records = await fetchAirtable('Checks', formula);
+      console.log('LOAD SMART: Fetched', records.length, 'checks in date range');
+      
+      records.forEach(function(r) {
+        if (r.fields.CheckKey && r.fields.State !== undefined) {
+          checks[r.fields.CheckKey] = r.fields.State;
+        }
+      });
+      
+      // Update cache with new data
+      try {
+        localStorage.setItem('checks_cache', JSON.stringify(checks));
+        localStorage.setItem('checks_cache_timestamp', Date.now().toString());
+        console.log('LOAD SMART: Updated localStorage cache');
+      } catch(e) {}
+      
+      renderGrid();
+    }
+    
     async function loadData() {
       console.log('LOAD: loadData started');
       
-      // Try to load checks from localStorage first (instant)
-      var cachedChecks = localStorage.getItem('checks_cache');
-      var cachedTimestamp = localStorage.getItem('checks_cache_timestamp');
-      var isStaleCache = !cachedTimestamp || (Date.now() - parseInt(cachedTimestamp)) > 5 * 60 * 1000; // 5 min stale
-      
-      if (cachedChecks) {
-        try {
-          var parsed = JSON.parse(cachedChecks);
-          checks = parsed;
-          console.log('LOAD: Loaded', Object.keys(checks).length, 'checks from localStorage cache');
-        } catch(e) {
-          console.log('LOAD: Cache parse failed, fetching from Airtable');
-        }
-      }
-      
+      // Step 1: Load works and settings (needed for UI)
       try {
         var worksRecords = await fetchAirtable('Works');
         console.log('LOAD: Fetched', worksRecords.length, 'works records');
@@ -377,24 +401,6 @@
           };
         });
 
-        var checksRecords = await fetchAirtable('Checks');
-        console.log('LOAD: Fetched', checksRecords.length, 'checks records from Airtable');
-        checks = {};
-        var loadedCount = 0;
-        checksRecords.forEach(function(r) {
-          if (r.fields.CheckKey && r.fields.State !== undefined) {
-            checks[r.fields.CheckKey] = r.fields.State;
-            loadedCount++;
-            // Debug: log the specific key we're looking for
-            if (r.fields.CheckKey === '2026-06-08_recQ8Nxn606CD8GGS_0') {
-              console.log('LOAD DEBUG: Found target key! State =', r.fields.State);
-            }
-          }
-        });
-        // Debug: check if target key exists in checks
-        console.log('LOAD DEBUG: checks["2026-06-08_recQ8Nxn606CD8GGS_0"] =', checks["2026-06-08_recQ8Nxn606CD8GGS_0"]);
-        console.log('LOAD: Loaded', loadedCount, 'check records into memory');
-
         var settingsRecords = await fetchAirtable('Settings');
         settingsRecords.forEach(function(r) {
           if (r.fields.Name && r.fields.Value) {
@@ -406,7 +412,33 @@
             }
           }
         });
-
+      } catch (error) {
+        console.error('LOAD: Error loading works/settings:', error);
+      }
+      
+      // Step 2: Try localStorage cache first for instant UI
+      var cachedChecks = localStorage.getItem('checks_cache');
+      var cachedTimestamp = localStorage.getItem('checks_cache_timestamp');
+      
+      if (cachedChecks) {
+        try {
+          var parsed = JSON.parse(cachedChecks);
+          checks = parsed;
+          console.log('LOAD: Loaded', Object.keys(checks).length, 'checks from localStorage cache (instant)');
+          isLoading = false;
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('dateControls').style.display = 'flex';
+          document.getElementById('mainTable').style.display = 'table';
+          document.getElementById('rmSettings').style.display = 'block';
+          initYearPicker();
+          renderGrid();
+          renderRmSettings();
+        } catch(e) {
+          console.log('LOAD: Cache parse failed');
+          checks = {};
+        }
+      } else {
+        // No cache, need to load from Airtable
         isLoading = false;
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dateControls').style.display = 'flex';
@@ -415,19 +447,12 @@
         initYearPicker();
         renderGrid();
         renderRmSettings();
-        
-        // Save checks to localStorage cache
-        try {
-          localStorage.setItem('checks_cache', JSON.stringify(checks));
-          localStorage.setItem('checks_cache_timestamp', Date.now().toString());
-          console.log('LOAD: Saved checks to localStorage cache');
-        } catch(e) {
-          console.log('LOAD: localStorage cache save failed (quota exceeded?)');
-        }
-      } catch (error) {
-        console.error('Error loading data:', error);
-        document.getElementById('loading').textContent = '❌ 載入失敗，請檢查 API Key 或網絡連接';
       }
+      
+      // Step 3: Background load current ± 5 weeks checks from Airtable (非阻塞)
+      setTimeout(function() {
+        loadDataSmart();
+      }, 100);
     }
 
     async function saveWorksToAirtable() {
