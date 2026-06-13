@@ -401,41 +401,45 @@
 
     async function saveChecksToAirtable() {
       try {
+        // Upsert mode: fetch existing, update or create individually
         var existingChecks = await fetchAirtable('Checks');
-        
-        // Delete all existing
+        var existingMap = {};
         for (var i = 0; i < existingChecks.length; i++) {
-          await deleteAirtableRecord('Checks', existingChecks[i].id);
+          var rec = existingChecks[i];
+          if (rec.fields.CheckKey) {
+            existingMap[rec.fields.CheckKey] = rec.id;
+          }
         }
         
         var checkKeys = Object.keys(checks);
+        var savedCount = 0;
+        
         for (var j = 0; j < checkKeys.length; j++) {
-          await createAirtableRecord('Checks', {
-            'CheckKey': checkKeys[j],
-            'State': checks[checkKeys[j]]
-          });
+          var key = checkKeys[j];
+          var state = checks[key];
+          
+          if (existingMap[key]) {
+            // Update existing record
+            await updateAirtableRecord('Checks', existingMap[key], {
+              'State': state
+            });
+          } else {
+            // Create new record
+            await createAirtableRecord('Checks', {
+              'CheckKey': key,
+              'State': state
+            });
+          }
+          savedCount++;
         }
         
-        console.log('Checks saved successfully:', checkKeys.length, 'records');
+        console.log('Checks saved successfully:', savedCount, 'records');
         showToast(true, '✅ 狀態已儲存');
       } catch (e) {
         console.error('Failed to save checks:', e);
-        // Reload checks from Airtable to restore state
-        var checksRecords = await fetchAirtable('Checks');
-        checks = {};
-        console.log('DEBUG: Loaded', checksRecords.length, 'check records from Airtable');
-        checksRecords.forEach(function(r) {
-          if (r.fields.CheckKey && r.fields.State !== undefined) {
-            checks[r.fields.CheckKey] = r.fields.State;
-            console.log('DEBUG: Set check', r.fields.CheckKey, '=', r.fields.State);
-          }
-        });
-        renderGrid();
-        alert('儲存勾選狀態失敗，數據已恢復。請稍後再試。');
         showToast(false, '❌ 狀態儲存失敗');
       }
     }
-
     async function saveRMStoAirtable() {
       var existingSettings = await fetchAirtable('Settings');
       for (var i = 0; i < existingSettings.length; i++) {
