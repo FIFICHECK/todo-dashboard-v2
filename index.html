@@ -435,6 +435,37 @@
       }
     }
 
+async function saveSingleCheckToAirtable(key) {
+      console.log('SAVE SINGLE: Starting for key:', key);
+      try {
+        var existingChecks = await fetchAirtable('Checks');
+        var existingMap = {};
+        for (var i = 0; i < existingChecks.length; i++) {
+          var rec = existingChecks[i];
+          if (rec.fields.CheckKey) {
+            existingMap[rec.fields.CheckKey] = rec.id;
+          }
+        }
+        
+        var state = checks[key];
+        console.log('SAVE SINGLE: state for', key, '=', state);
+        
+        if (existingMap[key]) {
+          console.log('SAVE SINGLE: PATCH existing record');
+          await updateAirtableRecord('Checks', existingMap[key], { 'State': state });
+        } else {
+          console.log('SAVE SINGLE: POST new record');
+          await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
+        }
+        
+        console.log('SAVE SINGLE: Done for', key);
+        showToast(true, '✅ 已儲存');
+      } catch (e) {
+        console.error('SAVE SINGLE: Error:', e);
+        showToast(false, '❌ 儲存失敗');
+      }
+    }
+
     async function saveChecksToAirtable() {
       if (isSaving) {
         console.log('SAVE: Skipped - already saving');
@@ -657,7 +688,7 @@ async function saveRMStoAirtable() {
       checks[key] = next;
       renderGrid();
       try {
-        await saveChecksToAirtable();
+        await saveSingleCheckToAirtable(key);
       } catch (e) {
         console.error('Save check failed:', e);
         alert('儲存失敗，請稍後再試');
