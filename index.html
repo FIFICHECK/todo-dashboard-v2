@@ -420,6 +420,8 @@
             'Repeat': works[j].repeat || 'none',
             'Urgent': works[j].urgent || false
           });
+          // Update local work.id to match the new Airtable record id
+          works[j].id = result.id;
           newWorks.push(result);
         }
         
