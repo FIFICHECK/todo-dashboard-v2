@@ -458,18 +458,32 @@
     async function saveWorksToAirtable() {
       try {
         var existingWorks = await fetchAirtable('Works');
-        // Build map of existing records by Name+DateKey (composite key)
-        var existingMap = {};
+        // Build map of existing records by Airtable ID
+        var existingById = {};
         for (var i = 0; i < existingWorks.length; i++) {
-          var rec = existingWorks[i];
-          var key = (rec.fields.Name || '') + '|' + (rec.fields.DateKey || '');
-          existingMap[key] = { id: rec.id, rec: rec };
+          existingById[existingWorks[i].id] = existingWorks[i];
         }
         
-        // Upsert each work: PATCH if exists, POST if new
+        // Separate works into: to PATCH (has existing Airtable ID) and to POST (new)
+        var toPatch = [];
+        var toCreate = [];
+        
         for (var j = 0; j < works.length; j++) {
           var work = works[j];
-          var key = work.text + '|' + work.dateKey;
+          if (work.id && work.id.startsWith('rec') && existingById[work.id]) {
+            // This work has a valid Airtable ID and it still exists
+            toPatch.push(work);
+          } else {
+            // New work or ID no longer exists in Airtable
+            toCreate.push(work);
+          }
+        }
+        
+        console.log('Works: PATCH', toPatch.length, 'records, POST', toCreate.length, 'new records');
+        
+        // PATCH existing records
+        for (var k = 0; k < toPatch.length; k++) {
+          var work = toPatch[k];
           var fields = {
             'Name': work.text,
             'URL': work.url || '',
@@ -477,18 +491,23 @@
             'Repeat': work.repeat || 'none',
             'Urgent': work.urgent || false
           };
-          
-          if (existingMap[key]) {
-            // Update existing record
-            var result = await updateAirtableRecord('Works', existingMap[key].id, fields);
-            work.id = result.id;
-            console.log('Works: PATCHED', work.text);
-          } else {
-            // Create new record
-            var result = await createAirtableRecord('Works', fields);
-            work.id = result.id;
-            console.log('Works: POSTED', work.text);
-          }
+          var result = await updateAirtableRecord('Works', work.id, fields);
+          console.log('Works: PATCHED', work.text);
+        }
+        
+        // POST new records
+        for (var m = 0; m < toCreate.length; m++) {
+          var work = toCreate[m];
+          var fields = {
+            'Name': work.text,
+            'URL': work.url || '',
+            'DateKey': work.dateKey,
+            'Repeat': work.repeat || 'none',
+            'Urgent': work.urgent || false
+          };
+          var result = await createAirtableRecord('Works', fields);
+          work.id = result.id;
+          console.log('Works: POSTED', work.text);
         }
         
         console.log('Works saved successfully:', works.length, 'records');
