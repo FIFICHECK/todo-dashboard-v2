@@ -411,11 +411,30 @@
           }
         }
         
+        // Helper to add delay between API calls
+        var delay = function(ms) { return new Promise(function(resolve) { setTimeout(resolve, ms); }); };
+        
+        // Retry helper for API calls with exponential backoff
+        async function saveWithRetry(fn, maxRetries) {
+          for (var attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+              await fn();
+              return true;
+            } catch (e) {
+              if (e.status === 429 && attempt < maxRetries) {
+                var waitMs = Math.pow(2, attempt) * 500;
+                console.log('Rate limited (attempt ' + (attempt+1) + '), waiting ' + waitMs + 'ms...');
+                await delay(waitMs);
+              } else {
+                throw e;
+              }
+            }
+          }
+          return false;
+        }
+        
         var checkKeys = Object.keys(checks);
         var savedCount = 0;
-        
-        // Helper to add delay between API calls (Airtable rate limit: 5/sec)
-        var delay = function(ms) { return new Promise(function(resolve) { setTimeout(resolve, ms); }); };
         
         for (var j = 0; j < checkKeys.length; j++) {
           var key = checkKeys[j];
@@ -424,28 +443,33 @@
           if (existingMap[key]) {
             // Update existing record
             console.log('DEBUG: PATCH', key, '=', state);
-            await updateAirtableRecord('Checks', existingMap[key], {
-              'State': state
-            });
+            await saveWithRetry(async function() {
+              await updateAirtableRecord('Checks', existingMap[key], {
+                'State': state
+              });
+            }, 3);
           } else {
             // Create new record
             console.log('DEBUG: POST', key, '=', state);
-            await createAirtableRecord('Checks', {
-              'CheckKey': key,
-              'State': state
-            });
+            await saveWithRetry(async function() {
+              await createAirtableRecord('Checks', {
+                'CheckKey': key,
+                'State': state
+              });
+            }, 3);
           }
           savedCount++;
-          if (j < checkKeys.length - 1) await delay(250); // Wait 250ms between requests
+          if (j < checkKeys.length - 1) await delay(300); // 300ms between requests
         }
         
         console.log('Checks saved successfully:', savedCount, 'records');
         showToast(true, '✅ 狀態已儲存 (' + savedCount + ' 記錄)');
       } catch (e) {
-        console.error('Failed to save checks:', e.status, e.statusText, e.response);
+        console.error('Failed to save checks:', e.status || 'network error');
         showToast(false, '❌ 狀態儲存失敗 (' + (e.status || 'Network') + ')');
       }
     }
+
     async function saveRMStoAirtable() {
       var existingSettings = await fetchAirtable('Settings');
       for (var i = 0; i < existingSettings.length; i++) {
