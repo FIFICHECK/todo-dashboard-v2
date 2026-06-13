@@ -467,6 +467,7 @@
         initYearPicker();
         renderGrid();
         renderRmSettings();
+        startPolling(); // Start polling for real-time sync
       }
       
       // Step 3: Background load current ± 5 weeks checks from Airtable (非阻塞)
@@ -1127,8 +1128,29 @@ async function saveRMStoAirtable() {
       if (document.visibilityState === 'visible' && !isLoading) {
         console.log('SYNC: Page became visible, triggering background sync...');
         loadDataSmart();
+      } else if (document.visibilityState === 'hidden') {
+        console.log('SYNC: Page hidden, stopping polling...');
+        stopPolling();
       }
     });
+    
+    // Poll for updates every 10 seconds (real-time sync)
+    var syncInterval = null;
+    function startPolling() {
+      if (syncInterval) clearInterval(syncInterval);
+      syncInterval = setInterval(function() {
+        if (!isLoading) {
+          console.log('SYNC: Polling for updates...');
+          loadDataSmart();
+        }
+      }, 10000); // 10 seconds
+    }
+    function stopPolling() {
+      if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+      }
+    }
     
     // Initialize
     function init() {
