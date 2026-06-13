@@ -329,9 +329,11 @@
 
         var checksRecords = await fetchAirtable('Checks');
         checks = {};
+        console.log('DEBUG: Loaded', checksRecords.length, 'check records from Airtable');
         checksRecords.forEach(function(r) {
           if (r.fields.CheckKey && r.fields.State !== undefined) {
             checks[r.fields.CheckKey] = r.fields.State;
+            console.log('DEBUG: Set check', r.fields.CheckKey, '=', r.fields.State);
           }
         });
 
@@ -421,9 +423,11 @@
         // Reload checks from Airtable to restore state
         var checksRecords = await fetchAirtable('Checks');
         checks = {};
+        console.log('DEBUG: Loaded', checksRecords.length, 'check records from Airtable');
         checksRecords.forEach(function(r) {
           if (r.fields.CheckKey && r.fields.State !== undefined) {
             checks[r.fields.CheckKey] = r.fields.State;
+            console.log('DEBUG: Set check', r.fields.CheckKey, '=', r.fields.State);
           }
         });
         renderGrid();
