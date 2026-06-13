@@ -471,6 +471,7 @@ async function saveSingleCheckToAirtable(key) {
           console.log('SAVE SINGLE: POST new record with CheckKey:', key, 'State:', state);
           result = await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
           console.log('SAVE SINGLE: POST result:', JSON.stringify(result));
+          alert('DEBUG POST result:\n' + JSON.stringify(result, null, 2));
         }
         
         console.log('SAVE SINGLE: Done for', key);
