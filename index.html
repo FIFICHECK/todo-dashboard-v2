@@ -271,15 +271,32 @@
     }
 
     async function fetchAirtable(table, filterByFormula) {
-      var url = AIRTABLE_BASE_URL + '/' + encodeURIComponent(table);
-      if (filterByFormula) {
-        url += '?filterByFormula=' + encodeURIComponent(filterByFormula);
-      }
-      var response = await fetch(url, {
-        headers: { 'Authorization': 'Bearer ' + AIRTABLE_API_KEY }
-      });
-      var data = await response.json();
-      return data.records || [];
+      var allRecords = [];
+      var offset = null;
+      do {
+        var url = AIRTABLE_BASE_URL + '/' + encodeURIComponent(table);
+        var params = [];
+        if (filterByFormula) {
+          params.push('filterByFormula=' + encodeURIComponent(filterByFormula));
+        }
+        if (offset) {
+          params.push('offset=' + offset);
+        }
+        if (params.length > 0) {
+          url += '?' + params.join('&');
+        }
+        var response = await fetch(url, {
+          headers: { 'Authorization': 'Bearer ' + AIRTABLE_API_KEY }
+        });
+        var data = await response.json();
+        if (data.records) {
+          allRecords = allRecords.concat(data.records);
+        }
+        offset = data.offset || null;
+        // Safety: max 10 pages (1000 records)
+        if (allRecords.length >= 1000) break;
+      } while (offset);
+      return allRecords;
     }
 
     async function createAirtableRecord(table, fields) {
@@ -328,8 +345,10 @@
     }
 
     async function loadData() {
+      console.log('LOAD: loadData started');
       try {
         var worksRecords = await fetchAirtable('Works');
+        console.log('LOAD: Fetched', worksRecords.length, 'works records');
         works = worksRecords.map(function(r) {
           return {
             id: r.id,
@@ -342,12 +361,16 @@
         });
 
         var checksRecords = await fetchAirtable('Checks');
+        console.log('LOAD: Fetched', checksRecords.length, 'checks records from Airtable');
         checks = {};
+        var loadedCount = 0;
         checksRecords.forEach(function(r) {
           if (r.fields.CheckKey && r.fields.State !== undefined) {
             checks[r.fields.CheckKey] = r.fields.State;
+            loadedCount++;
           }
         });
+        console.log('LOAD: Loaded', loadedCount, 'check records into memory');
 
         var settingsRecords = await fetchAirtable('Settings');
         settingsRecords.forEach(function(r) {
