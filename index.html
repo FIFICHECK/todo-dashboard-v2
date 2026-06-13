@@ -414,6 +414,9 @@
         var checkKeys = Object.keys(checks);
         var savedCount = 0;
         
+        // Helper to add delay between API calls (Airtable rate limit: 5/sec)
+        var delay = function(ms) { return new Promise(function(resolve) { setTimeout(resolve, ms); }); };
+        
         for (var j = 0; j < checkKeys.length; j++) {
           var key = checkKeys[j];
           var state = checks[key];
@@ -433,6 +436,7 @@
             });
           }
           savedCount++;
+          if (j < checkKeys.length - 1) await delay(250); // Wait 250ms between requests
         }
         
         console.log('Checks saved successfully:', savedCount, 'records');
