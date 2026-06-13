@@ -294,8 +294,8 @@
           allRecords = allRecords.concat(data.records);
         }
         offset = data.offset || null;
-        // Safety: max 10 pages (1000 records)
-        if (allRecords.length >= 1000) break;
+        // Safety: limit to 15000 records (Airtable max is ~100k)
+        if (allRecords.length >= 15000) break;
       } while (offset);
       return allRecords;
     }
