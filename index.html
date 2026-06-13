@@ -871,6 +871,37 @@
       loadData();
     }
 
+    // Background save queue - stores pending saves before page unload
+    var pendingSaveQueue = [];
+    
+    // Flush all pending saves
+    function flushPendingSaves() {
+      if (pendingSaveQueue.length === 0) return;
+      console.log('Background: Flushing', pendingSaveQueue.length, 'pending saves...');
+      // Use synchronous XHR for reliable background save (works better than sendBeacon for Airtable)
+      pendingSaveQueue.forEach(function(data) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', AIRTABLE_BASE_URL + '/' + encodeURIComponent(data.table), false); // sync=false is important!
+        xhr.setRequestHeader('Authorization', 'Bearer ' + AIRTABLE_API_KEY);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify({ fields: data.fields }));
+      });
+      pendingSaveQueue = [];
+      console.log('Background: All pending saves completed');
+    }
+    
+    // Listen for page visibility changes - save when user leaves
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') {
+        flushPendingSaves();
+      }
+    });
+    
+    // Also save on beforeunload
+    window.addEventListener('beforeunload', function() {
+      flushPendingSaves();
+    });
+    
     // Initialize
     function init() {
       // 每次進入頁面自動去當日嗰週
@@ -892,7 +923,7 @@
         document.getElementById('loading').style.display = 'none';
       }
     }
-    
+
 
     function showToast(success, message) {
       var toast = document.getElementById('toast');
