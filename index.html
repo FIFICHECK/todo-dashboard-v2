@@ -1056,9 +1056,11 @@ async function saveRMStoAirtable() {
       var id = document.getElementById('editWorkId').value;
       if (!confirm('確定刪除呢项工作？')) return;
       works = works.filter(function(w) { return w.id !== id; });
-      await saveWorksToAirtable();
+      // Note: DELETE API is 403 Forbidden for this token, so we only delete locally
+      // The Airtable record will need to be manually deleted if needed
       closeWorkModal();
       renderGrid();
+      showToast(true, '✅ 工作已刪除（請手動清理 Airtable）');
     }
 
     function closeWorkModal() {
