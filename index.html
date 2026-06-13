@@ -756,6 +756,10 @@ async function saveRMStoAirtable() {
       var next = (current + 1) % 3;
       checks[key] = next;
       renderGrid();
+      // Update localStorage cache immediately
+      try {
+        localStorage.setItem('checks_cache', JSON.stringify(checks));
+      } catch(e) {}
       try {
         await saveSingleCheckToAirtable(key);
         // Debug alert showing what was saved
