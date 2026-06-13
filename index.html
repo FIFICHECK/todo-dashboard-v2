@@ -480,6 +480,7 @@ async function saveSingleCheckToAirtable(key) {
         console.error('SAVE SINGLE: Error status:', e.status);
         console.error('SAVE SINGLE: Error data:', JSON.stringify(e.data));
         showToast(false, '❌ 儲存失敗: ' + (e.message || '未知錯誤'));
+        throw e; // Re-throw so toggleCheck knows save failed
       }
     }
 
@@ -710,10 +711,13 @@ async function saveRMStoAirtable() {
         var work = works.find(w => w.id === workId);
         var rmName = RMS[rmIdx] || 'RM' + (rmIdx + 1);
         var stateName = ['', '✅', '❌'][next];
-        alert('已保存！\n\n工作: ' + (work ? work.text : workId) + '\nRM: ' + rmName + '\nState: ' + current + ' → ' + next + ' (' + stateName + ')\nKey: ' + key);
+        var checkKeyExists = await fetchAirtable('Checks').then(records => {
+          return records.some(r => r.fields.CheckKey === key);
+        });
+        alert('✅ 保存成功！\n\n工作: ' + (work ? work.text : workId) + '\nRM: ' + rmName + '\nState: ' + current + ' → ' + next + ' (' + stateName + ')\nKey: ' + key + '\n\n已在 Airtable 確認: ' + (checkKeyExists ? '是' : '否'));
       } catch (e) {
         console.error('Save check failed:', e);
-        alert('儲存失敗，請稍後再試');
+        alert('❌ 保存失敗！\n\n工作: ' + (work ? work.text : workId) + '\nRM: ' + rmName + '\nState: ' + current + ' → ' + next + '\nKey: ' + key + '\n\n錯誤: ' + (e.message || '未知錯誤'));
       }
     }
 
