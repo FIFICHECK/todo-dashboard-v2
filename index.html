@@ -412,8 +412,12 @@
     }
 
     async function saveChecksToAirtable() {
+      console.log('SAVE: saveChecksToAirtable started');
+      console.log('SAVE: checks to save:', JSON.stringify(checks));
       try {
+        console.log('SAVE: Fetching existing checks from Airtable...');
         var existingChecks = await fetchAirtable('Checks');
+        console.log('SAVE: Fetched', existingChecks.length, 'existing checks');
         
         // Build a map of existing records by CheckKey
         var existingMap = {};
@@ -423,35 +427,37 @@
             existingMap[rec.fields.CheckKey] = rec.id;
           }
         }
+        console.log('SAVE: existingMap has', Object.keys(existingMap).length, 'entries');
         
         // UPSERT: PATCH existing, POST new
         var checkKeys = Object.keys(checks);
+        console.log('SAVE: Total checkKeys to save:', checkKeys.length);
         var delay = 300;
+        var savedCount = 0;
+        var errorCount = 0;
         
         for (var j = 0; j < checkKeys.length; j++) {
           var key = checkKeys[j];
           var state = checks[key];
+          console.log('SAVE: Processing', key, '=', state, '(existing?', !!existingMap[key], ')');
           
           try {
             if (existingMap[key]) {
               // PATCH existing record
+              console.log('SAVE: PATCH', existingMap[key], 'with State:', state);
               await updateAirtableRecord('Checks', existingMap[key], { 'State': state });
+              console.log('SAVE: PATCH successful for', key);
             } else {
               // POST new record
+              console.log('SAVE: POST new record for', key, 'with State:', state);
               await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
+              console.log('SAVE: POST successful for', key);
             }
+            savedCount++;
           } catch (err) {
-            // Retry once on rate limit
-            if (err.message && err.message.includes('429')) {
-              await new Promise(function(res) { setTimeout(res, 1000); });
-              if (existingMap[key]) {
-                await updateAirtableRecord('Checks', existingMap[key], { 'State': state });
-              } else {
-                await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
-              }
-            } else {
-              throw err;
-            }
+            console.error('SAVE ERROR for', key, ':', err.message || err);
+            errorCount++;
+            // Don't throw, continue with other records
           }
           
           // Delay between requests to avoid rate limit
@@ -460,11 +466,15 @@
           }
         }
         
-        console.log('Checks saved successfully:', checkKeys.length, 'records');
-        showToast(true, '✅ 狀態已儲存');
+        console.log('SAVE: Done! Saved:', savedCount, 'Errors:', errorCount);
+        if (errorCount === 0) {
+          showToast(true, '✅ 狀態已儲存 (' + savedCount + ' 記錄)');
+        } else {
+          showToast(false, '⚠️ 部分儲存失敗 (' + errorCount + ' 錯誤)');
+        }
       } catch (e) {
-        console.error('Failed to save checks:', e);
-        showToast(false, '❌ 狀態儲存失敗: ' + e.message);
+        console.error('SAVE: Fatal error:', e);
+        showToast(false, '❌ 狀態儲存失敗: ' + (e.message || e));
       }
     }
 
