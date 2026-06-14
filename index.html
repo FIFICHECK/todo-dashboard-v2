@@ -573,7 +573,7 @@ async function saveSingleCheckToAirtable(key) {
       // No longer fetches all records first - much faster!
       console.log('SAVE SINGLE: Saving key:', key, 'state:', checks[key]);
       var state = checks[key];
-      
+      isSaving = true;
       try {
         // Try POST first (assume new record)
         var result = await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
@@ -609,6 +609,8 @@ async function saveSingleCheckToAirtable(key) {
           console.error('SAVE SINGLE: Error:', e);
           showToast(false, '❌ 儲存失敗: ' + (e.message || '未知錯誤'));
         }
+      } finally {
+        isSaving = false;
       }
     }
 
@@ -1139,7 +1141,7 @@ async function saveRMStoAirtable() {
     function startPolling() {
       if (syncInterval) clearInterval(syncInterval);
       syncInterval = setInterval(function() {
-        if (!isLoading) {
+        if (!isLoading && !isSaving) {
           console.log('SYNC: Polling for updates...');
           loadDataSmart();
         }
