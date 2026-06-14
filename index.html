@@ -1272,6 +1272,16 @@ async function saveRMStoAirtable() {
       }
     }
     
+    // Protect: if user refreshes/closes during a save, wait for it to complete
+    window.addEventListener('beforeunload', function(e) {
+      if (isSaving) {
+        // Show warning that save is in progress
+        e.preventDefault();
+        e.returnValue = '儲存中，請稍候...';
+        // Don't return false - let the browser show its dialog
+      }
+    });
+
     // Initialize
     function init() {
       // 每次進入頁面自動去當日嗰週
