@@ -1161,39 +1161,46 @@ async function saveRMStoAirtable() {
       document.getElementById('workNameInput').focus();
     }
 
+    var isSavingWork = false; // Prevent double-save on work modal
     async function saveWork() {
+      if (isSavingWork) {
+        console.log('SAVE WORK: Already saving, skipped');
+        return;
+      }
+      isSavingWork = true;
       var id = document.getElementById('editWorkId').value;
       var text = document.getElementById('workNameInput').value.trim();
       var url = document.getElementById('workUrlInput').value.trim();
       var repeat = document.getElementById('workRepeatInput').value;
       var urgent = document.getElementById('workUrgentInput').checked;
-      
-      if (!text) { alert('請輸入工作名稱'); return; }
-      
+
+      if (!text) { isSavingWork = false; alert('請輸入工作名稱'); return; }
+
       if (id) {
         var work = works.find(function(w) { return w.id === id; });
-        if (work) { 
-          work.text = text; 
-          work.url = url; 
-          work.repeat = repeat; 
-          work.urgent = urgent; 
+        if (work) {
+          work.text = text;
+          work.url = url;
+          work.repeat = repeat;
+          work.urgent = urgent;
           await saveSingleWorkToAirtable(work);
         }
       } else {
-        if (!currentModalDateKey) { alert('請選擇日子'); return; }
-        var newWork = { 
-          id: 'new_' + Date.now(), 
-          text: text, 
-          url: url, 
-          dateKey: currentModalDateKey, 
-          repeat: repeat, 
-          urgent: urgent 
+        if (!currentModalDateKey) { isSavingWork = false; alert('請選擇日子'); return; }
+        var newWork = {
+          id: 'new_' + Date.now(),
+          text: text,
+          url: url,
+          dateKey: currentModalDateKey,
+          repeat: repeat,
+          urgent: urgent
         };
         works.push(newWork);
         await saveSingleWorkToAirtable(newWork);
       }
       closeWorkModal();
       renderGrid();
+      isSavingWork = false;
     }
 
     async function deleteWork() {
