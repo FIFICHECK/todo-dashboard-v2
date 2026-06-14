@@ -1127,7 +1127,7 @@ async function saveRMStoAirtable() {
     
     // Auto-sync when page becomes visible again (e.g., switch from another tab/app)
     document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'visible' && !isLoading) {
+      if (document.visibilityState === 'visible' && !isLoading && !isSaving) {
         console.log('SYNC: Page became visible, triggering background sync...');
         loadDataSmart();
       } else if (document.visibilityState === 'hidden') {
