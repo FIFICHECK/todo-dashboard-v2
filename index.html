@@ -400,18 +400,36 @@
       try {
         var records;
         var fetchFilter;
+        var isDelta = false;
         
         if (lastSyncTime) {
           // Delta sync: only fetch records modified since last sync
-          // lastModifiedTime is Airtable's built-in field (proper datetime type, not text)
+          // Note: lastModifiedTime must be a proper Airtable datetime field, not text
           fetchFilter = "IS_AFTER({lastModifiedTime}, '" + lastSyncTime + "')";
           console.log('LOAD SMART: Delta sync since', lastSyncTime);
+          isDelta = true;
         } else {
-          // First load: fetch all records
-          console.log('LOAD SMART: Full sync (no previous sync time)');
+          // No lastSyncTime: this is a fresh start, use date-based filter instead
+          var range = getInitialDateRange(2);
+          fetchFilter = buildCheckKeyDateFilter(range.start, range.end);
+          console.log('LOAD SMART: Date-range sync for', range.start, 'to', range.end);
         }
         
-        records = await fetchAirtable('Checks', fetchFilter || null);
+        try {
+          records = await fetchAirtable('Checks', fetchFilter);
+        } catch (fetchErr) {
+          // If 422 (bad formula, e.g. lastModifiedTime field doesn't exist), fall back to date range
+          if (fetchErr.status === 422 && isDelta) {
+            console.log('LOAD SMART: Delta filter failed (422), falling back to date range sync');
+            lastSyncTime = null; // Disable delta permanently
+            try { localStorage.removeItem('checks_last_sync'); } catch(e) {}
+            var range = getInitialDateRange(2);
+            fetchFilter = buildCheckKeyDateFilter(range.start, range.end);
+            records = await fetchAirtable('Checks', fetchFilter);
+          } else {
+            throw fetchErr;
+          }
+        }
         console.log('LOAD SMART: Fetched', records.length, 'records from Airtable');
         
         // Update checks object with fetched records
