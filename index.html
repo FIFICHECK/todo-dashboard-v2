@@ -404,8 +404,8 @@
         
         if (lastSyncTime) {
           // Delta sync: only fetch records modified since last sync
-          // Note: lastModifiedTime must be a proper Airtable datetime field, not text
-          fetchFilter = "IS_AFTER({lastModifiedTime}, '" + lastSyncTime + "')";
+          // Uses our custom LastModifiedTime field (Airtable datetime type)
+          fetchFilter = "IS_AFTER({LastModifiedTime}, '" + lastSyncTime + "')";
           console.log('LOAD SMART: Delta sync since', lastSyncTime);
           isDelta = true;
         } else {
@@ -670,10 +670,11 @@ async function saveSingleCheckToAirtable(key) {
       // No longer fetches all records first - much faster!
       console.log('SAVE SINGLE: Saving key:', key, 'state:', checks[key]);
       var state = checks[key];
+      var nowISO = new Date().toISOString();
       isSaving = true;
       try {
         // Try POST first (assume new record)
-        var result = await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state });
+        var result = await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state, 'LastModifiedTime': nowISO });
         console.log('SAVE SINGLE: POST success:', result.id);
         showToast(true, '✅ 已儲存');
       } catch (e) {
@@ -691,7 +692,7 @@ async function saveSingleCheckToAirtable(key) {
               }
             }
             if (existingMap[key]) {
-              result = await updateAirtableRecord('Checks', existingMap[key], { 'State': state });
+              result = await updateAirtableRecord('Checks', existingMap[key], { 'State': state, 'LastModifiedTime': nowISO });
               console.log('SAVE SINGLE: PATCH success after conflict');
               showToast(true, '✅ 已儲存');
             } else {
