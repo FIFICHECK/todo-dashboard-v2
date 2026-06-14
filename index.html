@@ -942,9 +942,25 @@ async function saveRMStoAirtable() {
       try {
         localStorage.setItem('checks_cache', JSON.stringify(checks));
       } catch(e) {}
+
+      // isSaving flag prevents polling from overwriting this save
+      isSaving = true;
       try {
         await saveSingleCheckToAirtable(key);
-        // Show success alert (no need to verify - POST success means record is saved)
+
+        // Also update LastModifiedTime via second PATCH so delta sync works
+        var existingChecks = await fetchAirtable('Checks');
+        var existingMap = {};
+        for (var i = 0; i < existingChecks.length; i++) {
+          var rec = existingChecks[i];
+          if (rec.fields.CheckKey) {
+            existingMap[rec.fields.CheckKey] = rec.id;
+          }
+        }
+        if (existingMap[key]) {
+          await updateAirtableRecord('Checks', existingMap[key], { 'LastModifiedTime': new Date().toISOString() });
+        }
+
         var work = works.find(w => w.id === workId);
         var rmName = RMS[rmIdx] || 'RM' + (rmIdx + 1);
         var stateName = ['', '✅', '❌'][next];
@@ -952,6 +968,8 @@ async function saveRMStoAirtable() {
       } catch (e) {
         console.error('Save check failed:', e);
         showToast(false, '❌ 保存失敗');
+      } finally {
+        isSaving = false;
       }
     }
 
