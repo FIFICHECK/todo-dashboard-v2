@@ -234,6 +234,7 @@
     var currentModalDateKey = '';
     var works = [];
     var checks = {};
+    var checkRecordIds = {}; // Cache: CheckKey → Airtable record ID
     var isSaving = false;
     var isSyncing = false;
     var lastSyncTime = null; // For delta sync: only fetch records modified after this time
@@ -437,6 +438,7 @@
         records.forEach(function(r) {
           if (r.fields.CheckKey && r.fields.State !== undefined) {
             checks[r.fields.CheckKey] = r.fields.State;
+            checkRecordIds[r.fields.CheckKey] = r.id; // Cache record ID
             updatedCount++;
           }
         });
@@ -556,6 +558,7 @@
             records.forEach(function(r) {
               if (r.fields.CheckKey && r.fields.State !== undefined) {
                 checks[r.fields.CheckKey] = r.fields.State;
+                checkRecordIds[r.fields.CheckKey] = r.id; // Cache record ID
               }
             });
             localStorage.setItem('checks_cache', JSON.stringify(checks));
@@ -666,39 +669,54 @@
     }
 
 async function saveSingleCheckToAirtable(key) {
-      // Optimized: Just POST directly. If POST fails (duplicate), then PATCH.
-      // No longer fetches all records first - much faster!
+      // Optimized: Use checkRecordIds cache to PATCH directly when possible
+      // No fetch needed for normal dashboard usage
       console.log('SAVE SINGLE: Saving key:', key, 'state:', checks[key]);
       var state = checks[key];
       var nowISO = new Date().toISOString();
+      var cachedId = checkRecordIds[key];
       isSaving = true;
       try {
-        // Try POST first (assume new record)
+        if (cachedId) {
+          // Fast path: we have the record ID, PATCH directly
+          try {
+            var result = await updateAirtableRecord('Checks', cachedId, { 'State': state, 'LastModifiedTime': nowISO });
+            console.log('SAVE SINGLE: PATCH success (cached):', cachedId);
+            return result;
+          } catch (patchErr) {
+            if (patchErr.status === 404) {
+              // Record was deleted externally, clear cache and fall through to POST
+              console.log('SAVE SINGLE: Cached ID is stale (404), creating new record');
+              delete checkRecordIds[key];
+              cachedId = null;
+            } else {
+              throw patchErr;
+            }
+          }
+        }
+        // No cached ID or 404: POST to create new record
         var result = await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state, 'LastModifiedTime': nowISO });
         console.log('SAVE SINGLE: POST success:', result.id);
-        showToast(true, '✅ 已儲存');
+        checkRecordIds[key] = result.id; // Cache the new ID
+        return result;
       } catch (e) {
         if (e.status === 409 || (e.data && e.data.error && e.data.error.type === 'INVALID_REQUEST')) {
-          // Record might already exist, try PATCH with a dummy record ID
-          // Actually we don't know the record ID, so we need to fetch
-          console.log('SAVE SINGLE: POST conflict, fetching existing records...');
+          // Rare conflict: record exists but not in our cache (created externally)
+          // Need to fetch to find the ID
+          console.log('SAVE SINGLE: Unexpected conflict, fetching to find ID...');
           try {
             var existingChecks = await fetchAirtable('Checks');
-            var existingMap = {};
             for (var i = 0; i < existingChecks.length; i++) {
               var rec = existingChecks[i];
-              if (rec.fields.CheckKey) {
-                existingMap[rec.fields.CheckKey] = rec.id;
+              if (rec.fields.CheckKey === key) {
+                checkRecordIds[key] = rec.id; // Update cache
+                var result = await updateAirtableRecord('Checks', rec.id, { 'State': state, 'LastModifiedTime': nowISO });
+                console.log('SAVE SINGLE: PATCH success after conflict fetch');
+                return result;
               }
             }
-            if (existingMap[key]) {
-              result = await updateAirtableRecord('Checks', existingMap[key], { 'State': state, 'LastModifiedTime': nowISO });
-              console.log('SAVE SINGLE: PATCH success after conflict');
-              showToast(true, '✅ 已儲存');
-            } else {
-              console.error('SAVE SINGLE: Record not found even after fetch');
-              showToast(false, '❌ 儲存失敗');
-            }
+            console.error('SAVE SINGLE: Record not found even after fetch');
+            showToast(false, '❌ 儲存失敗');
           } catch (e2) {
             console.error('SAVE SINGLE: PATCH also failed:', e2);
             showToast(false, '❌ 儲存失敗');
@@ -948,17 +966,10 @@ async function saveRMStoAirtable() {
       try {
         await saveSingleCheckToAirtable(key);
 
-        // Also update LastModifiedTime via second PATCH so delta sync works
-        var existingChecks = await fetchAirtable('Checks');
-        var existingMap = {};
-        for (var i = 0; i < existingChecks.length; i++) {
-          var rec = existingChecks[i];
-          if (rec.fields.CheckKey) {
-            existingMap[rec.fields.CheckKey] = rec.id;
-          }
-        }
-        if (existingMap[key]) {
-          await updateAirtableRecord('Checks', existingMap[key], { 'LastModifiedTime': new Date().toISOString() });
+        // Update LastModifiedTime using cached record ID (no fetch needed!)
+        var recordId = checkRecordIds[key];
+        if (recordId) {
+          await updateAirtableRecord('Checks', recordId, { 'LastModifiedTime': new Date().toISOString() });
         }
 
         var work = works.find(w => w.id === workId);
