@@ -432,7 +432,31 @@
           }
         }
         console.log('LOAD SMART: Fetched', records.length, 'records from Airtable');
-        
+
+        // If delta returned 0 but we have a lastSyncTime, fall back to date-range (not full fetch)
+        // This handles the case where LastModifiedTime is all set to backfill time (same for all records)
+        if (records.length === 0 && lastSyncTime && isDelta) {
+          console.log('LOAD SMART: Delta returned 0, falling back to date-range sync');
+          lastSyncTime = null;
+          try { localStorage.removeItem('checks_last_sync'); } catch(e) {}
+          var range = getInitialDateRange(2);
+          fetchFilter = buildCheckKeyDateFilter(range.start, range.end);
+          records = await fetchAirtable('Checks', fetchFilter);
+          console.log('LOAD SMART: Date-range fetched', records.length, 'records');
+        }
+
+        // Update lastSyncTime AFTER the fetch (to the time RIGHT NOW, so next delta is from this point forward)
+        // Only update if we got records (means there were changes to sync)
+        if (records.length > 0) {
+          // Set to current time - this is when the sync completed
+          // Next delta will fetch records modified AFTER this time
+          lastSyncTime = new Date().toISOString();
+          try {
+            localStorage.setItem('checks_last_sync', lastSyncTime);
+          } catch(e) {}
+          console.log('LOAD SMART: Updated lastSyncTime to', lastSyncTime);
+        }
+
         // Update checks object with fetched records
         var updatedCount = 0;
         records.forEach(function(r) {
@@ -442,14 +466,7 @@
             updatedCount++;
           }
         });
-        console.log('LOAD SMART: Updated', updatedCount, 'checks in memory');
-        
-        // Update lastSyncTime for next delta sync
-        lastSyncTime = syncStartTime;
-        try {
-          localStorage.setItem('checks_last_sync', lastSyncTime);
-        } catch(e) {}
-        
+
         // Update localStorage cache
         try {
           localStorage.setItem('checks_cache', JSON.stringify(checks));
