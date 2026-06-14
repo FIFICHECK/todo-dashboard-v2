@@ -258,6 +258,32 @@
       return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
     }
 
+    // Build Airtable formula to filter Checks by date range (CheckKey starts with date)
+    // e.g., LEFT({CheckKey}, 10) = '2026-06-01' OR LEFT({CheckKey}, 10) = '2026-06-02' ...
+    function buildCheckKeyDateFilter(startDateKey, endDateKey) {
+      var conditions = [];
+      var current = new Date(startDateKey);
+      var end = new Date(endDateKey);
+      while (current <= end) {
+        var dk = getDateKey(current);
+        conditions.push("LEFT({CheckKey},10)='" + dk + "'");
+        current.setDate(current.getDate() + 1);
+      }
+      return conditions.length > 0 ? 'OR(' + conditions.join(',') + ')' : null;
+    }
+
+    // Calculate date range for initial load: current week ± N weeks
+    function getInitialDateRange(weeksBuffer) {
+      var start = new Date(currentWeekStart);
+      start.setDate(start.getDate() - weeksBuffer * 7);
+      var end = new Date(currentWeekStart);
+      end.setDate(end.getDate() + (weeksBuffer + 1) * 7 - 1); // +6 for end of current week, +N weeks
+      return {
+        start: getDateKey(start),
+        end: getDateKey(end)
+      };
+    }
+
     function formatDateLabel() {
       var weekEnd = new Date(currentWeekStart);
       weekEnd.setDate(currentWeekStart.getDate() + 6);
@@ -490,7 +516,7 @@
           checks = {};
         }
       } else {
-        // No cache, need to load from Airtable
+        // No cache: fetch only current ±2 weeks for fast initial load
         isLoading = false;
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dateControls').style.display = 'flex';
@@ -499,13 +525,34 @@
         initYearPicker();
         renderGrid();
         renderRmSettings();
-        startPolling(); // Start polling for real-time sync
+        
+        // Background fetch for ±2 week range
+        var range = getInitialDateRange(2); // ±2 weeks
+        var dateFilter = buildCheckKeyDateFilter(range.start, range.end);
+        console.log('LOAD: Fetching checks for', range.start, 'to', range.end);
+        
+        setTimeout(async function() {
+          try {
+            var records = await fetchAirtable('Checks', dateFilter);
+            console.log('LOAD: Fetched', records.length, 'checks for ±2 weeks');
+            records.forEach(function(r) {
+              if (r.fields.CheckKey && r.fields.State !== undefined) {
+                checks[r.fields.CheckKey] = r.fields.State;
+              }
+            });
+            localStorage.setItem('checks_cache', JSON.stringify(checks));
+            localStorage.setItem('checks_cache_timestamp', Date.now().toString());
+            lastSyncTime = new Date().toISOString();
+            localStorage.setItem('checks_last_sync', lastSyncTime);
+            renderGrid();
+            showToast(true, '✅ 已載入 ' + records.length + ' 記錄');
+          } catch(e) {
+            console.error('LOAD: Initial fetch failed:', e);
+          }
+          startPolling();
+        }, 100);
+        return;
       }
-      
-      // Step 3: Background load current ± 5 weeks checks from Airtable (非阻塞)
-      setTimeout(function() {
-        loadDataSmart();
-      }, 100);
     }
 
     // Save a single work to Airtable (PATCH if exists, POST if new)
