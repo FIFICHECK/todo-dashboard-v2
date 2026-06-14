@@ -235,6 +235,7 @@
     var works = [];
     var checks = {};
     var isSaving = false;
+    var isSyncing = false;
     var RMS = ['', '', '', '', '', '', ''];
     var isLoading = true;
 
@@ -360,7 +361,11 @@
     
     async function loadDataSmart() {
       console.log('LOAD SMART: Starting background sync...');
-      
+      if (isSyncing) {
+        console.log('LOAD SMART: Skipped - already syncing');
+        return;
+      }
+      isSyncing = true;
       try {
         // Fetch all checks from Airtable (no filter to avoid 422 errors)
         var records = await fetchAirtable('Checks');
@@ -390,9 +395,11 @@
       } catch (e) {
         console.error('LOAD SMART: Failed:', e);
         showToast(false, '❌ 同步失敗');
+      } finally {
+        isSyncing = false;
       }
     }
-    
+
     async function loadData() {
       console.log('LOAD: loadData started');
       
@@ -830,6 +837,11 @@ async function saveRMStoAirtable() {
     }
 
     async function toggleCheck(dateKey, workId, rmIdx) {
+      if (isSyncing) {
+        console.log('TOGGLE: Skipped - sync in progress');
+        showToast(false, '⚠️ 同步中，請稍後再試');
+        return;
+      }
       var key = getCheckKey(dateKey, workId, rmIdx);
       var current = checks[key] || 0;
       var next = (current + 1) % 3;
@@ -1127,7 +1139,7 @@ async function saveRMStoAirtable() {
     
     // Auto-sync when page becomes visible again (e.g., switch from another tab/app)
     document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'visible' && !isLoading && !isSaving) {
+      if (document.visibilityState === 'visible' && !isLoading && !isSaving && !isSyncing) {
         console.log('SYNC: Page became visible, triggering background sync...');
         loadDataSmart();
       } else if (document.visibilityState === 'hidden') {
@@ -1141,7 +1153,7 @@ async function saveRMStoAirtable() {
     function startPolling() {
       if (syncInterval) clearInterval(syncInterval);
       syncInterval = setInterval(function() {
-        if (!isLoading && !isSaving) {
+        if (!isLoading && !isSaving && !isSyncing) {
           console.log('SYNC: Polling for updates...');
           loadDataSmart();
         }
