@@ -236,6 +236,7 @@
     var checks = {};
     var isSaving = false;
     var isSyncing = false;
+    var lastSyncTime = null; // For delta sync: only fetch records modified after this time
     var RMS = ['', '', '', '', '', '', ''];
     var isLoading = true;
 
@@ -366,12 +367,28 @@
         return;
       }
       isSyncing = true;
+      
+      // Capture sync start time BEFORE fetch (use as lower bound for changes)
+      var syncStartTime = new Date().toISOString();
+      
       try {
-        // Fetch all checks from Airtable (no filter to avoid 422 errors)
-        var records = await fetchAirtable('Checks');
+        var records;
+        var fetchFilter;
+        
+        if (lastSyncTime) {
+          // Delta sync: only fetch records modified since last sync
+          // lastModifiedTime is Airtable's built-in field (proper datetime type, not text)
+          fetchFilter = "IS_AFTER({lastModifiedTime}, '" + lastSyncTime + "')";
+          console.log('LOAD SMART: Delta sync since', lastSyncTime);
+        } else {
+          // First load: fetch all records
+          console.log('LOAD SMART: Full sync (no previous sync time)');
+        }
+        
+        records = await fetchAirtable('Checks', fetchFilter || null);
         console.log('LOAD SMART: Fetched', records.length, 'records from Airtable');
         
-        // Update checks object with all records
+        // Update checks object with fetched records
         var updatedCount = 0;
         records.forEach(function(r) {
           if (r.fields.CheckKey && r.fields.State !== undefined) {
@@ -380,6 +397,12 @@
           }
         });
         console.log('LOAD SMART: Updated', updatedCount, 'checks in memory');
+        
+        // Update lastSyncTime for next delta sync
+        lastSyncTime = syncStartTime;
+        try {
+          localStorage.setItem('checks_last_sync', lastSyncTime);
+        } catch(e) {}
         
         // Update localStorage cache
         try {
@@ -391,7 +414,9 @@
         }
         
         renderGrid();
-        showToast(true, '✅ 已同步 ' + updatedCount + ' 記錄');
+        if (updatedCount > 0) {
+          showToast(true, '✅ 已同步 ' + updatedCount + ' 記錄');
+        }
       } catch (e) {
         console.error('LOAD SMART: Failed:', e);
         showToast(false, '❌ 同步失敗');
@@ -853,17 +878,14 @@ async function saveRMStoAirtable() {
       } catch(e) {}
       try {
         await saveSingleCheckToAirtable(key);
-        // Debug alert showing what was saved
+        // Show success alert (no need to verify - POST success means record is saved)
         var work = works.find(w => w.id === workId);
         var rmName = RMS[rmIdx] || 'RM' + (rmIdx + 1);
         var stateName = ['', '✅', '❌'][next];
-        var checkKeyExists = await fetchAirtable('Checks').then(records => {
-          return records.some(r => r.fields.CheckKey === key);
-        });
-        alert('✅ 保存成功！\n\n工作: ' + (work ? work.text : workId) + '\nRM: ' + rmName + '\nState: ' + current + ' → ' + next + ' (' + stateName + ')\nKey: ' + key + '\n\n已在 Airtable 確認: ' + (checkKeyExists ? '是' : '否'));
+        showToast(true, '✅ ' + rmName + ' → ' + stateName);
       } catch (e) {
         console.error('Save check failed:', e);
-        alert('❌ 保存失敗！\n\n工作: ' + (work ? work.text : workId) + '\nRM: ' + rmName + '\nState: ' + current + ' → ' + next + '\nKey: ' + key + '\n\n錯誤: ' + (e.message || '未知錯誤'));
+        showToast(false, '❌ 保存失敗');
       }
     }
 
@@ -1174,6 +1196,13 @@ async function saveRMStoAirtable() {
       
       var savedApiKey = localStorage.getItem('airtable_api_key');
       var savedBaseId = localStorage.getItem('airtable_base_id');
+      
+      // Load last sync time for delta sync
+      var savedLastSync = localStorage.getItem('checks_last_sync');
+      if (savedLastSync) {
+        lastSyncTime = savedLastSync;
+        console.log('LOAD: Restored lastSyncTime:', lastSyncTime);
+      }
       
       if (savedApiKey && savedBaseId) {
         AIRTABLE_API_KEY = savedApiKey;
