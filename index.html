@@ -1011,7 +1011,7 @@ async function saveRMStoAirtable() {
       if (!label) return;
       var first = getFirstMondayOfYear(year);
       var last = getLastMondayOfYear(year);
-      label.textContent = '範圍：' + (first.getMonth() + 1) + '/' + first.getDate() + ' 至 ' + (last.getMonth() + 1) + '/' + last.getDate());
+      label.textContent = '範圍：' + (first.getMonth() + 1) + '/' + first.getDate() + ' 至 ' + (last.getMonth() + 1) + '/' + last.getDate();
     }
 
     // Check if target week is beyond sync range, extend if needed
