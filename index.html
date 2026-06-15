@@ -1413,8 +1413,8 @@ async function saveRMStoAirtable() {
           work.repeat = repeat;
           work.urgent = urgent;
           await saveSingleWorkToAirtable(work);
-          // Save URL override to localStorage - use work.dateKey for consistency
-          var saveDateKey = work.dateKey;
+          // Save URL override to localStorage - use currentModalDateKey (cell date user clicked) or currentWeekStart
+          var saveDateKey = currentModalDateKey || getDateKey(currentWeekStart);
           console.log('SAVE: work.id =', work.id, ', saveDateKey =', saveDateKey);
           setUrlOverride(work.id, saveDateKey, urlOverride);
           // Update per-week mode flag
