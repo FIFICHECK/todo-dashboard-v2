@@ -1673,24 +1673,32 @@ async function saveRMStoAirtable() {
       var btn = document.getElementById('reminderBtn');
       if (!btn) return;
 
-      // Calculate end of current week (Friday 23:59:59)
+      var today = new Date();
+      var todayStr = getDateKey(today);
+      var dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+
+      // Calculate Friday 23:59:59 of current week
       var fridayEnd = new Date(currentWeekStart);
-      fridayEnd.setDate(fridayEnd.getDate() + 4); // Thursday + 1 = Friday
+      fridayEnd.setDate(fridayEnd.getDate() + 4);
       fridayEnd.setHours(23, 59, 59, 999);
 
-      var now = new Date();
       var weekKey = getDateKey(currentWeekStart); // YYYY-MM-DD of Monday
 
-      // Check if already sent for this specific week
-      var sentKey = 'reminder_sent_week_' + weekKey;
-      var sentTime = localStorage.getItem(sentKey);
+      // Check if we should reset (after Friday 23:59 and it's Saturday or Sunday)
+      if (today > fridayEnd && (dayOfWeek === 0 || dayOfWeek === 6)) {
+        localStorage.removeItem('reminder_sent_' + weekKey);
+      }
 
-      if (sentTime) {
-        var sentDate = new Date(sentTime);
-        if (now < fridayEnd && sentDate.getTime() >= currentWeekStart.getTime()) {
-          showToast(false, '⚠️ 本週已發送過提醒，下週再試');
-          return;
-        }
+      // Only send on weekdays (Mon-Fri), and not if already sent today
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        showToast(false, '⚠️ 週末休息，下週一再見');
+        return;
+      }
+
+      var sentTodayKey = 'reminder_sent_' + weekKey + '_' + todayStr;
+      if (localStorage.getItem(sentTodayKey)) {
+        showToast(false, '⚠️ 今日已發送過提醒');
+        return;
       }
 
       // Disable button during sending
@@ -1699,16 +1707,16 @@ async function saveRMStoAirtable() {
 
       var DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1516150028006195360/BeHlUKU9hwVnDp_c26-PszpTWZnpPM_85eRqpTZKSIYU1x0nDzYwhh8cvo7Xdsr8fv_2';
 
-      // Get current week dates (Mon to Sun)
+      // Get current week dates (Mon to Fri only for this logic)
       var weekDates = [];
       var monday = new Date(currentWeekStart);
-      for (var i = 0; i < 7; i++) {
+      for (var i = 0; i < 5; i++) { // Mon to Fri
         var d = new Date(monday);
         d.setDate(monday.getDate() + i);
         weekDates.push(getDateKey(d));
       }
 
-      // Find unchecked (State=0) for current week, group by slot
+      // Find unchecked (State=0) for current week up to today, group by slot
       var uncheckedBySlot = {};
       for (var slot = 0; slot < 7; slot++) {
         uncheckedBySlot[slot] = [];
@@ -1724,7 +1732,9 @@ async function saveRMStoAirtable() {
         var datePart = parts[0];
         var slotIndex = parseInt(parts[parts.length - 1], 10);
 
+        // Only include dates up to today in current week
         if (weekDates.indexOf(datePart) === -1) continue;
+        if (datePart > todayStr) continue; // Don't include future dates
         if (slotIndex >= 0 && slotIndex <= 6) {
           uncheckedBySlot[slotIndex].push(datePart);
         }
@@ -1743,8 +1753,7 @@ async function saveRMStoAirtable() {
         return;
       }
 
-      // Send ONE notification per RM (consolidate all days)
-      var today = new Date();
+      // Send ONE notification per RM (consolidate all days from Mon to today)
       var dateStr = today.getFullYear() + '/' + String(today.getMonth() + 1).padStart(2, '0') + '/' + String(today.getDate()).padStart(2, '0');
 
       var sentCount = 0;
@@ -1768,7 +1777,7 @@ async function saveRMStoAirtable() {
 
           if (response.ok) {
             sentCount++;
-            console.log('Sent reminder for', rmName, ':', count, 'items across', uncheckedBySlot[slotIdx].length, 'days');
+            console.log('Sent reminder for', rmName, ':', count, 'items');
           } else {
             failedCount++;
             console.error('Failed to send for', rmName, ':', response.status);
@@ -1778,15 +1787,15 @@ async function saveRMStoAirtable() {
           console.error('Error sending for', rmName, ':', e);
         }
 
-        // Small delay between messages to avoid rate limiting
+        // Small delay between messages
         await new Promise(function(resolve) { setTimeout(resolve, 500); });
       }
 
-      // Mark as sent for this week
-      localStorage.setItem(sentKey, now.toISOString());
+      // Mark as sent today
+      localStorage.setItem(sentTodayKey, 'true');
 
       if (sentCount > 0) {
-        showToast(true, '✅ 已發送 ' + sentCount + ' 個提醒（本週五23:59後重置）');
+        showToast(true, '✅ 已發送 ' + sentCount + ' 個提醒（明日可再發）');
       } else {
         showToast(false, '❌ 發送失敗');
       }
