@@ -1106,7 +1106,7 @@ async function saveRMStoAirtable() {
             html += '<div class="work-name">';
             html += '<span class="work-text">' + escapeHtml(work.text) + urgentBadge + '</span>';
             if (work.url) {
-              html += '<a href="' + escapeHtml(work.url) + '" class="work-url" target="_blank" onclick="event.stopPropagation();">🔗</a>';
+              html += '<a href="' + escapeHtml(work.url) + '" class="work-url" target="_blank" onclick="event.stopPropagation();"><img src="assets/open_link_btn.png" alt="Open Link" style="height:28px;vertical-align:middle;"></a>';
             }
             html += '</div>';
             html += '</td>';
