@@ -327,6 +327,22 @@
       } catch(e) { console.error('Failed to save URL override:', e); }
     }
 
+    // Per-week URL mode: once user manually checks "use different URL", future weeks require per-week input
+    function isPerWeekUrlMode(workId) {
+      try {
+        var modes = JSON.parse(localStorage.getItem('per_week_url_mode') || '{}');
+        return modes[workId] === true;
+      } catch(e) { return false; }
+    }
+    function setPerWeekUrlMode(workId, enabled) {
+      try {
+        var modes = JSON.parse(localStorage.getItem('per_week_url_mode') || '{}');
+        if (enabled) { modes[workId] = true; }
+        else { delete modes[workId]; }
+        localStorage.setItem('per_week_url_mode', JSON.stringify(modes));
+      } catch(e) { console.error('Failed to save per-week mode:', e); }
+    }
+
     function formatDateLabel() {
       var weekEnd = new Date(currentWeekStart);
       weekEnd.setDate(currentWeekStart.getDate() + 6);
@@ -1219,15 +1235,14 @@ async function saveRMStoAirtable() {
             html += '<td class="work-col' + urgentClass + weekendTdClass + '" onclick="openEditWork(\'' + work.id + '\')">';
             html += '<div class="work-name">';
             html += '<span class="work-text">' + escapeHtml(work.text) + urgentBadge + '</span>';
-            // For WEEK repeat works: only show URL if override exists (not default URL)
+            // For WEEK repeat works: show override URL if set, else default URL
             // For non-WEEK works: show default URL as before
-            var displayUrl = null;
+            var displayUrl = work.url;
             if (work.repeat === 'week') {
-              // WEEK works: only show if explicit override exists
-              displayUrl = getUrlOverride(work.id, dateKey);
-            } else {
-              // Non-WEEK works: show default URL
-              displayUrl = work.url;
+              var override = getUrlOverride(work.id, dateKey);
+              if (override) displayUrl = override;
+              // If per-week mode is ON but no URL entered for this week, show nothing
+              if (isPerWeekUrlMode(work.id) && !override) displayUrl = null;
             }
             if (displayUrl) {
               html += '<a href="' + escapeHtml(displayUrl) + '" class="work-url" target="_blank" onclick="event.stopPropagation();"><img src="assets/open_link_btn.png" alt="Open Link" style="height:28px;vertical-align:middle;"></a>';
@@ -1328,10 +1343,18 @@ async function saveRMStoAirtable() {
         urlOverrideSection.style.display = 'block';
         var currentWeek = getDateKey(currentWeekStart);
         var override = getUrlOverride(work.id, currentWeek);
-        // Default to checked and visible for WEEK works
-        useUrlOverride.checked = true;
-        workUrlOverrideInput.style.display = 'block';
-        workUrlOverrideInput.value = override || '';
+        var perWeekMode = isPerWeekUrlMode(work.id);
+        if (perWeekMode) {
+          // Per-week mode ON: always require URL for this week
+          useUrlOverride.checked = true;
+          workUrlOverrideInput.style.display = 'block';
+          workUrlOverrideInput.value = override || '';
+        } else {
+          // Per-week mode OFF: show unchecked, only show input if already has override
+          useUrlOverride.checked = !!override;
+          workUrlOverrideInput.style.display = override ? 'block' : 'none';
+          workUrlOverrideInput.value = override || '';
+        }
       } else {
         urlOverrideSection.style.display = 'none';
       }
@@ -1365,10 +1388,12 @@ async function saveRMStoAirtable() {
 
       // Get URL override if applicable
       var urlOverride = null;
+      var perWeekModeEnabled = false;
       if (repeat === 'week') {
         var useOverride = document.getElementById('useUrlOverride').checked;
         if (useOverride) {
           urlOverride = document.getElementById('workUrlOverrideInput').value.trim();
+          perWeekModeEnabled = true; // User manually chose per-week mode
         }
       }
 
@@ -1383,6 +1408,8 @@ async function saveRMStoAirtable() {
           // Save URL override to localStorage
           var saveDateKey = id.startsWith('rec') ? work.dateKey : currentModalDateKey;
           setUrlOverride(work.id, saveDateKey, urlOverride);
+          // Update per-week mode flag
+          setPerWeekUrlMode(work.id, perWeekModeEnabled);
         }
       } else {
         if (!currentModalDateKey) { isSavingWork = false; alert('請選擇日子'); return; }
@@ -1398,6 +1425,8 @@ async function saveRMStoAirtable() {
         await saveSingleWorkToAirtable(newWork);
         // Save URL override to localStorage
         setUrlOverride(newWork.id, currentModalDateKey, urlOverride);
+        // Save per-week mode flag
+        setPerWeekUrlMode(newWork.id, perWeekModeEnabled);
       }
       closeWorkModal();
       renderGrid();
