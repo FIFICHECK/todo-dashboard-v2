@@ -1673,6 +1673,13 @@ async function saveRMStoAirtable() {
       var btn = document.getElementById('reminderBtn');
       if (!btn) return;
 
+      // Check if already sent today
+      var todayKey = 'reminder_sent_' + new Date().toISOString().slice(0, 10);
+      if (localStorage.getItem(todayKey)) {
+        showToast(false, '⚠️ 今日已發送過提醒，請明日再試');
+        return;
+      }
+
       // Disable button during sending
       btn.disabled = true;
       btn.textContent = '發送中...';
@@ -1706,7 +1713,7 @@ async function saveRMStoAirtable() {
 
         if (weekDates.indexOf(datePart) === -1) continue;
         if (slotIndex >= 0 && slotIndex <= 6) {
-          uncheckedBySlot[slotIndex].push(key);
+          uncheckedBySlot[slotIndex].push(datePart);
         }
       }
 
@@ -1723,7 +1730,7 @@ async function saveRMStoAirtable() {
         return;
       }
 
-      // Send notification for each RM with unchecked items
+      // Send ONE notification per RM (consolidate all days)
       var today = new Date();
       var dateStr = today.getFullYear() + '/' + String(today.getMonth() + 1).padStart(2, '0') + '/' + String(today.getDate()).padStart(2, '0');
 
@@ -1735,8 +1742,9 @@ async function saveRMStoAirtable() {
 
         var rmName = RM_SLOT_NAMES[slotIdx];
         var count = uncheckedBySlot[slotIdx].length;
+        var daysList = uncheckedBySlot[slotIdx].join('、').replace(/-/g, '/');
 
-        var message = '⏰⏰快D做 TO DO LIST 呀 ⏰⏰\n日期: ' + dateStr + ' 提醒\nRM Name: ' + rmName + '\n幾項工作未完成: ' + count + ' 項\n\n👉 https://fificheck.github.io/todo-dashboard-v2/';
+        var message = '⏰⏰快D做 TO DO LIST 呀 ⏰⏰\n日期: ' + dateStr + ' 提醒\nRM Name: ' + rmName + '\n未完成工作: ' + count + ' 項（' + daysList + '）\n\n👉 https://fificheck.github.io/todo-dashboard-v2/';
 
         try {
           var response = await fetch(DISCORD_WEBHOOK, {
@@ -1747,7 +1755,7 @@ async function saveRMStoAirtable() {
 
           if (response.ok) {
             sentCount++;
-            console.log('Sent reminder for', rmName, ':', count, 'items');
+            console.log('Sent reminder for', rmName, ':', count, 'items across', uncheckedBySlot[slotIdx].length, 'days');
           } else {
             failedCount++;
             console.error('Failed to send for', rmName, ':', response.status);
@@ -1761,8 +1769,11 @@ async function saveRMStoAirtable() {
         await new Promise(function(resolve) { setTimeout(resolve, 500); });
       }
 
+      // Mark as sent today
+      localStorage.setItem(todayKey, 'true');
+
       if (sentCount > 0) {
-        showToast(true, '✅ 已發送 ' + sentCount + ' 個提醒' + (failedCount > 0 ? '，' + failedCount + ' 個失敗' : ''));
+        showToast(true, '✅ 已發送 ' + sentCount + ' 個提醒（每日只一次）');
       } else {
         showToast(false, '❌ 發送失敗');
       }
