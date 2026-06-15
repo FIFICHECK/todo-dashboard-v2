@@ -47,6 +47,8 @@
     .data-row td.work-col:hover { color: #4fc3f7; }
     .data-row td.work-col.urgent { background: linear-gradient(135deg, #3a3520 0%, #4a4530 100%); border-left: 4px solid #ffcc00; }
     .data-row td.work-col.urgent:hover { color: #ffcc00; }
+    .data-row td.work-col.serious { background: linear-gradient(135deg, #4a1a1a 0%, #5a2020 100%); border-left: 4px solid #ff0000; }
+    .data-row td.work-col.serious:hover { color: #ff4444; }
     .data-row td.rm-col { background: #1f1f3a; text-align: center; }
     
     .add-work-row td { background: #151525; padding: 10px 12px; border-bottom: none; }
@@ -213,10 +215,20 @@
         <option value="week">每週重複 (WEEK)</option>
         <option value="month">每月重複 (MONTH)</option>
       </select>
-      <label style="display:flex;align-items:center;gap:10px;margin-top:10px;">
-        <input type="checkbox" id="workUrgentInput" style="width:20px;height:20px;cursor:pointer;">
-        <span style="color:#ffcc00;font-weight:600;">⚡ URGENT（重要/緊急）</span>
-      </label>
+      <label style="margin-top:10px;font-weight:600;color:#888;">優先級：</label>
+      <div style="display:flex;gap:15px;margin-top:5px;">
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <input type="radio" name="workPriority" value="" style="width:18px;height:18px;"> 普通
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <input type="radio" name="workPriority" value="urgent" style="width:18px;height:18px;">
+          <span style="color:#ffcc00;font-weight:600;">⚡ URGENT</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <input type="radio" name="workPriority" value="serious" style="width:18px;height:18px;">
+          <span style="color:#ff0000;font-weight:600;">⚡ SERIOUS</span>
+        </label>
+      </div>
       <div class="modal-buttons">
         <button class="delete-btn" id="deleteWorkBtn" style="display:none;" onclick="deleteWork()">刪除</button>
         <button class="cancel-btn" onclick="closeWorkModal()">取消</button>
@@ -511,7 +523,7 @@
               url: rec.fields.URL || '',
               dateKey: rec.fields.DateKey || '',
               repeat: rec.fields.Repeat || 'none',
-              urgent: rec.fields.Urgent || false
+              urgent: rec.fields.Urgent || ''  // 'urgent', 'serious', or '' (empty)
             });
           }
         }
@@ -1132,10 +1144,11 @@ async function saveRMStoAirtable() {
           return workDates.indexOf(dateKey) !== -1;
         });
         
-        // Sort: URGENT first, then by creation order
+        // Sort: URGENT/SERIOUS first, then by creation order
         dayWorks.sort(function(a, b) {
-          if (a.urgent && !b.urgent) return -1;
-          if (!a.urgent && b.urgent) return 1;
+          var aP = a.urgent === 'serious' ? 2 : (a.urgent === 'urgent' ? 1 : 0);
+          var bP = b.urgent === 'serious' ? 2 : (b.urgent === 'urgent' ? 1 : 0);
+          if (aP !== bP) return bP - aP; // higher priority first
           return 0;
         });
         
@@ -1163,8 +1176,8 @@ async function saveRMStoAirtable() {
           html += '</tr>';
         } else {
           dayWorks.forEach(function(work) {
-            var urgentClass = work.urgent ? ' urgent' : '';
-            var urgentBadge = work.urgent ? ' <span style="background:#ffcc00;color:#000;padding:2px 6px;border-radius:4px;font-size:0.75rem;font-weight:bold;margin-left:5px;">⚡ URGENT</span>' : '';
+            var urgentClass = work.urgent === 'urgent' ? ' urgent' : (work.urgent === 'serious' ? ' serious' : '');
+            var urgentBadge = work.urgent === 'urgent' ? ' <span style="background:#ffcc00;color:#000;padding:2px 6px;border-radius:4px;font-size:0.75rem;font-weight:bold;margin-left:5px;">⚡ URGENT</span>' : (work.urgent === 'serious' ? ' <span style="background:#ff0000;color:#fff;padding:2px 6px;border-radius:4px;font-size:0.75rem;font-weight:bold;margin-left:5px;">⚡ SERIOUS</span>' : '');
             var weekendTdClass = isWeekend ? ' weekend' : '';
             html += '<tr class="data-row">';
             html += '<td class="date-col' + weekendTdClass + '">' + dateLabel + '</td>';
@@ -1210,7 +1223,11 @@ async function saveRMStoAirtable() {
       document.getElementById('workNameInput').value = '';
       document.getElementById('workUrlInput').value = '';
       document.getElementById('workRepeatInput').value = 'none';
-      document.getElementById('workUrgentInput').checked = false;
+      // Clear priority radio buttons
+      var radios = document.getElementsByName('workPriority');
+      for (var i = 0; i < radios.length; i++) {
+        radios[i].checked = radios[i].value === '';
+      }
       document.getElementById('deleteWorkBtn').style.display = 'none';
       document.getElementById('workModal').classList.add('active');
       document.getElementById('workNameInput').focus();
@@ -1223,7 +1240,11 @@ async function saveRMStoAirtable() {
       document.getElementById('workNameInput').value = '';
       document.getElementById('workUrlInput').value = '';
       document.getElementById('workRepeatInput').value = 'none';
-      document.getElementById('workUrgentInput').checked = false;
+      // Clear priority radio buttons
+      var radios = document.getElementsByName('workPriority');
+      for (var i = 0; i < radios.length; i++) {
+        radios[i].checked = radios[i].value === '';
+      }
       document.getElementById('deleteWorkBtn').style.display = 'none';
       document.getElementById('workModal').classList.add('active');
       document.getElementById('workNameInput').focus();
@@ -1238,7 +1259,12 @@ async function saveRMStoAirtable() {
       document.getElementById('workNameInput').value = work.text;
       document.getElementById('workUrlInput').value = work.url || '';
       document.getElementById('workRepeatInput').value = work.repeat || 'none';
-      document.getElementById('workUrgentInput').checked = work.urgent || false;
+      // Set priority radio button
+      var priority = work.urgent || '';
+      var radios = document.getElementsByName('workPriority');
+      for (var i = 0; i < radios.length; i++) {
+        radios[i].checked = radios[i].value === priority;
+      }
       document.getElementById('deleteWorkBtn').style.display = 'block';
       document.getElementById('workModal').classList.add('active');
       document.getElementById('workNameInput').focus();
@@ -1255,7 +1281,15 @@ async function saveRMStoAirtable() {
       var text = document.getElementById('workNameInput').value.trim();
       var url = document.getElementById('workUrlInput').value.trim();
       var repeat = document.getElementById('workRepeatInput').value;
-      var urgent = document.getElementById('workUrgentInput').checked;
+      // Get priority from radio buttons
+      var urgent = '';
+      var radios = document.getElementsByName('workPriority');
+      for (var i = 0; i < radios.length; i++) {
+        if (radios[i].checked) {
+          urgent = radios[i].value;
+          break;
+        }
+      }
 
       if (!text) { isSavingWork = false; alert('請輸入工作名稱'); return; }
 
