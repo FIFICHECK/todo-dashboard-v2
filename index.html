@@ -1073,6 +1073,13 @@ async function saveRMStoAirtable() {
           return workDates.indexOf(dateKey) !== -1;
         });
         
+        // Sort: URGENT first, then by creation order
+        dayWorks.sort(function(a, b) {
+          if (a.urgent && !b.urgent) return -1;
+          if (!a.urgent && b.urgent) return 1;
+          return 0;
+        });
+        
         var isWeekend = date.getDay() === 0 || date.getDay() === 6;
         
         // Skip weekends completely - do not render anything for Sat/Sun
