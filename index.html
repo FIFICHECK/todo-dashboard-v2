@@ -201,11 +201,6 @@
   <table class="main-table" id="mainTable" style="display:none;">
   </table>
 
-  <div class="rm-settings" id="rmSettings" style="display:none;">
-    <h3>RM 名稱設定（點擊編輯）</h3>
-    <div class="rm-settings-list" id="rmSettingsList"></div>
-  </div>
-
   <div class="modal-overlay" id="workModal">
     <div class="modal">
       <h3 id="workModalTitle">新增工作</h3>
@@ -612,10 +607,8 @@
           document.getElementById('loading').style.display = 'none';
           document.getElementById('dateControls').style.display = 'flex';
           document.getElementById('mainTable').style.display = 'table';
-          document.getElementById('rmSettings').style.display = 'block';
           initYearPicker();
           renderGrid();
-          renderRmSettings();
         } catch(e) {
           console.log('LOAD: Cache parse failed');
           checks = {};
@@ -626,10 +619,9 @@
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dateControls').style.display = 'flex';
         document.getElementById('mainTable').style.display = 'table';
-        document.getElementById('rmSettings').style.display = 'block';
         initYearPicker();
         renderGrid();
-        renderRmSettings();
+        
         
         // Background fetch for current week + future 4 weeks
         var range = getInitialDateRange(0, 4); // current week + future 4 weeks only
@@ -1076,27 +1068,7 @@ async function saveRMStoAirtable() {
       container.innerHTML = html;
     }
 
-    function renderRmSettings() {
-      var container = document.getElementById('rmSettingsList');
-      var html = '';
-      for (var i = 0; i < MAX_RMS; i++) {
-        var rmName = RMS[i] || 'RM' + (i + 1);
-        html += '<button class="rm-name-btn" style="background:' + RM_COLORS[i] + ';" onclick="setRmName(' + i + ')">' + escapeHtml(rmName) + '</button>';
-      }
-      container.innerHTML = html;
-    }
-
-    async function setRmName(rmIdx) {
-      var name = prompt('請輸入 RM' + (rmIdx + 1) + ' 的名稱：', RMS[rmIdx] || '');
-      if (name !== null) {
-        RMS[rmIdx] = name.trim();
-        await saveRMStoAirtable();
-        renderGrid();
-        renderRmSettings();
-      }
-    }
-
-    var STATE_NAMES = ['☐', '✅', '✕'];
+    var STATE_NAMES = ['☐', '✅', '🔶'];
     
     function getCheckKey(dateKey, workId, rmIdx) {
       return dateKey + '_' + workId + '_' + rmIdx;
@@ -1175,7 +1147,7 @@ async function saveRMStoAirtable() {
         var bgClass = state === 1 ? 'checked' : (state === 2 && isLockedWork ? 'crossed locked' : (state === 2 ? '' : 'unchecked'));
         
         html += '<div class="rm-check ' + bgClass + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + workId + '\',' + rmIdx + ')">';
-        html += '<span class="rm-label" style="color:#fff;background:' + rmColor + ';border-radius:3px;white-space:nowrap;" title="點擊編輯名稱" onclick="event.stopPropagation();setRmName(' + rmIdx + ')">' + escapeHtml(rmName) + '</span>';
+        html += '<span class="rm-label" style="color:#fff;background:' + rmColor + ';border-radius:3px;white-space:nowrap;">' + escapeHtml(rmName) + '</span>';
         html += '<span class="check-icon">' + icon + '</span>';
         html += '</div>';
       }
