@@ -839,28 +839,25 @@ async function saveRMStoAirtable() {
     }
 
     function navigateWeek(direction) {
-      var currentYear = currentWeekStart.getFullYear();
+      var targetWeek = new Date(currentWeekStart);
+      targetWeek.setDate(targetWeek.getDate() + (direction * 7));
+      
+      // Check if target week is beyond sync range
+      checkAndExtendSyncRange(targetWeek);
+      
+      var currentYear = targetWeek.getFullYear();
       var firstMonday = getFirstMondayOfYear(currentYear);
       var lastMonday = getLastMondayOfYear(currentYear);
       
-      if (direction === -1) {
-        // 上一週：檢查是否已經係該年第一週
-        var currentMondayStr = currentWeekStart.toISOString().split('T')[0];
-        var firstMondayStr = firstMonday.toISOString().split('T')[0];
-        if (currentMondayStr === firstMondayStr) {
-          return; // 已經係第一週，唔郁
-        }
-        currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-      } else if (direction === 1) {
-        // 下一週：檢查是否已經係該年最後一週
-        var currentMondayStr = currentWeekStart.toISOString().split('T')[0];
-        var lastMondayStr = lastMonday.toISOString().split('T')[0];
-        if (currentMondayStr === lastMondayStr) {
-          return; // 已經係最後一週，唔郁
-        }
-        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      var targetStr = targetWeek.toISOString().split('T')[0];
+      var firstStr = firstMonday.toISOString().split('T')[0];
+      var lastStr = lastMonday.toISOString().split('T')[0];
+      
+      if (targetStr < firstStr || targetStr > lastStr) {
+        return; // Out of year range
       }
       
+      currentWeekStart = targetWeek;
       renderGrid();
     }
 
@@ -920,8 +917,50 @@ async function saveRMStoAirtable() {
       }
     }
 
+    // Check if target week is beyond sync range, extend if needed
+    function checkAndExtendSyncRange(targetWeek) {
+      var today = new Date();
+      today = getMonday(today);
+      var currentSyncEnd = new Date(today);
+      currentSyncEnd.setDate(today.getDate() + (12 + 1) * 7 - 1); // 12 weeks ahead
+      
+      if (targetWeek > currentSyncEnd) {
+        // Need to extend sync range
+        var weeksAhead = Math.ceil((targetWeek - today) / (7 * 24 * 60 * 60 * 1000));
+        var newWeeksAfter = weeksAhead + 4; // Add 4 extra weeks buffer
+        
+        console.log('Extending sync range to', newWeeksAfter, 'weeks ahead');
+        var range = getInitialDateRange(0, newWeeksAfter);
+        var dateFilter = buildCheckKeyDateFilter(range.start, range.end);
+        
+        // Async fetch new data
+        setTimeout(async function() {
+          try {
+            var records = await fetchAirtable('Checks', dateFilter);
+            console.log('Extended sync fetched', records.length, 'records');
+            records.forEach(function(r) {
+              if (r.fields.CheckKey && r.fields.State !== undefined) {
+                checks[r.fields.CheckKey] = r.fields.State;
+                checkRecordIds[r.fields.CheckKey] = r.id;
+              }
+            });
+            localStorage.setItem('checks_cache', JSON.stringify(checks));
+            localStorage.setItem('checks_cache_timestamp', Date.now().toString());
+            lastSyncTime = new Date().toISOString();
+            localStorage.setItem('checks_last_sync', lastSyncTime);
+            renderGrid();
+            showToast(true, '✅ 已載入 ' + records.length + ' 記錄');
+          } catch(e) {
+            console.error('Extended sync failed:', e);
+          }
+        }, 100);
+      }
+    }
+
     function jumpToWeek(dateStr) {
-      currentWeekStart = getMonday(new Date(dateStr));
+      var targetWeek = getMonday(new Date(dateStr));
+      checkAndExtendSyncRange(targetWeek);
+      currentWeekStart = targetWeek;
       renderGrid();
     }
 
