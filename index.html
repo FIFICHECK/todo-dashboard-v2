@@ -16,7 +16,7 @@
     h1 { text-align: center; color: #fff; margin-bottom: 10px; font-size: 1.8rem; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
     .subtitle { text-align: center; color: #888; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
     .loading { text-align: center; color: #4fc3f7; font-size: 1.2rem; padding: 40px; }
-    .setup-container { position: relative; z-index: 1001; max-width: 500px; margin: 50px auto; background: #1a1a2e; border-radius: 20px; padding: 30px; border: 1px solid #333; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .setup-container { max-width: 500px; background: #1a1a2e; border-radius: 20px; padding: 30px; border: 1px solid #333; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
     .setup-container h2 { color: #4fc3f7; margin-bottom: 20px; font-weight: 700; }
     .setup-container p { color: #888; margin-bottom: 15px; line-height: 1.6; }
     .setup-container input { width: 100%; padding: 12px; margin-bottom: 15px; background: #151525; border: 1px solid #333; border-radius: 10px; color: #fff; font-size: 1rem; box-sizing: border-box; }
@@ -165,6 +165,7 @@
   <p class="subtitle">每個日子獨立新增工作 | 點擊 RM 名稱可編輯 | 數據同步至 Airtable</p>
   
   <!-- Setup Screen -->
+  <div id="setupOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#0d0d1a;z-index:1000;display:flex;align-items:center;justify-content:center;">
   <div id="setupScreen" class="setup-container">
     <h2>🔗 首次設定 Airtable 連接</h2>
     <p>請輸入你嘅 Airtable API Key 與 Base ID（只需設定一次）</p>
@@ -172,6 +173,7 @@
     <input type="text" id="setupBaseId" placeholder="Base ID (app...)" value="appQrncWYHHMh1iXf">
     <p style="font-size:0.8rem;color:#666;">API Key 會安全地儲存喺你瀏覽器嘅 localStorage</p>
     <button onclick="saveSetup()">連接 Airtable</button>
+  </div>
   </div>
 
   <div id="loading" class="loading" style="display:none;">⏳ 載入數據中...</div>
@@ -1534,6 +1536,7 @@ async function saveRMStoAirtable() {
       AIRTABLE_BASE_URL = 'https://api.airtable.com/v0/' + AIRTABLE_BASE_ID;
       
       document.getElementById('setupScreen').style.display = 'none';
+      document.getElementById('setupOverlay').style.display = 'none';
       document.getElementById('loading').style.display = 'block';
       
       loadData();
@@ -1619,6 +1622,7 @@ async function saveRMStoAirtable() {
         loadData();
       } else {
         document.getElementById('setupScreen').style.display = 'block';
+        document.getElementById('setupOverlay').style.display = 'flex';
         document.getElementById('loading').style.display = 'none';
       }
     }
