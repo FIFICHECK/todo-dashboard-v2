@@ -1347,8 +1347,9 @@ async function saveRMStoAirtable() {
       var workUrlOverrideInput = document.getElementById('workUrlOverrideInput');
       if (work.repeat === 'week') {
         urlOverrideSection.style.display = 'block';
-        var currentWeek = getDateKey(currentWeekStart);
-        var override = getUrlOverride(work.id, currentWeek);
+        // Use currentModalDateKey (which was set to cellDateKey when work was opened) for override lookup
+        var overrideKey = currentModalDateKey || getDateKey(currentWeekStart);
+        var override = getUrlOverride(work.id, overrideKey);
         var perWeekMode = isPerWeekUrlMode(work.id);
         if (perWeekMode) {
           // Per-week mode ON: always require URL for this week
