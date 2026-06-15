@@ -578,7 +578,7 @@
         renderRmSettings();
         
         // Background fetch for current week + future 4 weeks
-        var range = getInitialDateRange(0, 12); // current week + future 12 weeks only
+        var range = getInitialDateRange(0, 4); // current week + future 4 weeks only
         var dateFilter = buildCheckKeyDateFilter(range.start, range.end);
         console.log('LOAD: Fetching checks for', range.start, 'to', range.end);
         
@@ -614,9 +614,14 @@
           'Name': work.text,
           'URL': work.url || '',
           'DateKey': work.dateKey,
-          'Repeat': work.repeat || 'none',
-          'Urgent': work.urgent || false
+          'Repeat': work.repeat || 'none'
         };
+        // Only add Urgent field if it has a value (URGENT or SERIOUS)
+        if (work.urgent === 'urgent') {
+          fields['Urgent'] = 'URGENT';
+        } else if (work.urgent === 'serious') {
+          fields['Urgent'] = 'SERIOUS';
+        }
         
         if (work.id && work.id.startsWith('rec')) {
           // Existing record - PATCH
@@ -668,9 +673,10 @@
             'Name': work.text,
             'URL': work.url || '',
             'DateKey': work.dateKey,
-            'Repeat': work.repeat || 'none',
-            'Urgent': work.urgent || false
+            'Repeat': work.repeat || 'none'
           };
+          if (work.urgent === 'urgent') { fields['Urgent'] = 'URGENT'; }
+          else if (work.urgent === 'serious') { fields['Urgent'] = 'SERIOUS'; }
           var result = await updateAirtableRecord('Works', work.id, fields);
           console.log('Works: PATCHED', work.text);
         }
@@ -682,9 +688,10 @@
             'Name': work.text,
             'URL': work.url || '',
             'DateKey': work.dateKey,
-            'Repeat': work.repeat || 'none',
-            'Urgent': work.urgent || false
+            'Repeat': work.repeat || 'none'
           };
+          if (work.urgent === 'urgent') { fields['Urgent'] = 'URGENT'; }
+          else if (work.urgent === 'serious') { fields['Urgent'] = 'SERIOUS'; }
           var result = await createAirtableRecord('Works', fields);
           work.id = result.id;
           console.log('Works: POSTED', work.text);
@@ -934,7 +941,7 @@ async function saveRMStoAirtable() {
       var today = new Date();
       today = getMonday(today);
       var currentSyncEnd = new Date(today);
-      currentSyncEnd.setDate(today.getDate() + (12 + 1) * 7 - 1); // 12 weeks ahead
+      currentSyncEnd.setDate(today.getDate() + (4 + 1) * 7 - 1); // 4 weeks ahead
       
       if (targetWeek > currentSyncEnd) {
         // Need to extend sync range
@@ -1323,12 +1330,21 @@ async function saveRMStoAirtable() {
     async function deleteWork() {
       var id = document.getElementById('editWorkId').value;
       if (!confirm('確定刪除呢项工作？')) return;
+      var work = works.find(function(w) { return w.id === id; });
+      // Delete from Airtable if it has a record ID
+      if (work && work.id && work.id.startsWith('rec')) {
+        try {
+          await deleteAirtableRecord('Works', work.id);
+          console.log('Work deleted from Airtable:', work.text);
+        } catch(e) {
+          console.error('Failed to delete from Airtable:', e);
+          showToast(false, '⚠️ Airtable 刪除失敗，但本地已刪除');
+        }
+      }
       works = works.filter(function(w) { return w.id !== id; });
-      // Note: DELETE API is 403 Forbidden for this token, so we only delete locally
-      // The Airtable record will need to be manually deleted if needed
       closeWorkModal();
       renderGrid();
-      showToast(true, '✅ 工作已刪除（請手動清理 Airtable）');
+      showToast(true, '✅ 工作已刪除');
     }
 
     function closeWorkModal() {
