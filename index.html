@@ -1144,7 +1144,7 @@ async function saveRMStoAirtable() {
         var icon = STATE_NAMES[state];
         
         // Only "Add on Promotion" has locked X=2
-        var bgClass = state === 1 ? 'checked' : (state === 2 && isLockedWork ? 'crossed locked' : (state === 2 ? '' : 'unchecked'));
+        var bgClass = state === 1 ? 'checked' : (state === 2 ? 'crossed' + (isLockedWork ? ' locked' : '') : 'unchecked');
         
         html += '<div class="rm-check ' + bgClass + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + workId + '\',' + rmIdx + ')">';
         html += '<span class="rm-label" style="color:#fff;background:' + rmColor + ';border-radius:3px;white-space:nowrap;">' + escapeHtml(rmName) + '</span>';
