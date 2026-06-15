@@ -1413,8 +1413,8 @@ async function saveRMStoAirtable() {
           work.repeat = repeat;
           work.urgent = urgent;
           await saveSingleWorkToAirtable(work);
-          // Save URL override to localStorage - use currentWeekStart for consistency
-          var saveDateKey = work.dateKey || currentModalDateKey || getDateKey(currentWeekStart);
+          // Save URL override to localStorage - use currentModalDateKey to match render lookup
+          var saveDateKey = currentModalDateKey || getDateKey(currentWeekStart);
           console.log('SAVE: work.id =', work.id, ', saveDateKey =', saveDateKey);
           setUrlOverride(work.id, saveDateKey, urlOverride);
           // Update per-week mode flag
@@ -1432,9 +1432,10 @@ async function saveRMStoAirtable() {
         };
         works.push(newWork);
         await saveSingleWorkToAirtable(newWork);
-        // Save URL override to localStorage
-        console.log('SAVE: new work id =', newWork.id, ', currentModalDateKey =', currentModalDateKey);
-        setUrlOverride(newWork.id, currentModalDateKey, urlOverride);
+        // Save URL override to localStorage - use currentWeekStart for consistency
+        var newSaveDateKey = getDateKey(currentWeekStart);
+        console.log('SAVE: new work id =', newWork.id, ', newSaveDateKey =', newSaveDateKey);
+        setUrlOverride(newWork.id, newSaveDateKey, urlOverride);
         // Save per-week mode flag
         setPerWeekUrlMode(newWork.id, perWeekModeEnabled);
       }
