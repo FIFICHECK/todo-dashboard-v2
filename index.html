@@ -81,8 +81,10 @@
     .rm-check:hover { background: #333; box-shadow: 0 0 15px rgba(79,195,247,0.3); transform: translateY(-2px); border-color: #4fc3f7; }
     .rm-check.checked { background: linear-gradient(135deg, #1f3a2e 0%, #2a4a3e 100%); border-color: #4ecca3; }
     .rm-check.checked:hover { box-shadow: 0 0 15px rgba(78,204,163,0.3); }
-    .rm-check.crossed { background: linear-gradient(135deg, #3a1f1f 0%, #4a2a2a 100%); border-color: #e74c3c; cursor: not-allowed; }
-    .rm-check.crossed:hover { box-shadow: none; transform: none; border-color: #e74c3c; }
+    .rm-check.crossed { background: linear-gradient(135deg, #3a1f1f 0%, #4a2a2a 100%); border-color: #e74c3c; }
+    .rm-check.crossed:hover { box-shadow: 0 0 15px rgba(231,76,60,0.3); }
+    .rm-check.locked { cursor: not-allowed; }
+    .rm-check.locked:hover { box-shadow: none; transform: none; border-color: #e74c3c; }
     
     .rm-check .rm-label { font-size: 0.8rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; background: #333; color: #fff; transition: all 0.2s; }
     .rm-check .rm-label:hover { opacity: 0.8; background: #444; }
@@ -971,8 +973,9 @@ async function saveRMStoAirtable() {
       var key = getCheckKey(dateKey, workId, rmIdx);
       var current = checks[key] || 0;
       
-      // Locked: X=2 cannot be changed
-      if (current === 2) {
+      // Locked: X=2 cannot be changed ONLY for "Add on Promotion" work
+      var work = works.find(w => w.id === workId);
+      if (work && work.text === 'Add on Promotion' && current === 2) {
         showToast(false, '🔒 此 RM 已鎖定，無法修改');
         return;
       }
@@ -1009,11 +1012,9 @@ async function saveRMStoAirtable() {
     }
 
     function renderRmChecks(dateKey, workId) {
-      // Debug: log the checkKey for rmIdx=0
-      var debugCheckKey = getCheckKey(dateKey, workId, 0);
-      if (dateKey === '2026-06-08' && debugCheckKey.includes('recQ8Nxn606CD8GGS')) {
-        console.log('RENDER DEBUG: dateKey=', dateKey, 'workId=', workId, 'checkKey=', debugCheckKey, 'checks[checkKey]=', checks[debugCheckKey]);
-      }
+      var work = works.find(w => w.id === workId);
+      var isLockedWork = work && work.text === 'Add on Promotion';
+      
       var html = '<div class="rm-checkboxes">';
       for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
         var checkKey = getCheckKey(dateKey, workId, rmIdx);
@@ -1021,7 +1022,9 @@ async function saveRMStoAirtable() {
         var rmColor = RM_COLORS[rmIdx];
         var rmName = RMS[rmIdx] || 'RM' + (rmIdx + 1);
         var icon = STATE_NAMES[state];
-        var bgClass = state === 1 ? 'checked' : (state === 2 ? 'crossed' : 'unchecked');
+        
+        // Only "Add on Promotion" has locked X=2
+        var bgClass = state === 1 ? 'checked' : (state === 2 && isLockedWork ? 'crossed locked' : (state === 2 ? '' : 'unchecked'));
         
         html += '<div class="rm-check ' + bgClass + '" onclick="toggleCheck(\'' + dateKey + '\',\'' + workId + '\',' + rmIdx + ')">';
         html += '<span class="rm-label" style="color:#fff;background:' + rmColor + ';border-radius:3px;white-space:nowrap;" title="點擊編輯名稱" onclick="event.stopPropagation();setRmName(' + rmIdx + ')">' + escapeHtml(rmName) + '</span>';
