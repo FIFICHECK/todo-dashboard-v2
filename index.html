@@ -912,7 +912,7 @@ async function saveRMStoAirtable() {
       if (!select) return;
       select.innerHTML = '<option value="">-- 選擇年份 --</option>';
       var currentYear = new Date().getFullYear();
-      for (var y = 2026; y <= 2036; y++) {
+      for (var y = 2026; y <= 2027; y++) {
         var selected = y === currentYear ? ' selected' : '';
         select.innerHTML += '<option value="' + y + '"' + selected + '>' + y + ' 年</option>';
       }
