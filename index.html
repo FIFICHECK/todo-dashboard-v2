@@ -1673,11 +1673,24 @@ async function saveRMStoAirtable() {
       var btn = document.getElementById('reminderBtn');
       if (!btn) return;
 
-      // Check if already sent today
-      var todayKey = 'reminder_sent_' + new Date().toISOString().slice(0, 10);
-      if (localStorage.getItem(todayKey)) {
-        showToast(false, '⚠️ 今日已發送過提醒，請明日再試');
-        return;
+      // Calculate end of current week (Friday 23:59:59)
+      var fridayEnd = new Date(currentWeekStart);
+      fridayEnd.setDate(fridayEnd.getDate() + 4); // Thursday + 1 = Friday
+      fridayEnd.setHours(23, 59, 59, 999);
+
+      var now = new Date();
+      var weekKey = getDateKey(currentWeekStart); // YYYY-MM-DD of Monday
+
+      // Check if already sent for this specific week
+      var sentKey = 'reminder_sent_week_' + weekKey;
+      var sentTime = localStorage.getItem(sentKey);
+
+      if (sentTime) {
+        var sentDate = new Date(sentTime);
+        if (now < fridayEnd && sentDate.getTime() >= currentWeekStart.getTime()) {
+          showToast(false, '⚠️ 本週已發送過提醒，下週再試');
+          return;
+        }
       }
 
       // Disable button during sending
@@ -1769,11 +1782,11 @@ async function saveRMStoAirtable() {
         await new Promise(function(resolve) { setTimeout(resolve, 500); });
       }
 
-      // Mark as sent today
-      localStorage.setItem(todayKey, 'true');
+      // Mark as sent for this week
+      localStorage.setItem(sentKey, now.toISOString());
 
       if (sentCount > 0) {
-        showToast(true, '✅ 已發送 ' + sentCount + ' 個提醒（每日只一次）');
+        showToast(true, '✅ 已發送 ' + sentCount + ' 個提醒（本週五23:59後重置）');
       } else {
         showToast(false, '❌ 發送失敗');
       }
