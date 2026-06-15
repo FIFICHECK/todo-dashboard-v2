@@ -273,12 +273,12 @@
       return conditions.length > 0 ? 'OR(' + conditions.join(',') + ')' : null;
     }
 
-    // Calculate date range for initial load: current week ± N weeks
-    function getInitialDateRange(weeksBuffer) {
+    // Calculate date range for initial load: current week ± N weeks (separate before/after)
+    function getInitialDateRange(weeksBefore, weeksAfter) {
       var start = new Date(currentWeekStart);
-      start.setDate(start.getDate() - weeksBuffer * 7);
+      start.setDate(start.getDate() - weeksBefore * 7);
       var end = new Date(currentWeekStart);
-      end.setDate(end.getDate() + (weeksBuffer + 1) * 7 - 1); // +6 for end of current week, +N weeks
+      end.setDate(end.getDate() + (weeksAfter + 1) * 7 - 1); // +6 for end of current week, +N weeks
       return {
         start: getDateKey(start),
         end: getDateKey(end)
@@ -411,7 +411,7 @@
           isDelta = true;
         } else {
           // No lastSyncTime: this is a fresh start, use date-based filter instead
-          var range = getInitialDateRange(2);
+          var range = getInitialDateRange(0, 2);
           fetchFilter = buildCheckKeyDateFilter(range.start, range.end);
           console.log('LOAD SMART: Date-range sync for', range.start, 'to', range.end);
         }
@@ -424,7 +424,7 @@
             console.log('LOAD SMART: Delta filter failed (422), falling back to date range sync');
             lastSyncTime = null; // Disable delta permanently
             try { localStorage.removeItem('checks_last_sync'); } catch(e) {}
-            var range = getInitialDateRange(2);
+            var range = getInitialDateRange(0, 2);
             fetchFilter = buildCheckKeyDateFilter(range.start, range.end);
             records = await fetchAirtable('Checks', fetchFilter);
           } else {
@@ -439,7 +439,7 @@
           console.log('LOAD SMART: Delta returned 0, falling back to date-range sync');
           lastSyncTime = null;
           try { localStorage.removeItem('checks_last_sync'); } catch(e) {}
-          var range = getInitialDateRange(2);
+          var range = getInitialDateRange(0, 2);
           fetchFilter = buildCheckKeyDateFilter(range.start, range.end);
           records = await fetchAirtable('Checks', fetchFilter);
           console.log('LOAD SMART: Date-range fetched', records.length, 'records');
@@ -564,7 +564,7 @@
         renderRmSettings();
         
         // Background fetch for ±2 week range
-        var range = getInitialDateRange(2); // ±2 weeks
+        var range = getInitialDateRange(0, 2); // current week + future 2 weeks only
         var dateFilter = buildCheckKeyDateFilter(range.start, range.end);
         console.log('LOAD: Fetching checks for', range.start, 'to', range.end);
         
