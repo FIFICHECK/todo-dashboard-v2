@@ -1234,7 +1234,7 @@ async function saveRMStoAirtable() {
             var weekendTdClass = isWeekend ? ' weekend' : '';
             html += '<tr class="data-row">';
             html += '<td class="date-col' + weekendTdClass + '">' + dateLabel + '</td>';
-            html += '<td class="work-col' + urgentClass + weekendTdClass + '" onclick="openEditWork(\'' + work.id + '\')">';
+            html += '<td class="work-col' + urgentClass + weekendTdClass + '" onclick="openEditWork(\'' + work.id + '\', \'' + dateKey + '\')">';
             html += '<div class="work-name">';
             html += '<span class="work-text">' + escapeHtml(work.text) + urgentBadge + '</span>';
             // For WEEK repeat works: show override URL if set, else default URL
@@ -1326,12 +1326,12 @@ async function saveRMStoAirtable() {
       document.getElementById('workNameInput').focus();
     }
 
-    function openEditWork(workId) {
+    function openEditWork(workId, cellDateKey) {
       var work = works.find(function(w) { return w.id === workId; });
       if (!work) return;
       document.getElementById('workModalTitle').textContent = '編輯工作';
       document.getElementById('editWorkId').value = workId;
-      currentModalDateKey = work.dateKey || '';
+      currentModalDateKey = cellDateKey || work.dateKey || '';
       document.getElementById('workNameInput').value = work.text;
       document.getElementById('workUrlInput').value = work.url || '';
       document.getElementById('workRepeatInput').value = work.repeat || 'none';
@@ -1413,8 +1413,8 @@ async function saveRMStoAirtable() {
           work.repeat = repeat;
           work.urgent = urgent;
           await saveSingleWorkToAirtable(work);
-          // Save URL override to localStorage - use currentModalDateKey to match render lookup
-          var saveDateKey = currentModalDateKey || getDateKey(currentWeekStart);
+          // Save URL override to localStorage - use work.dateKey for consistency
+          var saveDateKey = work.dateKey;
           console.log('SAVE: work.id =', work.id, ', saveDateKey =', saveDateKey);
           setUrlOverride(work.id, saveDateKey, urlOverride);
           // Update per-week mode flag
@@ -1432,7 +1432,7 @@ async function saveRMStoAirtable() {
         };
         works.push(newWork);
         await saveSingleWorkToAirtable(newWork);
-        // Save URL override to localStorage - use currentWeekStart for consistency
+        // Save URL override to localStorage - use currentWeekStart date to match grid render
         var newSaveDateKey = getDateKey(currentWeekStart);
         console.log('SAVE: new work id =', newWork.id, ', newSaveDateKey =', newSaveDateKey);
         setUrlOverride(newWork.id, newSaveDateKey, urlOverride);
