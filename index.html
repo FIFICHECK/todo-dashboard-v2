@@ -354,14 +354,9 @@
     function formatDateLabel() {
       var weekEnd = new Date(currentWeekStart);
       weekEnd.setDate(currentWeekStart.getDate() + 6);
-      // 2026: no year prefix (e.g. "6/8 - 6/14")
-      // 2027+: year prefix (e.g. "2026/6/8 - 2026/6/14")
+      // Always show year prefix (e.g. "2026/6/8 - 2026/6/14")
       var year = currentWeekStart.getFullYear();
-      if (year <= 2026) {
-        return (currentWeekStart.getMonth() + 1) + '/' + currentWeekStart.getDate() + ' - ' + (weekEnd.getMonth() + 1) + '/' + weekEnd.getDate();
-      } else {
-        return year + '/' + (currentWeekStart.getMonth() + 1) + '/' + currentWeekStart.getDate() + ' - ' + year + '/' + (weekEnd.getMonth() + 1) + '/' + weekEnd.getDate();
-      }
+      return year + '/' + (currentWeekStart.getMonth() + 1) + '/' + currentWeekStart.getDate() + ' - ' + year + '/' + (weekEnd.getMonth() + 1) + '/' + weekEnd.getDate();
     }
 
     function getWeekDates() {
@@ -1229,15 +1224,8 @@ async function saveRMStoAirtable() {
       dates.forEach(function(date, dateIdx) {
         var dateKey = getDateKey(date);
         var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
-        var year = date.getFullYear();
-        // 2026: no year prefix (e.g. "6/8 星期一")
-        // 2027+: year prefix (e.g. "2026/6/8 星期一")
-        var dateLabel;
-        if (year <= 2026) {
-          dateLabel = (date.getMonth() + 1) + '/' + date.getDate() + ' 星期' + dayNames[date.getDay()];
-        } else {
-          dateLabel = year + '/' + (date.getMonth() + 1) + '/' + date.getDate() + ' 星期' + dayNames[date.getDay()];
-        }
+        // Always show year prefix (e.g. "2026/6/8 星期一")
+        var dateLabel = date.getFullYear() + '/' + (date.getMonth() + 1) + '/' + date.getDate() + ' 星期' + dayNames[date.getDay()];
         
         var dayWorks = works.filter(function(w) { 
           var workDates = getWorkDates(w.dateKey, w.repeat, dates);
