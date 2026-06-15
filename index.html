@@ -411,7 +411,7 @@
           isDelta = true;
         } else {
           // No lastSyncTime: this is a fresh start, use date-based filter instead
-          var range = getInitialDateRange(0, 2);
+          var range = getInitialDateRange(0, 4);
           fetchFilter = buildCheckKeyDateFilter(range.start, range.end);
           console.log('LOAD SMART: Date-range sync for', range.start, 'to', range.end);
         }
@@ -424,7 +424,7 @@
             console.log('LOAD SMART: Delta filter failed (422), falling back to date range sync');
             lastSyncTime = null; // Disable delta permanently
             try { localStorage.removeItem('checks_last_sync'); } catch(e) {}
-            var range = getInitialDateRange(0, 2);
+            var range = getInitialDateRange(0, 4);
             fetchFilter = buildCheckKeyDateFilter(range.start, range.end);
             records = await fetchAirtable('Checks', fetchFilter);
           } else {
@@ -439,7 +439,7 @@
           console.log('LOAD SMART: Delta returned 0, falling back to date-range sync');
           lastSyncTime = null;
           try { localStorage.removeItem('checks_last_sync'); } catch(e) {}
-          var range = getInitialDateRange(0, 2);
+          var range = getInitialDateRange(0, 4);
           fetchFilter = buildCheckKeyDateFilter(range.start, range.end);
           records = await fetchAirtable('Checks', fetchFilter);
           console.log('LOAD SMART: Date-range fetched', records.length, 'records');
@@ -563,8 +563,8 @@
         renderGrid();
         renderRmSettings();
         
-        // Background fetch for ±2 week range
-        var range = getInitialDateRange(0, 2); // current week + future 2 weeks only
+        // Background fetch for current week + future 4 weeks
+        var range = getInitialDateRange(0, 4); // current week + future 4 weeks only
         var dateFilter = buildCheckKeyDateFilter(range.start, range.end);
         console.log('LOAD: Fetching checks for', range.start, 'to', range.end);
         
