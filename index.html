@@ -183,12 +183,14 @@
       <button onclick="goToYearEnd()">年末 ▶</button>
     </div>
     <div class="week-chips" id="weekChips"></div>
-    <div class="year-picker" style="margin-top:10px;">
-      <label for="yearSelect" style="color:#4fc3f7;font-weight:bold;margin-right:8px;">年份：</label>
-      <select id="yearSelect" onchange="jumpToYear(this.value)" style="padding:5px 10px;border-radius:5px;border:1px solid #4fc3f7;background:#1a1a2e;color:#fff;font-weight:bold;">
-        <option value="">-- 選擇年份 --</option>
-      </select>
-      
+    <div class="year-picker" style="margin-top:10px;display:flex;align-items:center;gap:15px;">
+      <div>
+        <label for="yearSelect" style="color:#4fc3f7;font-weight:bold;margin-right:8px;">RM年度：</label>
+        <select id="yearSelect" onchange="jumpToYear(this.value)" style="padding:5px 10px;border-radius:5px;border:1px solid #4fc3f7;background:#1a1a2e;color:#fff;font-weight:bold;">
+          <option value="">-- 選擇年份 --</option>
+        </select>
+      </div>
+      <div id="yearRangeLabel" style="color:#888;font-size:0.85rem;"></div>
     </div>
   </div>
 
@@ -906,68 +908,83 @@ async function saveRMStoAirtable() {
     function navigateWeek(direction) {
       var targetWeek = new Date(currentWeekStart);
       targetWeek.setDate(targetWeek.getDate() + (direction * 7));
-      
+
       // Check if target week is beyond sync range
       checkAndExtendSyncRange(targetWeek);
-      
+
       var currentYear = targetWeek.getFullYear();
       var firstMonday = getFirstMondayOfYear(currentYear);
       var lastMonday = getLastMondayOfYear(currentYear);
-      
+
       var targetStr = targetWeek.toISOString().split('T')[0];
       var firstStr = firstMonday.toISOString().split('T')[0];
       var lastStr = lastMonday.toISOString().split('T')[0];
-      
+
       if (targetStr < firstStr || targetStr > lastStr) {
         return; // Out of year range
       }
-      
+
       currentWeekStart = targetWeek;
+      updateYearSelectAndLabel(currentYear);
       renderGrid();
     }
 
     function getFirstMondayOfYear(year) {
-      // Find the first Monday that falls within this year
-      // January 4 is always in the first week of the year
-      var jan4 = new Date(year, 0, 4);
-      return getMonday(jan4);
+      // RM Year: Dec 28 of previous year to Dec 27 of current year
+      // Special case: 2026 starts from June 8 instead
+      if (year === 2026) {
+        // June 8, 2026 - find Monday of that week
+        var june8 = new Date(2026, 5, 8); // June 8, 2026
+        return getMonday(june8);
+      }
+      // Dec 28 of previous year
+      var dec28 = new Date(year - 1, 11, 28);
+      return getMonday(dec28);
     }
 
     function getLastMondayOfYear(year) {
-      // Find the last Monday of this year
-      var dec31 = new Date(year, 11, 31);
-      var lastMonday = new Date(dec31);
-      var day = lastMonday.getDay();
-      // Subtract days to get to Monday (0=Sun, 1=Mon, ..., 6=Sat)
-      // If already Monday (day=1), stay. Otherwise go back (day - 1) days for Mon or (7 - (1-day)) for Mon
-      if (day === 0) {
-        lastMonday.setDate(lastMonday.getDate() - 6); // Sun -> previous Monday
-      } else if (day === 1) {
-        // Already Monday
-      } else {
-        lastMonday.setDate(lastMonday.getDate() - (day - 1)); // Go back to Monday
-      }
-      return lastMonday;
+      // RM Year: Dec 28 of previous year to Dec 27 of current year
+      // Dec 27 of current year
+      var dec27 = new Date(year, 11, 27);
+      return getMonday(dec27);
+    }
+
+    function getYearDisplayRange() {
+      var year = currentWeekStart.getFullYear();
+      var first = getFirstMondayOfYear(year);
+      var last = getLastMondayOfYear(year);
+      var firstLabel = (first.getMonth() + 1) + '/' + first.getDate();
+      var lastLabel = (last.getMonth() + 1) + '/' + last.getDate();
+      return firstLabel + ' 至 ' + lastLabel;
     }
 
     function goToYearStart() {
       var year = currentWeekStart.getFullYear();
       currentWeekStart = getFirstMondayOfYear(year);
+      updateYearSelectAndLabel(year);
       renderGrid();
     }
 
     function goToYearEnd() {
       var year = currentWeekStart.getFullYear();
       currentWeekStart = getLastMondayOfYear(year);
+      updateYearSelectAndLabel(year);
       renderGrid();
+    }
+
+    function updateYearSelectAndLabel(year) {
+      var select = document.getElementById('yearSelect');
+      if (select) select.value = year;
+      updateYearRangeLabel(year);
     }
 
     function jumpToYear(year) {
       if (!year) return;
       var y = parseInt(year);
-      // 計算 6月8日 喺邊個星期，跳去該星期嘅星期一
-      var june8 = new Date(y, 5, 8); // month is 0-indexed, so 5 = June
-      currentWeekStart = getMonday(june8);
+      // Jump to first Monday of RM year (Dec 28 of previous year for most years)
+      currentWeekStart = getFirstMondayOfYear(y);
+      // Update year range label
+      updateYearRangeLabel(y);
       renderGrid();
     }
 
@@ -976,10 +993,21 @@ async function saveRMStoAirtable() {
       if (!select) return;
       select.innerHTML = '<option value="">-- 選擇年份 --</option>';
       var currentYear = new Date().getFullYear();
-      for (var y = 2026; y <= 2027; y++) {
+      // Add years from 2026 to current year + 1
+      for (var y = 2026; y <= currentYear + 1; y++) {
         var selected = y === currentYear ? ' selected' : '';
         select.innerHTML += '<option value="' + y + '"' + selected + '>' + y + ' 年</option>';
       }
+      // Update range label for current year
+      updateYearRangeLabel(currentYear);
+    }
+
+    function updateYearRangeLabel(year) {
+      var label = document.getElementById('yearRangeLabel');
+      if (!label) return;
+      var first = getFirstMondayOfYear(year);
+      var last = getLastMondayOfYear(year);
+      label.textContent = '範圍：' + (first.getMonth() + 1) + '/' + first.getDate() + ' 至 ' + (last.getMonth() + 1) + '/' + last.getDate());
     }
 
     // Check if target week is beyond sync range, extend if needed
