@@ -165,7 +165,7 @@
   <p class="subtitle">每個日子獨立新增工作 | 點擊 RM 名稱可編輯 | 數據同步至 Airtable</p>
   
   <!-- Setup Screen -->
-  <div id="setupOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#0d0d1a;z-index:1000;display:flex;align-items:center;justify-content:center;">
+  <div id="setupOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#0d0d1a;z-index:1000;display:none;align-items:center;justify-content:center;">
   <div id="setupScreen" class="setup-container">
     <h2>🔗 首次設定 Airtable 連接</h2>
     <p>請輸入你嘅 Airtable API Key 與 Base ID（只需設定一次）</p>
@@ -1622,7 +1622,6 @@ async function saveRMStoAirtable() {
         document.getElementById('loading').style.display = 'block';
         loadData();
       } else {
-        document.getElementById('setupScreen').style.display = 'block';
         document.getElementById('setupOverlay').style.display = 'flex';
         document.getElementById('loading').style.display = 'none';
       }
