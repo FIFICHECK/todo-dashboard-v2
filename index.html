@@ -208,6 +208,13 @@
       <input type="text" id="workNameInput" placeholder="輸入工作名稱...">
       <label>URL 連結（可選）</label>
       <input type="text" id="workUrlInput" placeholder="https://...">
+      <div id="urlOverrideSection" style="display:none;margin-top:8px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="useUrlOverride" style="width:16px;height:16px;">
+          <span style="color:#ff9800;font-weight:600;font-size:0.9em;">本週使用不同 URL</span>
+        </label>
+        <input type="text" id="workUrlOverrideInput" placeholder="本週 URL（只影響本週）..." style="margin-top:6px;display:none;">
+      </div>
       <label>重複頻率</label>
       <select id="workRepeatInput" style="width:100%;padding:10px;margin-bottom:10px;background:#151525;border:1px solid #333;border-radius:10px;color:#fff;font-family:inherit;font-weight:600;">
         <option value="none">不重複</option>
@@ -297,6 +304,27 @@
         start: getDateKey(start),
         end: getDateKey(end)
       };
+    }
+
+    // URL Override functions (per work, per week)
+    function getUrlOverrideKey(workId, dateKey) {
+      return 'url_override_' + workId + '_' + dateKey;
+    }
+    function getUrlOverride(workId, dateKey) {
+      try {
+        var overrides = JSON.parse(localStorage.getItem('url_overrides') || '{}');
+        var key = getUrlOverrideKey(workId, dateKey);
+        return overrides[key] || null;
+      } catch(e) { return null; }
+    }
+    function setUrlOverride(workId, dateKey, url) {
+      try {
+        var overrides = JSON.parse(localStorage.getItem('url_overrides') || '{}');
+        var key = getUrlOverrideKey(workId, dateKey);
+        if (url) { overrides[key] = url; }
+        else { delete overrides[key]; }
+        localStorage.setItem('url_overrides', JSON.stringify(overrides));
+      } catch(e) { console.error('Failed to save URL override:', e); }
     }
 
     function formatDateLabel() {
@@ -1191,8 +1219,14 @@ async function saveRMStoAirtable() {
             html += '<td class="work-col' + urgentClass + weekendTdClass + '" onclick="openEditWork(\'' + work.id + '\')">';
             html += '<div class="work-name">';
             html += '<span class="work-text">' + escapeHtml(work.text) + urgentBadge + '</span>';
-            if (work.url) {
-              html += '<a href="' + escapeHtml(work.url) + '" class="work-url" target="_blank" onclick="event.stopPropagation();"><img src="assets/open_link_btn.png" alt="Open Link" style="height:28px;vertical-align:middle;"></a>';
+            // Use URL override if available (for WEEK repeat works)
+            var displayUrl = work.url;
+            if (work.repeat === 'week') {
+              var override = getUrlOverride(work.id, dateKey);
+              if (override) displayUrl = override;
+            }
+            if (displayUrl) {
+              html += '<a href="' + escapeHtml(displayUrl) + '" class="work-url" target="_blank" onclick="event.stopPropagation();"><img src="assets/open_link_btn.png" alt="Open Link" style="height:28px;vertical-align:middle;"></a>';
             }
             html += '</div>';
             html += '</td>';
@@ -1272,6 +1306,26 @@ async function saveRMStoAirtable() {
       for (var i = 0; i < radios.length; i++) {
         radios[i].checked = radios[i].value === priority;
       }
+      // URL Override section (only for WEEK repeat)
+      var urlOverrideSection = document.getElementById('urlOverrideSection');
+      var useUrlOverride = document.getElementById('useUrlOverride');
+      var workUrlOverrideInput = document.getElementById('workUrlOverrideInput');
+      if (work.repeat === 'week') {
+        urlOverrideSection.style.display = 'block';
+        var currentWeek = getDateKey(currentWeekStart);
+        var override = getUrlOverride(work.id, currentWeek);
+        if (override) {
+          useUrlOverride.checked = true;
+          workUrlOverrideInput.value = override;
+          workUrlOverrideInput.style.display = 'block';
+        } else {
+          useUrlOverride.checked = false;
+          workUrlOverrideInput.value = '';
+          workUrlOverrideInput.style.display = 'none';
+        }
+      } else {
+        urlOverrideSection.style.display = 'none';
+      }
       document.getElementById('deleteWorkBtn').style.display = 'block';
       document.getElementById('workModal').classList.add('active');
       document.getElementById('workNameInput').focus();
@@ -1300,6 +1354,15 @@ async function saveRMStoAirtable() {
 
       if (!text) { isSavingWork = false; alert('請輸入工作名稱'); return; }
 
+      // Get URL override if applicable
+      var urlOverride = null;
+      if (repeat === 'week') {
+        var useOverride = document.getElementById('useUrlOverride').checked;
+        if (useOverride) {
+          urlOverride = document.getElementById('workUrlOverrideInput').value.trim();
+        }
+      }
+
       if (id) {
         var work = works.find(function(w) { return w.id === id; });
         if (work) {
@@ -1308,6 +1371,9 @@ async function saveRMStoAirtable() {
           work.repeat = repeat;
           work.urgent = urgent;
           await saveSingleWorkToAirtable(work);
+          // Save URL override to localStorage
+          var saveDateKey = id.startsWith('rec') ? work.dateKey : currentModalDateKey;
+          setUrlOverride(work.id, saveDateKey, urlOverride);
         }
       } else {
         if (!currentModalDateKey) { isSavingWork = false; alert('請選擇日子'); return; }
@@ -1321,6 +1387,8 @@ async function saveRMStoAirtable() {
         };
         works.push(newWork);
         await saveSingleWorkToAirtable(newWork);
+        // Save URL override to localStorage
+        setUrlOverride(newWork.id, currentModalDateKey, urlOverride);
       }
       closeWorkModal();
       renderGrid();
@@ -1354,6 +1422,19 @@ async function saveRMStoAirtable() {
 
     document.getElementById('workModal').addEventListener('click', function(e) {
       if (e.target.classList.contains('modal-overlay')) closeWorkModal();
+    });
+
+    // URL Override checkbox toggle
+    document.getElementById('useUrlOverride').addEventListener('change', function(e) {
+      var input = document.getElementById('workUrlOverrideInput');
+      input.style.display = e.target.checked ? 'block' : 'none';
+      if (!e.target.checked) input.value = '';
+    });
+
+    // Show/hide URL Override when repeat changes
+    document.getElementById('workRepeatInput').addEventListener('change', function(e) {
+      var urlOverrideSection = document.getElementById('urlOverrideSection');
+      urlOverrideSection.style.display = (e.target.value === 'week') ? 'block' : 'none';
     });
 
     function saveSetup() {
