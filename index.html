@@ -1618,6 +1618,7 @@ async function saveRMStoAirtable() {
         AIRTABLE_BASE_ID = savedBaseId;
         AIRTABLE_BASE_URL = 'https://api.airtable.com/v0/' + AIRTABLE_BASE_ID;
         document.getElementById('setupScreen').style.display = 'none';
+        document.getElementById('setupOverlay').style.display = 'none';
         document.getElementById('loading').style.display = 'block';
         loadData();
       } else {
