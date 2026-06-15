@@ -1219,11 +1219,15 @@ async function saveRMStoAirtable() {
             html += '<td class="work-col' + urgentClass + weekendTdClass + '" onclick="openEditWork(\'' + work.id + '\')">';
             html += '<div class="work-name">';
             html += '<span class="work-text">' + escapeHtml(work.text) + urgentBadge + '</span>';
-            // Use URL override if available (for WEEK repeat works)
-            var displayUrl = work.url;
+            // For WEEK repeat works: only show URL if override exists (not default URL)
+            // For non-WEEK works: show default URL as before
+            var displayUrl = null;
             if (work.repeat === 'week') {
-              var override = getUrlOverride(work.id, dateKey);
-              if (override) displayUrl = override;
+              // WEEK works: only show if explicit override exists
+              displayUrl = getUrlOverride(work.id, dateKey);
+            } else {
+              // Non-WEEK works: show default URL
+              displayUrl = work.url;
             }
             if (displayUrl) {
               html += '<a href="' + escapeHtml(displayUrl) + '" class="work-url" target="_blank" onclick="event.stopPropagation();"><img src="assets/open_link_btn.png" alt="Open Link" style="height:28px;vertical-align:middle;"></a>';
@@ -1269,6 +1273,11 @@ async function saveRMStoAirtable() {
       for (var i = 0; i < radios.length; i++) {
         radios[i].checked = radios[i].value === '';
       }
+      // Reset URL override
+      document.getElementById('urlOverrideSection').style.display = 'none';
+      document.getElementById('useUrlOverride').checked = false;
+      document.getElementById('workUrlOverrideInput').value = '';
+      document.getElementById('workUrlOverrideInput').style.display = 'none';
       document.getElementById('deleteWorkBtn').style.display = 'none';
       document.getElementById('workModal').classList.add('active');
       document.getElementById('workNameInput').focus();
@@ -1286,6 +1295,11 @@ async function saveRMStoAirtable() {
       for (var i = 0; i < radios.length; i++) {
         radios[i].checked = radios[i].value === '';
       }
+      // Reset URL override
+      document.getElementById('urlOverrideSection').style.display = 'none';
+      document.getElementById('useUrlOverride').checked = false;
+      document.getElementById('workUrlOverrideInput').value = '';
+      document.getElementById('workUrlOverrideInput').style.display = 'none';
       document.getElementById('deleteWorkBtn').style.display = 'none';
       document.getElementById('workModal').classList.add('active');
       document.getElementById('workNameInput').focus();
@@ -1314,15 +1328,10 @@ async function saveRMStoAirtable() {
         urlOverrideSection.style.display = 'block';
         var currentWeek = getDateKey(currentWeekStart);
         var override = getUrlOverride(work.id, currentWeek);
-        if (override) {
-          useUrlOverride.checked = true;
-          workUrlOverrideInput.value = override;
-          workUrlOverrideInput.style.display = 'block';
-        } else {
-          useUrlOverride.checked = false;
-          workUrlOverrideInput.value = '';
-          workUrlOverrideInput.style.display = 'none';
-        }
+        // Default to checked and visible for WEEK works
+        useUrlOverride.checked = true;
+        workUrlOverrideInput.style.display = 'block';
+        workUrlOverrideInput.value = override || '';
       } else {
         urlOverrideSection.style.display = 'none';
       }
