@@ -300,6 +300,7 @@
     var isSaving = false;
     var isSyncing = false;
     var lastSyncTime = null; // For delta sync: only fetch records modified after this time
+    var lastWorksSyncTime = null; // For delta sync of Works table
     var RMS = ['', '', '', '', '', '', ''];
     var isLoading = true;
 
@@ -578,10 +579,67 @@
         } catch(e) {
           console.log('LOAD SMART: Cache save failed (quota exceeded)');
         }
-        
+
+        // ─── SYNC WORKS ───
+        // Sync Works table: detect URL/text/repeat/urgent changes from other computers
+        var worksUpdatedCount = 0;
+        try {
+          var worksFilter = null;
+          var worksIsDelta = false;
+          if (lastWorksSyncTime) {
+            worksFilter = "IS_AFTER({LastModifiedTime}, '" + lastWorksSyncTime + "')";
+            worksIsDelta = true;
+            console.log('LOAD SMART WORKS: Delta sync since', lastWorksSyncTime);
+          }
+          var worksRecords = await fetchAirtable('Works', worksFilter);
+          console.log('LOAD SMART WORKS: Fetched', worksRecords.length, 'works records');
+
+          if (worksRecords.length > 0) {
+            worksRecords.forEach(function(rec) {
+              var existingIndex = works.findIndex(function(w) { return w.id === rec.id; });
+              var workData = {
+                id: rec.id,
+                text: rec.fields.Name || '',
+                url: rec.fields.URL || '',
+                dateKey: rec.fields.DateKey || '',
+                repeat: rec.fields.Repeat || 'none',
+                urgent: rec.fields.Urgent || ''
+              };
+              if (existingIndex >= 0) {
+                // Update existing work (preserve local-only fields if any)
+                works[existingIndex] = workData;
+                worksUpdatedCount++;
+                console.log('LOAD SMART WORKS: Updated work:', workData.text, 'url:', workData.url);
+              } else {
+                // New work added from another computer
+                works.push(workData);
+                worksUpdatedCount++;
+                console.log('LOAD SMART WORKS: Added new work:', workData.text);
+              }
+            });
+
+            // Update lastWorksSyncTime
+            lastWorksSyncTime = new Date().toISOString();
+            try {
+              localStorage.setItem('works_last_sync', lastWorksSyncTime);
+            } catch(e) {}
+            console.log('LOAD SMART WORKS: Updated lastWorksSyncTime to', lastWorksSyncTime);
+
+            // Re-render grid to reflect Works changes (URL/text may have changed)
+            renderGrid();
+          }
+        } catch(worksErr) {
+          console.error('LOAD SMART WORKS: Failed to sync Works:', worksErr);
+          // Don't throw - Works sync failure shouldn't break the whole sync
+        }
+        // ─── END WORKS SYNC ───
+
         renderGrid();
-        if (updatedCount > 0) {
-          showToast(true, '✅ 已同步 ' + updatedCount + ' 記錄');
+        if (updatedCount > 0 || worksUpdatedCount > 0) {
+          var msg = '✅ 已同步';
+          if (updatedCount > 0) msg += ' ' + updatedCount + ' 記錄';
+          if (worksUpdatedCount > 0) msg += ' ' + worksUpdatedCount + ' 工作';
+          showToast(true, msg);
         }
       } catch (e) {
         console.error('LOAD SMART: Failed:', e);
@@ -1452,6 +1510,12 @@ async function saveRMStoAirtable() {
         }
       }
 
+      // If URL override is set, use it as the new default URL (saved to Airtable, synced to all computers)
+      if (urlOverride) {
+        url = urlOverride;
+        console.log('SAVE: urlOverride applied to Airtable url =', url);
+      }
+
       if (id) {
         var work = works.find(function(w) { return w.id === id; });
         if (work) {
@@ -1626,6 +1690,11 @@ async function saveRMStoAirtable() {
       if (savedLastSync) {
         lastSyncTime = savedLastSync;
         console.log('LOAD: Restored lastSyncTime:', lastSyncTime);
+      }
+      var savedLastWorksSync = localStorage.getItem('works_last_sync');
+      if (savedLastWorksSync) {
+        lastWorksSyncTime = savedLastWorksSync;
+        console.log('LOAD: Restored lastWorksSyncTime:', lastWorksSyncTime);
       }
       
       if (savedApiKey && savedBaseId) {
