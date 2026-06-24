@@ -765,6 +765,8 @@
           fields['Urgent'] = 'URGENT';
         } else if (work.urgent === 'serious') {
           fields['Urgent'] = 'SERIOUS';
+        } else {
+          fields['Urgent'] = '';  // clear the field when set to none
         }
         
         if (work.id && work.id.startsWith('rec')) {
@@ -821,6 +823,7 @@
           };
           if (work.urgent === 'urgent') { fields['Urgent'] = 'URGENT'; }
           else if (work.urgent === 'serious') { fields['Urgent'] = 'SERIOUS'; }
+          else { fields['Urgent'] = ''; }
           var result = await updateAirtableRecord('Works', work.id, fields);
           console.log('Works: PATCHED', work.text);
         }
@@ -836,6 +839,7 @@
           };
           if (work.urgent === 'urgent') { fields['Urgent'] = 'URGENT'; }
           else if (work.urgent === 'serious') { fields['Urgent'] = 'SERIOUS'; }
+          else { fields['Urgent'] = ''; }
           var result = await createAirtableRecord('Works', fields);
           work.id = result.id;
           console.log('Works: POSTED', work.text);
