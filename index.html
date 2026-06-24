@@ -603,7 +603,7 @@
                 url: rec.fields.URL || '',
                 dateKey: rec.fields.DateKey || '',
                 repeat: rec.fields.Repeat || 'none',
-                urgent: rec.fields.Urgent || ''
+                urgent: (rec.fields.Urgent || '').toLowerCase()
               };
               if (existingIndex >= 0) {
                 // Update existing work (preserve local-only fields if any)
@@ -670,7 +670,7 @@
               url: rec.fields.URL || '',
               dateKey: rec.fields.DateKey || '',
               repeat: rec.fields.Repeat || 'none',
-              urgent: rec.fields.Urgent || ''  // 'urgent', 'serious', or '' (empty)
+              urgent: (rec.fields.Urgent || '').toLowerCase()  // 'urgent', 'serious', or '' (empty)
             });
           }
         }
