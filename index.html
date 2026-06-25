@@ -774,8 +774,20 @@
         
         if (work.id && work.id.startsWith('rec')) {
           // Existing record - PATCH
-          var result = await updateAirtableRecord('Works', work.id, fields);
-          console.log('Work PATCHED:', work.text);
+          try {
+            var result = await updateAirtableRecord('Works', work.id, fields);
+            console.log('Work PATCHED:', work.text);
+          } catch(patchErr) {
+            // If error is due to unknown field (e.g. URLOverrides not yet created in Airtable), retry without it
+            if (patchErr.status === 422 || (patchErr.data && patchErr.data.error && patchErr.data.error.type === 'INVALID_PERMITTED_FIELD_OPTIONS')) {
+              console.log('Work PATCH: URLOverrides field may not exist, retrying without it');
+              delete fields['URLOverrides'];
+              var result = await updateAirtableRecord('Works', work.id, fields);
+              console.log('Work PATCHED (without URLOverrides):', work.text);
+            } else {
+              throw patchErr;
+            }
+          }
         } else {
           // New record - POST
           var result = await createAirtableRecord('Works', fields);
@@ -828,8 +840,19 @@
           if (work.urgent === 'urgent') { fields['Urgent'] = 'URGENT'; }
           else if (work.urgent === 'serious') { fields['Urgent'] = 'SERIOUS'; }
           else { fields['Urgent'] = ''; }
-          var result = await updateAirtableRecord('Works', work.id, fields);
-          console.log('Works: PATCHED', work.text);
+          try {
+            var result = await updateAirtableRecord('Works', work.id, fields);
+            console.log('Works: PATCHED', work.text);
+          } catch(patchErr) {
+            if (patchErr.status === 422 || (patchErr.data && patchErr.data.error && patchErr.data.error.type === 'INVALID_PERMITTED_FIELD_OPTIONS')) {
+              console.log('Works PATCH: URLOverrides field may not exist, retrying without it');
+              delete fields['URLOverrides'];
+              var result = await updateAirtableRecord('Works', work.id, fields);
+              console.log('Works: PATCHED (without URLOverrides)', work.text);
+            } else {
+              throw patchErr;
+            }
+          }
         }
         
         // POST new records
