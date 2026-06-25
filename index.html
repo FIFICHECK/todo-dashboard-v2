@@ -354,8 +354,20 @@
         var work = works.find(function(w) { return w.id === workId; });
         if (!work) return null;
         var overrides = work.urlOverrides || {};
-        var value = overrides[dateKey] || null;
-        console.log('GET URL OVERRIDE: workId =', workId, ', dateKey =', dateKey, ', value =', value);
+        // For DAY repeat: use cell date directly
+        // For WEEK/MONTH repeat: convert cell date to week-start date
+        var lookupKey;
+        if (work.repeat === 'day') {
+          lookupKey = dateKey;
+        } else {
+          // WEEK/MONTH: convert dateKey to week-start (Monday)
+          var parts = dateKey.split('-');
+          var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+          var monday = getMonday(d);
+          lookupKey = getDateKey(monday);
+        }
+        var value = overrides[lookupKey] || null;
+        console.log('GET URL OVERRIDE: workId =', workId, ', repeat =', work.repeat, ', dateKey =', dateKey, ', lookupKey =', lookupKey, ', value =', value);
         return value;
       } catch(e) { return null; }
     }
@@ -1506,9 +1518,16 @@ async function saveRMStoAirtable() {
           work.urgent = urgent;
           // Initialize urlOverrides if needed
           if (!work.urlOverrides) work.urlOverrides = {};
-          // Save URL override to Airtable-synced urlOverrides
-          var saveDateKey = currentModalDateKey || getDateKey(currentWeekStart);
-          console.log('SAVE: work.id =', work.id, ', saveDateKey =', saveDateKey);
+          // Save URL override: use currentModalDateKey (specific date for DAY), week-start for WEEK/MONTH
+          var saveDateKey;
+          if (repeat === 'day') {
+            // DAY repeat: key by specific cell date
+            saveDateKey = currentModalDateKey || getDateKey(currentWeekStart);
+          } else {
+            // WEEK/MONTH repeat: key by week start (Monday)
+            saveDateKey = getDateKey(currentWeekStart);
+          }
+          console.log('SAVE: work.id =', work.id, ', repeat =', repeat, ', saveDateKey =', saveDateKey);
           if (urlOverride) {
             work.urlOverrides[saveDateKey] = urlOverride;
           } else {
@@ -1528,8 +1547,13 @@ async function saveRMStoAirtable() {
           urlOverrides: {}
         };
         // Save URL override to Airtable-synced urlOverrides
-        var newSaveDateKey = getDateKey(currentWeekStart);
-        console.log('SAVE: new work id =', newWork.id, ', newSaveDateKey =', newSaveDateKey);
+        var newSaveDateKey;
+        if (repeat === 'day') {
+          newSaveDateKey = currentModalDateKey || getDateKey(currentWeekStart);
+        } else {
+          newSaveDateKey = getDateKey(currentWeekStart);
+        }
+        console.log('SAVE: new work id =', newWork.id, ', repeat =', repeat, ', newSaveDateKey =', newSaveDateKey);
         if (urlOverride) {
           newWork.urlOverrides[newSaveDateKey] = urlOverride;
         }
