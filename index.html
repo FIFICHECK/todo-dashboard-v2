@@ -71,6 +71,14 @@
     .reminder-btn:active { transform: translateY(0); }
     .reminder-btn:disabled { background: #666; cursor: not-allowed; transform: none; box-shadow: none; }
 
+    
+    .table-wrapper {
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    @media (max-width: 768px) {
+      .table-wrapper { border-radius: 10px; }
+    }
     .main-table { width: 100%; border-collapse: separate; border-spacing: 0; background: #1a1a2e; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); border: 1px solid #333; }
     
     .header-row th { background: linear-gradient(135deg, #1a1a2e 0%, #252545 100%); padding: 14px 12px; text-align: center; font-weight: 700; color: #fff; font-size: 0.85rem; border-bottom: 1px solid #333; }
@@ -381,7 +389,8 @@
   <div class="ticker-container" id="tickerContainer" style="display:none;">
     <div class="ticker-track" id="tickerTrack"></div>
   </div>
-  <table class="main-table" id="mainTable" style="display:none;">
+  <div class="table-wrapper" id="tableWrapper" style="display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+  <table class="main-table" id="mainTable">
   </table>
 
   <div class="modal-overlay" id="workModal">
@@ -960,7 +969,7 @@
           isLoading = false;
           document.getElementById('loading').style.display = 'none';
           document.getElementById('dateControls').style.display = 'flex';
-          document.getElementById('mainTable').style.display = 'table';
+          document.getElementById('tableWrapper').style.display = 'block';
           initYearPicker();
           renderGrid();
         } catch(e) {
@@ -972,7 +981,7 @@
         isLoading = false;
         document.getElementById('loading').style.display = 'none';
         document.getElementById('dateControls').style.display = 'flex';
-        document.getElementById('mainTable').style.display = 'table';
+        document.getElementById('tableWrapper').style.display = 'block';
         initYearPicker();
         renderGrid();
         
