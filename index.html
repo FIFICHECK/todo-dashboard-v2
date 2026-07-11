@@ -259,6 +259,82 @@
     .toast { right: 10px; left: 10px; font-size: 0.8rem; padding: 10px 16px; }
   }
 
+
+    /* ===== Incomplete Tasks Ticker ===== */
+    .ticker-container {
+      width: 100%;
+      background: linear-gradient(135deg, #2a1a1a 0%, #3a2020 100%);
+      border: 1px solid #5a3030;
+      border-radius: 12px;
+      padding: 10px 0;
+      margin-bottom: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(255,0,0,0.1);
+    }
+    .ticker-container.complete {
+      background: linear-gradient(135deg, #1a2a1a 0%, #1a3a1a 100%);
+      border-color: #2a5a2a;
+      box-shadow: 0 4px 15px rgba(0,255,0,0.05);
+    }
+    .ticker-track {
+      display: flex;
+      white-space: nowrap;
+      animation: ticker-scroll 20s linear infinite;
+    }
+    @keyframes ticker-scroll {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .ticker-track:hover {
+      animation-play-state: paused;
+    }
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 16px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #ff6b6b;
+      flex-shrink: 0;
+    }
+    .ticker-item.complete-item {
+      color: #4ecca3;
+    }
+    .ticker-item .rm-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #fff;
+    }
+    .ticker-item .pending-count {
+      background: #5a2020;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      color: #ff6b6b;
+    }
+    .ticker-icon { font-size: 1rem; margin-right: 4px; }
+    .ticker-label { color: #ffcc00; font-size: 0.85rem; margin-right: 8px; }
+    
+    @media (max-width: 768px) {
+      .ticker-container { padding: 6px 0; margin-bottom: 10px; border-radius: 8px; }
+      .ticker-item { font-size: 0.75rem; padding: 0 10px; }
+      .ticker-item .rm-badge { font-size: 0.65rem; padding: 1px 5px; }
+      .ticker-item .pending-count { font-size: 0.65rem; }
+      .ticker-label { font-size: 0.7rem; }
+      @keyframes ticker-scroll {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-200%); }
+      }
+    }
+    @media (max-width: 480px) {
+      .ticker-item { font-size: 0.65rem; padding: 0 6px; }
+      .ticker-item .rm-badge { font-size: 0.55rem; padding: 1px 4px; }
+      .ticker-label { font-size: 0.6rem; }
+    }
+
 </style>
 </head>
 <body>
@@ -302,6 +378,9 @@
     </div>
   </div>
 
+  <div class="ticker-container" id="tickerContainer" style="display:none;">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
   <table class="main-table" id="mainTable" style="display:none;">
   </table>
 
@@ -1614,6 +1693,7 @@ async function saveRMStoAirtable() {
       });
 
       table.innerHTML = html;
+      renderIncompleteTicker();
     }
 
     function escapeHtml(text) {
@@ -1621,6 +1701,81 @@ async function saveRMStoAirtable() {
       var div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    function renderIncompleteTicker() {
+      var dates = getWeekDates();
+      var today = new Date();
+      today.setHours(0,0,0,0);
+      
+      // Count pending items per RM for Mon-Fri dates that have passed (today or earlier)
+      var rmPending = {};
+      var rmColors = RM_COLORS;
+      var hasAnyWork = false;
+      
+      dates.forEach(function(date) {
+        var dateKey = getDateKey(date);
+        var dayOfWeek = date.getDay();
+        // Skip weekends
+        if (dayOfWeek === 0 || dayOfWeek === 6) return;
+        // Only count past or today dates (not future)
+        if (date > today) return;
+        
+        var dayWorks = works.filter(function(w) { 
+          var workDates = getWorkDates(w.dateKey, w.repeat, dates);
+          return workDates.indexOf(dateKey) !== -1;
+        });
+        
+        if (dayWorks.length > 0) hasAnyWork = true;
+        
+        dayWorks.forEach(function(work) {
+          for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
+            var key = getCheckKey(dateKey, work.id, rmIdx);
+            var state = checks[key] !== undefined ? checks[key] : (checkArchive[key] !== undefined ? checkArchive[key] : 0);
+            if (state === 0) {
+              var rmName = RMS[rmIdx] || 'RM' + (rmIdx + 1);
+              if (!rmPending[rmIdx]) rmPending[rmIdx] = 0;
+              rmPending[rmIdx]++;
+            }
+          }
+        });
+      });
+      
+      var container = document.getElementById('tickerContainer');
+      var track = document.getElementById('tickerTrack');
+      
+      if (!hasAnyWork || Object.keys(rmPending).length === 0) {
+        // All complete or no works this week
+        container.className = 'ticker-container complete';
+        track.innerHTML = '<div class="ticker-item complete-item"><span class="ticker-icon">✅</span> 本星期所有工作已完成!</div>';
+        container.style.display = '';
+        return;
+      }
+      
+      container.className = 'ticker-container';
+      
+      var html = '<div class="ticker-item">';
+      html += '<span class="ticker-icon">⚠️</span>';
+      html += '<span class="ticker-label">未完成</span>';
+      html += '</div>';
+      
+      // Sort RMs by pending count (highest first)
+      var sortedRMs = Object.keys(rmPending).sort(function(a, b) {
+        return rmPending[b] - rmPending[a];
+      });
+      
+      sortedRMs.forEach(function(rmIdx) {
+        var rmName = RMS[parseInt(rmIdx)] || 'RM' + (parseInt(rmIdx) + 1);
+        var color = rmColors[parseInt(rmIdx)];
+        var count = rmPending[rmIdx];
+        html += '<div class="ticker-item">';
+        html += '<span class="rm-badge" style="background:' + color + ';">' + escapeHtml(rmName) + '</span>';
+        html += '<span class="pending-count">' + count + '</span>';
+        html += '</div>';
+      });
+      
+      track.innerHTML = html;
+      container.style.display = '';
     }
 
     function openAddWork() {
