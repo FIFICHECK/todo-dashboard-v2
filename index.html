@@ -1315,12 +1315,6 @@ async function saveRMStoAirtable() {
       var targetWeek = new Date(currentWeekStart);
       targetWeek.setDate(targetWeek.getDate() + (direction * 7));
 
-      // Check ±2 week boundary
-      var range = getAllowedWeekRange();
-      if (targetWeek < range.min || targetWeek > range.max) {
-        return;
-      }
-
       // Check if target week is beyond sync range
       checkAndExtendSyncRange(targetWeek);
 
@@ -1394,12 +1388,7 @@ async function saveRMStoAirtable() {
       if (!year) return;
       var y = parseInt(year);
       // Jump to first Monday of RM year (Dec 28 of previous year for most years)
-      var target = getFirstMondayOfYear(y);
-      var range = getAllowedWeekRange();
-      // Snap to allowed range if target is outside
-      if (target < range.min) target = range.min;
-      if (target > range.max) target = range.max;
-      currentWeekStart = target;
+      currentWeekStart = getFirstMondayOfYear(y);
       // Update year range label
       updateYearRangeLabel(y);
       renderGrid();
