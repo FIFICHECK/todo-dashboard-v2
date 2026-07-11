@@ -343,6 +343,80 @@
       .ticker-label { font-size: 0.6rem; }
     }
 
+
+    /* ===== Urgent/Serious Reminder Banner ===== */
+    .urgent-banner {
+      width: 100%;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      box-shadow: 0 4px 20px rgba(255,0,0,0.15);
+      animation: urgent-pulse 2s ease-in-out infinite;
+    }
+    @keyframes urgent-pulse {
+      0%, 100% { box-shadow: 0 4px 20px rgba(255,0,0,0.15); }
+      50% { box-shadow: 0 4px 30px rgba(255,0,0,0.3); }
+    }
+    .urgent-banner .banner-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .urgent-banner .banner-items {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .urgent-banner .banner-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .urgent-banner .banner-item.serious-item {
+      background: rgba(255,23,68,0.15);
+      border-left: 3px solid #ff1744;
+      color: #ff6b6b;
+    }
+    .urgent-banner .banner-item.urgent-item {
+      background: rgba(255,204,0,0.12);
+      border-left: 3px solid #ffcc00;
+      color: #ffd700;
+    }
+    .urgent-banner .banner-item .work-name-urgent {
+      flex: 1;
+      font-size: 0.85rem;
+    }
+    .urgent-banner .banner-item .urgent-days {
+      font-size: 0.75rem;
+      color: #aaa;
+      font-weight: 600;
+    }
+    .urgent-banner .banner-empty {
+      color: #888;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    @media (max-width: 768px) {
+      .urgent-banner { padding: 10px 12px; gap: 8px; border-radius: 8px; }
+      .urgent-banner .banner-icon { font-size: 1.2rem; }
+      .urgent-banner .banner-item { font-size: 0.75rem; padding: 4px 8px; }
+      .urgent-banner .banner-item .work-name-urgent { font-size: 0.75rem; }
+      .urgent-banner .banner-item .urgent-days { font-size: 0.65rem; }
+    }
+    @media (max-width: 480px) {
+      .urgent-banner { padding: 8px 10px; flex-direction: column; }
+      .urgent-banner .banner-item { font-size: 0.65rem; padding: 3px 6px; }
+      .urgent-banner .banner-item .work-name-urgent { font-size: 0.65rem; }
+    }
+
 </style>
 </head>
 <body>
@@ -388,6 +462,10 @@
 
   <div class="ticker-container" id="tickerContainer" style="display:none;">
     <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+  <div class="urgent-banner" id="urgentBanner" style="display:none;">
+    <div class="banner-icon">⚡</div>
+    <div class="banner-items" id="urgentBannerItems"></div>
   </div>
   <div class="table-wrapper" id="tableWrapper" style="display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;">
   <table class="main-table" id="mainTable">
@@ -1691,6 +1769,7 @@ async function saveRMStoAirtable() {
       });
 
       table.innerHTML = html;
+      renderUrgentBanner();
       renderIncompleteTicker();
     }
 
@@ -1699,6 +1778,84 @@ async function saveRMStoAirtable() {
       var div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    function renderUrgentBanner() {
+      var dates = getWeekDates();
+      var today = new Date();
+      today.setHours(0,0,0,0);
+      
+      var urgentItems = [];
+      var seriousItems = [];
+      
+      dates.forEach(function(date) {
+        var dateKey = getDateKey(date);
+        var dayOfWeek = date.getDay();
+        // Skip weekends
+        if (dayOfWeek === 0 || dayOfWeek === 6) return;
+        // Only show past and today (not future)
+        if (date > today) return;
+        
+        var dayWorks = works.filter(function(w) { 
+          var workDates = getWorkDates(w.dateKey, w.repeat, dates);
+          return workDates.indexOf(dateKey) !== -1;
+        });
+        
+        dayWorks.forEach(function(work) {
+          var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+          var dayLabel = (date.getMonth() + 1) + '/' + date.getDate() + '(' + dayNames[dayOfWeek] + ')';
+          
+          if (work.urgent === 'serious') {
+            seriousItems.push({ text: work.text, day: dayLabel, dateKey: dateKey });
+          } else if (work.urgent === 'urgent') {
+            urgentItems.push({ text: work.text, day: dayLabel, dateKey: dateKey });
+          }
+        });
+      });
+      
+      var container = document.getElementById('urgentBanner');
+      var itemsDiv = document.getElementById('urgentBannerItems');
+      
+      if (seriousItems.length === 0 && urgentItems.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+      
+      // Deduplicate work names and aggregate days
+      function aggregate(items) {
+        var map = {};
+        items.forEach(function(item) {
+          if (!map[item.text]) map[item.text] = [];
+          if (map[item.text].indexOf(item.day) === -1) map[item.text].push(item.day);
+        });
+        return map;
+      }
+      
+      var seriousMap = aggregate(seriousItems);
+      var urgentMap = aggregate(urgentItems);
+      
+      var html = '';
+      
+      // SERIOUS items first (red)
+      Object.keys(seriousMap).forEach(function(name) {
+        html += '<div class="banner-item serious-item">';
+        html += '<span>🔴</span>';
+        html += '<span class="work-name-urgent">' + escapeHtml(name) + '</span>';
+        html += '<span class="urgent-days">' + seriousMap[name].join('、') + '</span>';
+        html += '</div>';
+      });
+      
+      // URGENT items (gold)
+      Object.keys(urgentMap).forEach(function(name) {
+        html += '<div class="banner-item urgent-item">';
+        html += '<span>⚠️</span>';
+        html += '<span class="work-name-urgent">' + escapeHtml(name) + '</span>';
+        html += '<span class="urgent-days">' + urgentMap[name].join('、') + '</span>';
+        html += '</div>';
+      });
+      
+      itemsDiv.innerHTML = html;
+      container.style.display = '';
     }
 
     function renderIncompleteTicker() {
