@@ -1150,9 +1150,24 @@ async function saveRMStoAirtable() {
       }
     }
 
+    function getAllowedWeekRange() {
+      var today = getMonday(new Date());
+      var minWeek = new Date(today);
+      minWeek.setDate(today.getDate() - 14);
+      var maxWeek = new Date(today);
+      maxWeek.setDate(today.getDate() + 14);
+      return { min: getMonday(minWeek), max: getMonday(maxWeek) };
+    }
+
     function navigateWeek(direction) {
       var targetWeek = new Date(currentWeekStart);
       targetWeek.setDate(targetWeek.getDate() + (direction * 7));
+
+      // Check ±2 week boundary
+      var range = getAllowedWeekRange();
+      if (targetWeek < range.min || targetWeek > range.max) {
+        return;
+      }
 
       // Check if target week is beyond sync range
       checkAndExtendSyncRange(targetWeek);
@@ -1227,7 +1242,12 @@ async function saveRMStoAirtable() {
       if (!year) return;
       var y = parseInt(year);
       // Jump to first Monday of RM year (Dec 28 of previous year for most years)
-      currentWeekStart = getFirstMondayOfYear(y);
+      var target = getFirstMondayOfYear(y);
+      var range = getAllowedWeekRange();
+      // Snap to allowed range if target is outside
+      if (target < range.min) target = range.min;
+      if (target > range.max) target = range.max;
+      currentWeekStart = target;
       // Update year range label
       updateYearRangeLabel(y);
       renderGrid();
@@ -1297,6 +1317,10 @@ async function saveRMStoAirtable() {
 
     function jumpToWeek(dateStr) {
       var targetWeek = getMonday(new Date(dateStr));
+      var range = getAllowedWeekRange();
+      if (targetWeek < range.min || targetWeek > range.max) {
+        return;
+      }
       checkAndExtendSyncRange(targetWeek);
       currentWeekStart = targetWeek;
       renderGrid();
@@ -1306,7 +1330,7 @@ async function saveRMStoAirtable() {
       var container = document.getElementById('weekChips');
       var baseMonday = new Date(currentWeekStart);
       var html = '';
-      for (var w = -4; w <= 4; w++) {
+      for (var w = -2; w <= 2; w++) {
         var monday = new Date(baseMonday);
         monday.setDate(baseMonday.getDate() + (w * 7));
         var isActive = monday.getTime() === currentWeekStart.getTime();
