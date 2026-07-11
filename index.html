@@ -297,6 +297,9 @@
     var works = [];
     var checks = {};
     var checkRecordIds = {}; // Cache: CheckKey → Airtable record ID
+    var checkArchive = {}; // Archived old checks from Settings table
+    var archiveRecordId = null; // Airtable record ID for CheckArchive
+    var ARCHIVE_CUTOFF_DAYS = 14; // Auto-archive checks older than this
     var isSaving = false;
     var isSyncing = false;
     var lastSyncTime = null; // For delta sync: only fetch records modified after this time
@@ -461,10 +464,115 @@
     }
 
     async function deleteAirtableRecord(table, recordId) {
-      await fetch(AIRTABLE_BASE_URL + '/' + encodeURIComponent(table) + '/' + recordId, {
+      var response = await fetch(AIRTABLE_BASE_URL + '/' + encodeURIComponent(table) + '/' + recordId, {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + AIRTABLE_API_KEY }
       });
+      if (!response.ok) {
+        console.warn('DELETE failed for', recordId, 'status:', response.status);
+      }
+    }
+
+    // ===== CheckArchive Functions (auto-archive old checks) =====
+    async function loadCheckArchive() {
+      try {
+        var records = await fetchAirtable('Settings', "Name='CheckArchive'");
+        if (records.length > 0) {
+          archiveRecordId = records[0].id;
+          try {
+            checkArchive = JSON.parse(records[0].fields.Value || '{}');
+          } catch(e) {
+            checkArchive = {};
+          }
+          console.log('ARCHIVE: Loaded', Object.keys(checkArchive).length, 'archived checks');
+        }
+      } catch(e) {
+        console.error('ARCHIVE: Failed to load:', e);
+        checkArchive = {};
+      }
+    }
+
+    async function saveCheckArchive() {
+      var archiveStr = JSON.stringify(checkArchive);
+      // Truncate if too long (Airtable long text limit is ~100K)
+      if (archiveStr.length > 90000) {
+        console.warn('ARCHIVE: Archive too large (' + archiveStr.length + ' chars), truncating oldest entries');
+        var keys = Object.keys(checkArchive).sort();
+        while (archiveStr.length > 80000 && keys.length > 0) {
+          delete checkArchive[keys.shift()];
+          archiveStr = JSON.stringify(checkArchive);
+        }
+      }
+      if (archiveRecordId) {
+        await updateAirtableRecord('Settings', archiveRecordId, { 'Value': archiveStr });
+      } else {
+        var result = await createAirtableRecord('Settings', { 'Name': 'CheckArchive', 'Value': archiveStr });
+        archiveRecordId = result.id;
+      }
+      console.log('ARCHIVE: Saved', Object.keys(checkArchive).length, 'archived checks');
+    }
+
+    async function archiveOldChecks() {
+      var cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - ARCHIVE_CUTOFF_DAYS);
+      var cutoffKey = getDateKey(cutoff);
+      
+      var oldKeys = Object.keys(checks).filter(function(key) {
+        var datePart = key.split('_')[0];
+        return datePart < cutoffKey;
+      });
+      
+      if (oldKeys.length === 0) {
+        console.log('ARCHIVE: No old checks to archive');
+        return;
+      }
+      
+      console.log('ARCHIVE: Archiving ' + oldKeys.length + ' old checks (before ' + cutoffKey + ')');
+      
+      // Merge into archive
+      oldKeys.forEach(function(key) {
+        checkArchive[key] = checks[key];
+        delete checks[key];
+      });
+      
+      // Save archive to Settings
+      try {
+        await saveCheckArchive();
+      } catch(e) {
+        console.error('ARCHIVE: Failed to save archive:', e);
+        // Rollback
+        oldKeys.forEach(function(key) {
+          checks[key] = checkArchive[key];
+          delete checkArchive[key];
+        });
+        return;
+      }
+      
+      // Delete old records from Checks table (best-effort)
+      var deleted = 0;
+      for (var i = 0; i < oldKeys.length; i++) {
+        var key = oldKeys[i];
+        var recordId = checkRecordIds[key];
+        if (recordId) {
+          try {
+            await deleteAirtableRecord('Checks', recordId);
+            delete checkRecordIds[key];
+            deleted++;
+            // Small delay to avoid rate limits
+            if (i % 10 === 9) await new Promise(r => setTimeout(r, 100));
+          } catch(e) {
+            console.warn('ARCHIVE: Failed to delete record ' + key + ':', e);
+          }
+        }
+      }
+      
+      // Update localStorage
+      try {
+        localStorage.setItem('checks_cache', JSON.stringify(checks));
+        localStorage.setItem('check_archive_cache', JSON.stringify(checkArchive));
+      } catch(e) {}
+      
+      console.log('ARCHIVE: Complete - archived ' + oldKeys.length + ', deleted ' + deleted + ' from Airtable');
     }
 
     // Calculate date range for smart loading: current week ± weeks
@@ -679,6 +787,9 @@
         console.log('LOAD: Deduplicated to', uniqueWorks.length, 'unique works');
         works = uniqueWorks;
 
+        // Load CheckArchive from Settings table
+        await loadCheckArchive();
+        
         var settingsRecords = await fetchAirtable('Settings');
         settingsRecords.forEach(function(r) {
           if (r.fields.Name && r.fields.Value) {
@@ -739,11 +850,17 @@
               }
             });
             localStorage.setItem('checks_cache', JSON.stringify(checks));
+            localStorage.setItem('check_archive_cache', JSON.stringify(checkArchive));
             localStorage.setItem('checks_cache_timestamp', Date.now().toString());
             lastSyncTime = new Date().toISOString();
             localStorage.setItem('checks_last_sync', lastSyncTime);
             renderGrid();
             showToast(true, '✅ 已載入 ' + records.length + ' 記錄');
+            // Auto-archive old checks in background
+            setTimeout(async function() {
+              await archiveOldChecks();
+              renderGrid();
+            }, 500);
           } catch(e) {
             console.error('LOAD: Initial fetch failed:', e);
           }
@@ -1211,7 +1328,7 @@ async function saveRMStoAirtable() {
         return;
       }
       var key = getCheckKey(dateKey, workId, rmIdx);
-      var current = checks[key] || 0;
+      var current = checks[key] !== undefined ? checks[key] : (checkArchive[key] !== undefined ? checkArchive[key] : 0);
       
       // Special logic for "Add on Promotion" work
       var work = works.find(w => w.id === workId);
@@ -1268,7 +1385,7 @@ async function saveRMStoAirtable() {
       var html = '<div class="rm-checkboxes">';
       for (var rmIdx = 0; rmIdx < MAX_RMS; rmIdx++) {
         var checkKey = getCheckKey(dateKey, workId, rmIdx);
-        var state = checks[checkKey] || 0;
+        var state = checks[checkKey] !== undefined ? checks[checkKey] : (checkArchive[checkKey] !== undefined ? checkArchive[checkKey] : 0);
         var rmColor = RM_COLORS[rmIdx];
         var rmName = RMS[rmIdx] || 'RM' + (rmIdx + 1);
         var icon = STATE_NAMES[state];
