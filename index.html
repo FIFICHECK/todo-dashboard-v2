@@ -269,6 +269,38 @@
 
 
     /* ===== Incomplete Tasks Ticker ===== */
+
+    /* ===== Auto-refresh Timer ===== */
+    .auto-refresh-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 10px;
+      padding: 4px 12px;
+      background: #151525;
+      border: 1px solid #2a2a40;
+      border-radius: 20px;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .refresh-label {
+      font-size: 0.75rem;
+      color: #666;
+    }
+    .refresh-countdown {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #4fc3f7;
+      min-width: 18px;
+      text-align: center;
+    }
+    .refresh-unit {
+      font-size: 0.7rem;
+      color: #666;
+    }
+
     .ticker-container {
       width: 100%;
       background: linear-gradient(135deg, #2a1a1a 0%, #3a2020 100%);
@@ -459,6 +491,11 @@
       </div>
       <div id="yearRangeLabel" style="color:#888;font-size:0.85rem;"></div>
     </div>
+  </div>
+
+  <div class="auto-refresh-bar">
+    <span class="refresh-label">🔄 自動更新</span>
+    <span class="refresh-countdown" id="refreshCountdown">10</span><span class="refresh-unit">s</span>
   </div>
 
   <div class="ticker-container" id="tickerContainer" style="display:none;">
@@ -2190,6 +2227,8 @@ async function saveRMStoAirtable() {
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible' && !isLoading && !isSaving && !isSyncing) {
         console.log('SYNC: Page became visible, triggering background sync...');
+        countdownValue = 10;
+        updateCountdown();
         loadDataSmart();
       } else if (document.visibilityState === 'hidden') {
         console.log('SYNC: Page hidden, stopping polling...');
@@ -2197,16 +2236,29 @@ async function saveRMStoAirtable() {
       }
     });
     
-    // Poll for updates every 10 seconds (real-time sync)
+    // Poll for updates every 10 seconds with countdown timer
     var syncInterval = null;
+    var countdownValue = 10;
+    function updateCountdown() {
+      var el = document.getElementById('refreshCountdown');
+      if (el) el.textContent = countdownValue;
+    }
     function startPolling() {
       if (syncInterval) clearInterval(syncInterval);
+      countdownValue = 10;
+      updateCountdown();
+      // Countdown tick every 1 second
       syncInterval = setInterval(function() {
-        if (!isLoading && !isSaving && !isSyncing) {
-          console.log('SYNC: Polling for updates...');
-          loadDataSmart();
+        countdownValue--;
+        if (countdownValue <= 0) {
+          countdownValue = 10;
+          if (!isLoading && !isSaving && !isSyncing) {
+            console.log('SYNC: Auto-refresh...');
+            loadDataSmart();
+          }
         }
-      }, 1000); // 10 seconds
+        updateCountdown();
+      }, 1000);
     }
     function stopPolling() {
       if (syncInterval) {
