@@ -301,6 +301,120 @@
       color: #666;
     }
 
+    /* ===== Report Panel ===== */
+    .report-panel {
+      background: linear-gradient(135deg, #1a1a2e 0%, #252545 100%);
+      border: 1px solid #4fc3f7;
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 20px rgba(79,195,247,0.15);
+    }
+    .report-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .report-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #4fc3f7;
+    }
+    .report-period-toggle {
+      display: flex;
+      gap: 4px;
+      background: #151525;
+      border-radius: 8px;
+      padding: 3px;
+    }
+    .period-btn {
+      padding: 5px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: transparent;
+      color: #888;
+      transition: all 0.2s;
+    }
+    .period-btn.active {
+      background: #4fc3f7;
+      color: #fff;
+    }
+    .period-btn:hover:not(.active) {
+      color: #fff;
+    }
+    .report-close {
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+    .report-close:hover {
+      color: #fff;
+    }
+    .report-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #151525;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .report-table th {
+      padding: 10px 12px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: #aaa;
+      background: #1a1a30;
+      border-bottom: 1px solid #2a2a40;
+    }
+    .report-table td {
+      padding: 9px 12px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #ddd;
+      border-bottom: 1px solid #222;
+    }
+    .report-table tr:last-child td {
+      border-bottom: none;
+    }
+    .report-table .rate-good {
+      color: #4ecca3;
+      font-weight: 700;
+    }
+    .report-table .rate-mid {
+      color: #f39c12;
+      font-weight: 700;
+    }
+    .report-table .rate-bad {
+      color: #e74c3c;
+      font-weight: 700;
+    }
+    .report-summary {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #2a2a40;
+      text-align: center;
+    }
+    .report-summary-item {
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .report-summary-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+
     .ticker-container {
       width: 100%;
       background: linear-gradient(135deg, #2a1a1a 0%, #3a2020 100%);
@@ -481,6 +595,7 @@
     <div class="week-chips" id="weekChips"></div>
     <div style="margin-top:10px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
       <button class="reminder-btn" id="reminderBtn" onclick="sendDiscordReminder()">🔔 發送提醒</button>
+      <button class="report-btn" onclick="toggleReport()">📊 表現報告</button>
     </div>
     <div class="year-picker" style="margin-top:10px;display:flex;align-items:center;gap:15px;">
       <div>
@@ -504,6 +619,17 @@
   <div class="urgent-banner" id="urgentBanner" style="display:none;">
     <div class="banner-icon">⚡</div>
     <div class="banner-items" id="urgentBannerItems"></div>
+  </div>
+  <div class="report-panel" id="reportPanel" style="display:none;">
+    <div class="report-header">
+      <span class="report-title">📊 工作完成度報告</span>
+      <div class="report-period-toggle">
+        <button class="period-btn active" id="periodWeek" onclick="showReportBy('week')">By Week</button>
+        <button class="period-btn" id="periodMonth" onclick="showReportBy('month')">By Month</button>
+      </div>
+      <button class="report-close" onclick="toggleReport()">✕</button>
+    </div>
+    <div id="reportContent"></div>
   </div>
   <div class="table-wrapper" id="tableWrapper" style="display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;">
   <table class="main-table" id="mainTable">
@@ -2281,6 +2407,140 @@ async function saveRMStoAirtable() {
         // Don't return false - let the browser show its dialog
       }
     });
+
+    // ===== Report Functions =====
+    var reportPeriod = 'week';
+
+    function toggleReport() {
+      var panel = document.getElementById('reportPanel');
+      if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        buildReport();
+      } else {
+        panel.style.display = 'none';
+      }
+    }
+
+    function showReportBy(period) {
+      reportPeriod = period;
+      document.getElementById('periodWeek').className = period === 'week' ? 'period-btn active' : 'period-btn';
+      document.getElementById('periodMonth').className = period === 'month' ? 'period-btn active' : 'period-btn';
+      buildReport();
+    }
+
+    function getPeriodDates(period) {
+      var today = new Date();
+      today.setHours(0,0,0,0);
+      var dates = [];
+      if (period === 'week') {
+        var monday = getMonday(today);
+        for (var i = 0; i < 7; i++) {
+          var d = new Date(monday);
+          d.setDate(monday.getDate() + i);
+          dates.push(d);
+        }
+      } else {
+        var first = new Date(today.getFullYear(), today.getMonth(), 1);
+        var last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        for (var d2 = new Date(first); d2 <= last; d2.setDate(d2.getDate() + 1)) {
+          dates.push(new Date(d2));
+        }
+      }
+      return dates;
+    }
+
+    function buildReport() {
+      var dates = getPeriodDates(reportPeriod);
+      var totalWorks = 0;
+      var rmStats = {};
+      for (var i = 0; i < MAX_RMS; i++) {
+        rmStats[i] = { total: 0, done: 0, crossed: 0, pending: 0 };
+      }
+      var today = new Date();
+      today.setHours(0,0,0,0);
+
+      dates.forEach(function(date) {
+        var dayOfWeek = date.getDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6) return;
+        if (date > today) return;
+
+        var dateKey = getDateKey(date);
+        var dayWorks = works.filter(function(w) {
+          var workDates = getWorkDates(w.dateKey, w.repeat, dates);
+          return workDates.indexOf(dateKey) !== -1;
+        });
+
+        dayWorks.forEach(function(work) {
+          totalWorks++;
+          for (var r = 0; r < MAX_RMS; r++) {
+            rmStats[r].total++;
+            var key = getCheckKey(dateKey, work.id, r);
+            var state = checks[key] !== undefined ? checks[key] : (checkArchive[key] !== undefined ? checkArchive[key] : 0);
+            if (state === 1) rmStats[r].done++;
+            else if (state === 2) rmStats[r].crossed++;
+            else rmStats[r].pending++;
+          }
+        });
+      });
+
+      renderReport(rmStats, totalWorks);
+    }
+
+    function renderReport(rmStats, totalWorks) {
+      var container = document.getElementById('reportContent');
+      var periodLabel = reportPeriod === 'week' ? '本週' : '本月';
+      var today = new Date();
+      var label = reportPeriod === 'week'
+        ? getMonday(today).getMonth()+1 + '/' + getMonday(today).getDate() + ' - ' + new Date(getMonday(today).getTime() + 6*86400000).getMonth()+1 + '/' + new Date(getMonday(today).getTime() + 6*86400000).getDate()
+        : today.getFullYear() + '/' + (today.getMonth()+1);
+
+      var totalDone = 0, totalPending = 0, totalCrossed = 0, grandTotal = 0;
+      var html = '<table class="report-table"><thead><tr>';
+      html += '<th>RM</th><th>總數</th><th>✅ 完成</th><th>❌ 跳過</th><th>⏳ 未做</th><th>完成率</th>';
+      html += '</tr></thead><tbody>';
+
+      for (var i = 0; i < MAX_RMS; i++) {
+        var s = rmStats[i];
+        if (s.total === 0) continue;
+        grandTotal += s.total;
+        totalDone += s.done;
+        totalPending += s.pending;
+        totalCrossed += s.crossed;
+        var rate = s.total > 0 ? (s.done / s.total * 100) : 0;
+        var rateClass = rate >= 80 ? 'rate-good' : (rate >= 50 ? 'rate-mid' : 'rate-bad');
+        var rmName = RMS[i] || 'RM' + (i+1);
+        var color = RM_COLORS[i];
+        html += '<tr>';
+        html += '<td><span class="rm-badge" style="background:' + color + ';">' + escapeHtml(rmName) + '</span></td>';
+        html += '<td>' + s.total + '</td>';
+        html += '<td>' + s.done + '</td>';
+        html += '<td>' + s.crossed + '</td>';
+        html += '<td>' + s.pending + '</td>';
+        html += '<td class="' + rateClass + '">' + rate.toFixed(1) + '%</td>';
+        html += '</tr>';
+      }
+
+      var overallRate = grandTotal > 0 ? (totalDone / grandTotal * 100) : 0;
+      var overallClass = overallRate >= 80 ? 'rate-good' : (overallRate >= 50 ? 'rate-mid' : 'rate-bad');
+      html += '<tr style="background:#1a1a30;font-weight:700;">';
+      html += '<td style="color:#4fc3f7;">📊 合計</td>';
+      html += '<td style="color:#fff;">' + grandTotal + '</td>';
+      html += '<td style="color:#4ecca3;">' + totalDone + '</td>';
+      html += '<td style="color:#f39c12;">' + totalCrossed + '</td>';
+      html += '<td style="color:#e74c3c;">' + totalPending + '</td>';
+      html += '<td class="' + overallClass + '">' + overallRate.toFixed(1) + '%</td>';
+      html += '</tr>';
+
+      html += '</tbody></table>';
+
+      html += '<div class="report-summary">';
+      html += '<div><div class="report-summary-value">' + periodLabel + '</div><div class="report-summary-item" style="color:#4fc3f7;">' + label + '</div></div>';
+      html += '<div><div class="report-summary-value" style="color:#4fc3f7;">' + grandTotal + '</div><div class="report-summary-item">總工作量</div></div>';
+      html += '<div><div class="report-summary-value" style="color:#4ecca3;">' + overallRate.toFixed(1) + '%</div><div class="report-summary-item">整體完成率</div></div>';
+      html += '</div>';
+
+      container.innerHTML = html;
+    }
 
     // Initialize
     function init() {
