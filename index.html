@@ -2227,11 +2227,14 @@ async function saveRMStoAirtable() {
     
     // Auto-sync when page becomes visible again (e.g., switch from another tab/app)
     document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'visible' && !isLoading && !isSaving && !isSyncing) {
-        console.log('SYNC: Page became visible, triggering background sync...');
+      if (document.visibilityState === 'visible') {
+        console.log('SYNC: Page became visible, restarting polling...');
         countdownValue = 10;
         updateCountdown();
-        loadDataSmart();
+        startPolling();
+        if (!isLoading && !isSaving && !isSyncing) {
+          loadDataSmart();
+        }
       } else if (document.visibilityState === 'hidden') {
         console.log('SYNC: Page hidden, stopping polling...');
         stopPolling();
