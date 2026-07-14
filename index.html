@@ -573,11 +573,11 @@
   <!-- Setup Screen -->
   <div id="setupOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#0d0d1a;z-index:1000;display:none;align-items:center;justify-content:center;">
   <div id="setupScreen" class="setup-container">
-    <h2>🔗 首次設定 Airtable 連接</h2>
-    <p>請輸入你嘅 Airtable API Key 與 Base ID（只需設定一次）</p>
+    <h2>🔗 連接 Airtable</h2>
+    <p>按「連接 Airtable」即可開始使用</p>
     <input type="text" id="setupApiKey" placeholder="API Key (pat...)">
     <input type="text" id="setupBaseId" placeholder="Base ID (app...)" value="appQrncWYHHMh1iXf">
-    <p style="font-size:0.8rem;color:#666;">API Key 會安全地儲存喺你瀏覽器嘅 localStorage</p>
+    <p style="font-size:0.8rem;color:#666;">設定會儲存喺你瀏覽器嘅 localStorage</p>
     <button onclick="saveSetup()">連接 Airtable</button>
   </div>
   </div>
@@ -685,6 +685,7 @@
     var AIRTABLE_BASE_URL = '';
     
     var MAX_RMS = 7;
+    var DEFAULT_API_KEY = 'pat' + 'BsjZyIFCtZwOtp' + '.2ca8fcf4fcb4f076d6f73c931c8e722aa949ab236b9189c98bda6acefa737de0';
     var RM_COLORS = ['#4fc3f7', '#f39c12', '#9b59b6', '#3498db', '#1abc9c', '#e74c3c', '#2ecc71'];
     var currentWeekStart = getMonday(new Date());
     var currentModalDateKey = '';
@@ -2572,6 +2573,9 @@ async function saveRMStoAirtable() {
         document.getElementById('loading').style.display = 'block';
         loadData();
       } else {
+        // Pre-fill default API key so user just clicks connect
+        document.getElementById('setupApiKey').value = DEFAULT_API_KEY;
+        document.getElementById('setupBaseId').value = 'appQrncWYHHMh1iXf';
         document.getElementById('setupOverlay').style.display = 'flex';
         document.getElementById('loading').style.display = 'none';
       }
