@@ -1267,17 +1267,28 @@
       if (cachedChecks) {
         try {
           var parsed = JSON.parse(cachedChecks);
-          // If cache has way more entries than expected, it's stale (from before cleanup)
-          var checkCount = Object.keys(parsed).length;
-          if (checkCount > 2000) {
-            console.log('LOAD: Cache too large (' + checkCount + '), likely stale. Invalidating...');
-            try { localStorage.removeItem('checks_cache'); } catch(e) {}
-            try { localStorage.removeItem('checks_cache_timestamp'); } catch(e) {}
-            try { localStorage.removeItem('checks_last_sync'); } catch(e) {}
-            try { localStorage.removeItem('works_last_sync'); } catch(e) {}
-            parsed = {};
+          // Filter out stale entries: keep only CheckKeys within the last 21 days
+          // This prevents old records that were deleted from Airtable from lingering in cache
+          var cutoffDate = new Date();
+          cutoffDate.setDate(cutoffDate.getDate() - 21);
+          var cutoffKey = getDateKey(cutoffDate);
+          var filtered = {};
+          var removedCount = 0;
+          for (var ck in parsed) {
+            if (parsed.hasOwnProperty(ck)) {
+              var datePart = ck.substring(0, 10);
+              if (datePart >= cutoffKey) {
+                filtered[ck] = parsed[ck];
+              } else {
+                removedCount++;
+              }
+            }
           }
-          checks = parsed;
+          console.log('LOAD: Cache filtered - kept', Object.keys(filtered).length, 'removed', removedCount);
+          if (removedCount > 0) {
+            try { localStorage.setItem('checks_cache', JSON.stringify(filtered)); } catch(e) {}
+          }
+          checks = filtered;
           console.log('LOAD: Loaded', Object.keys(checks).length, 'checks from localStorage cache (instant)');
           isLoading = false;
           document.getElementById('loading').style.display = 'none';
