@@ -2485,24 +2485,12 @@ async function saveRMStoAirtable() {
     async function fetchRecordCount() {
       if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_URL) return;
       try {
+        // Reuse the existing fetchAirtable helper (same pattern as loadDataSmart)
+        var records = await fetchAirtable('Checks', null);
         var uniqueKeys = new Set();
-        var offset = null;
-        while (true) {
-          var url = AIRTABLE_BASE_URL + '/Checks?fields%5B%5D=CheckKey';
-          if (offset) url += '&offset=' + offset;
-          var resp = await fetch(url, {
-            headers: { 'Authorization': 'Bearer ' + AIRTABLE_API_KEY }
-          });
-          if (!resp.ok) break;
-          var data = await resp.json();
-          if (data.records) {
-            data.records.forEach(function(r) {
-              if (r.fields.CheckKey) uniqueKeys.add(r.fields.CheckKey);
-            });
-          }
-          offset = data.offset;
-          if (!offset) break;
-        }
+        records.forEach(function(r) {
+          if (r.fields.CheckKey) uniqueKeys.add(r.fields.CheckKey);
+        });
         var settingsCnt = 8;
         var worksCnt = (typeof works !== 'undefined' && works) ? works.length : 0;
         cachedRecordCount = settingsCnt + worksCnt + uniqueKeys.size;
