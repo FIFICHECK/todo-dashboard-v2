@@ -2603,17 +2603,6 @@ async function saveRMStoAirtable() {
       showToast(true, msg);
       console.log('SYNC PENDING: Done -', msg);
     }
-        countdownValue--;
-        if (countdownValue <= 0) {
-          countdownValue = 10;
-          if (!isLoading && !isSaving && !isSyncing) {
-            console.log('SYNC: Auto-refresh...');
-            loadDataSmart();
-          }
-        }
-        updateCountdown();
-      }, 1000);
-    }
     function stopPolling() {
       if (syncInterval) {
         clearInterval(syncInterval);
