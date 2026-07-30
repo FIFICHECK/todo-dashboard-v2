@@ -2459,29 +2459,54 @@ async function saveRMStoAirtable() {
     }
 
     // Update Airtable record usage counter
-    function updateRecordUsage() {
+    var lastActualCheck = 0;
+    var lastActualUpdate = 0;
+    async function updateRecordUsage(forceActual) {
       var el = document.getElementById('recordUsage');
       if (!el) return;
-      var total = 0;
-      // Settings: 7 RM records + CheckArchive = 8
-      total += 8;
-      // Works
-      if (typeof works !== 'undefined' && works) {
-        total += works.length;
-      }
-      // Active checks: count unique CheckKeys loaded from Airtable
-      if (typeof checks !== 'undefined' && checks) {
-        total += Object.keys(checks).length;
-      }
-      // Archive is stored as JSON in a single Settings record (NOT individual records)
-      // So we do NOT add checkArchive.length here
 
-      el.textContent = '📊 Airtable: ~' + total + ' records';
-      el.className = 'record-usage';
-      if (total > 800) {
-        el.classList.add('danger');
-      } else if (total > 500) {
-        el.classList.add('warning');
+      // Quick estimate from memory
+      var settingsCnt = 8;
+      var worksCnt = (typeof works !== 'undefined' && works) ? works.length : 0;
+      var checksCnt = (typeof checks !== 'undefined' && checks) ? Object.keys(checks).length : 0;
+      var estimate = settingsCnt + worksCnt + checksCnt;
+      el.textContent = '📊 Airtable: ~' + estimate + ' records';
+
+      // Fetch actual count from Airtable API (throttled: max once per 30s)
+      var now = Date.now();
+      if (forceActual || now - lastActualUpdate > 30000) {
+        try {
+          lastActualUpdate = now;
+          var uniqueKeys = new Set();
+          var offset = null;
+          while (true) {
+            var url = AIRTABLE_BASE_URL + '/Checks?fields%5B%5D=CheckKey&maxRecords=100';
+            if (offset) url += '&offset=' + offset;
+            var resp = await fetch(url, {
+              headers: { 'Authorization': 'Bearer ' + AIRTABLE_API_KEY }
+            });
+            var data = await resp.json();
+            if (data.records) {
+              data.records.forEach(function(r) {
+                if (r.fields.CheckKey) uniqueKeys.add(r.fields.CheckKey);
+              });
+            }
+            offset = data.offset;
+            if (!offset || uniqueKeys.size > 2000) break;
+          }
+          lastActualCheck = uniqueKeys.size;
+          var actual = settingsCnt + worksCnt + uniqueKeys.size;
+          el.textContent = '📊 Airtable: ' + actual + ' records';
+          el.className = 'record-usage';
+          if (actual > 800) {
+            el.classList.add('danger');
+          } else if (actual > 500) {
+            el.classList.add('warning');
+          }
+        } catch(e) {
+          console.log('Record count fetch failed, using estimate');
+          el.textContent = '📊 Airtable: ~' + estimate + ' records';
+        }
       }
     }
     function startPolling() {
