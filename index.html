@@ -314,6 +314,25 @@
       color: #ef5350;
       font-weight: 700;
     }
+    .sync-pending-btn {
+      font-size: 0.7rem;
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid #4fc3f7;
+      background: transparent;
+      color: #4fc3f7;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: 8px;
+    }
+    .sync-pending-btn:hover {
+      background: #4fc3f7;
+      color: #0d0d1a;
+    }
+    .sync-pending-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
     /* ===== Report Panel ===== */
     .report-panel {
@@ -626,6 +645,7 @@
     <span class="refresh-label">🔄 自動更新</span>
     <span class="refresh-countdown" id="refreshCountdown">10</span><span class="refresh-unit">s</span>
     <span class="record-usage" id="recordUsage">📊 Airtable: -- records</span>
+    <button class="sync-pending-btn" id="syncPendingBtn" onclick="syncPendingChecks()" title="同步未儲存嘅 check states 到 Airtable">🔄 Sync Pending</button>
   </div>
 
   <div class="ticker-container" id="tickerContainer" style="display:none;">
@@ -2506,6 +2526,83 @@ async function saveRMStoAirtable() {
       updateCountdown();
       // Countdown tick every 1 second
       syncInterval = setInterval(function() {
+        countdownValue--;
+        if (countdownValue <= 0) {
+          countdownValue = 10;
+          loadDataSmart();
+        }
+        updateCountdown();
+      }, 1000);
+    }
+
+    // Sync all pending (non-zero) checks that haven't been saved to Airtable yet
+    var syncPendingRunning = false;
+    async function syncPendingChecks() {
+      var btn = document.getElementById('syncPendingBtn');
+      if (syncPendingRunning || !btn) return;
+      syncPendingRunning = true;
+      btn.disabled = true;
+      btn.textContent = '🔄 Syncing...';
+
+      var pending = [];
+      for (var key in checks) {
+        if (checks.hasOwnProperty(key)) {
+          var state = checks[key];
+          if (state !== undefined && state !== 0 && !checkRecordIds[key]) {
+            pending.push({ key: key, state: state });
+          }
+        }
+      }
+
+      if (pending.length === 0) {
+        showToast(true, '✅ 冇 pending checks 需要 sync');
+        btn.textContent = '🔄 Sync Pending';
+        btn.disabled = false;
+        syncPendingRunning = false;
+        return;
+      }
+
+      console.log('SYNC PENDING: Found', pending.length, 'checks to sync');
+      showToast(true, '🔄 Syncing ' + pending.length + ' pending checks...');
+
+      var synced = 0;
+      var failed = 0;
+      for (var i = 0; i < pending.length; i++) {
+        var item = pending[i];
+        var parts = item.key.split('_');
+        var dateKey = parts[0];
+        var rmIdx = parseInt(parts[parts.length - 1], 10);
+        try {
+          var nowISO = new Date().toISOString();
+          var result = await createAirtableRecord('Checks', {
+            'CheckKey': item.key,
+            'State': item.state,
+            'LastModifiedTime': nowISO
+          });
+          checkRecordIds[item.key] = result.id;
+          synced++;
+        } catch(e) {
+          failed++;
+          console.warn('SYNC PENDING: Failed to sync', item.key, ':', e.message || e);
+        }
+        if (i % 10 === 9) {
+          btn.textContent = '🔄 ' + (i + 1) + '/' + pending.length;
+          await new Promise(function(r) { setTimeout(r, 100); });
+        }
+      }
+
+      // Update cache
+      try { localStorage.setItem('check_record_ids', JSON.stringify(checkRecordIds)); } catch(e) {}
+
+      btn.textContent = '🔄 Sync Pending';
+      btn.disabled = false;
+      syncPendingRunning = false;
+
+      var msg = '✅ Synced ' + synced + '/' + pending.length + ' checks';
+      if (failed > 0) msg += ' (' + failed + ' failed)';
+      showToast(true, msg);
+      console.log('SYNC PENDING: Done -', msg);
+    }
         countdownValue--;
         if (countdownValue <= 0) {
           countdownValue = 10;
