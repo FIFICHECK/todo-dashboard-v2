@@ -1298,6 +1298,8 @@
           renderGrid();
           // Start auto-refresh polling immediately when loading from cache
           startPolling();
+          // Fetch actual Airtable record count in background
+          setTimeout(fetchRecordCount, 2000);
         } catch(e) {
           console.log('LOAD: Cache parse failed');
           checks = {};
@@ -2461,36 +2463,37 @@ async function saveRMStoAirtable() {
     // Update Airtable record usage counter
     var lastActualCheck = 0;
     var lastActualUpdate = 0;
-    async function updateRecordUsage(forceActual) {
+    var cachedRecordCount = null;
+    function updateRecordUsage() {
       var el = document.getElementById('recordUsage');
       if (!el) return;
-
       var settingsCnt = 8;
       var worksCnt = (typeof works !== 'undefined' && works) ? works.length : 0;
       var checksCnt = (typeof checks !== 'undefined' && checks) ? Object.keys(checks).length : 0;
-      var estimate = settingsCnt + worksCnt + checksCnt;
-      el.textContent = '📊 Airtable: ~' + estimate + ' records';
-
-      // Only fetch actual count if API key is available
-      if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_URL) {
-        console.log('Record count skip: API not connected');
-        return;
+      if (cachedRecordCount !== null) {
+        el.textContent = '📊 Airtable: ' + cachedRecordCount + ' records';
+      } else {
+        el.textContent = '📊 Airtable: ~' + (settingsCnt + worksCnt + checksCnt) + ' records';
       }
-
+      el.className = 'record-usage';
+      if (cachedRecordCount > 800) {
+        el.classList.add('danger');
+      } else if (cachedRecordCount > 500) {
+        el.classList.add('warning');
+      }
+    }
+    async function fetchRecordCount() {
+      if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_URL) return;
       try {
         var uniqueKeys = new Set();
         var offset = null;
-        var pageCount = 0;
         while (true) {
           var url = AIRTABLE_BASE_URL + '/Checks?fields%5B%5D=CheckKey';
           if (offset) url += '&offset=' + offset;
           var resp = await fetch(url, {
             headers: { 'Authorization': 'Bearer ' + AIRTABLE_API_KEY }
           });
-          if (!resp.ok) {
-            console.log('Record count API error:', resp.status);
-            break;
-          }
+          if (!resp.ok) break;
           var data = await resp.json();
           if (data.records) {
             data.records.forEach(function(r) {
@@ -2498,21 +2501,15 @@ async function saveRMStoAirtable() {
             });
           }
           offset = data.offset;
-          pageCount++;
           if (!offset) break;
         }
-        var actual = settingsCnt + worksCnt + uniqueKeys.size;
-        el.textContent = '📊 Airtable: ' + actual + ' records';
-        el.className = 'record-usage';
-        if (actual > 800) {
-          el.classList.add('danger');
-        } else if (actual > 500) {
-          el.classList.add('warning');
-        }
-        console.log('Record count: actual=' + actual + ' (unique=' + uniqueKeys.size + ', pages=' + pageCount + ')');
+        var settingsCnt = 8;
+        var worksCnt = (typeof works !== 'undefined' && works) ? works.length : 0;
+        cachedRecordCount = settingsCnt + worksCnt + uniqueKeys.size;
+        console.log('Record count fetched:', cachedRecordCount, '(unique checks:', uniqueKeys.size, ')');
+        updateRecordUsage();
       } catch(e) {
         console.log('Record count fetch error:', e.message || e);
-        el.textContent = '📊 Airtable: ~' + estimate + ' records';
       }
     }
     function startPolling() {
