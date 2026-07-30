@@ -2480,7 +2480,7 @@ async function saveRMStoAirtable() {
           var uniqueKeys = new Set();
           var offset = null;
           while (true) {
-            var url = AIRTABLE_BASE_URL + '/Checks?fields%5B%5D=CheckKey&maxRecords=100';
+            var url = AIRTABLE_BASE_URL + '/Checks?fields%5B%5D=CheckKey';
             if (offset) url += '&offset=' + offset;
             var resp = await fetch(url, {
               headers: { 'Authorization': 'Bearer ' + AIRTABLE_API_KEY }
