@@ -1267,6 +1267,16 @@
       if (cachedChecks) {
         try {
           var parsed = JSON.parse(cachedChecks);
+          // If cache has way more entries than expected, it's stale (from before cleanup)
+          var checkCount = Object.keys(parsed).length;
+          if (checkCount > 2000) {
+            console.log('LOAD: Cache too large (' + checkCount + '), likely stale. Invalidating...');
+            try { localStorage.removeItem('checks_cache'); } catch(e) {}
+            try { localStorage.removeItem('checks_cache_timestamp'); } catch(e) {}
+            try { localStorage.removeItem('checks_last_sync'); } catch(e) {}
+            try { localStorage.removeItem('works_last_sync'); } catch(e) {}
+            parsed = {};
+          }
           checks = parsed;
           console.log('LOAD: Loaded', Object.keys(checks).length, 'checks from localStorage cache (instant)');
           isLoading = false;
@@ -2442,22 +2452,18 @@ async function saveRMStoAirtable() {
       var el = document.getElementById('recordUsage');
       if (!el) return;
       var total = 0;
-      // Settings: fixed 7 RM records
-      total += 7;
+      // Settings: 7 RM records + CheckArchive = 8
+      total += 8;
       // Works
       if (typeof works !== 'undefined' && works) {
         total += works.length;
       }
-      // Active checks loaded in memory
+      // Active checks: count unique CheckKeys loaded from Airtable
       if (typeof checks !== 'undefined' && checks) {
         total += Object.keys(checks).length;
       }
-      // Archived checks
-      if (typeof checkArchive !== 'undefined' && checkArchive) {
-        total += Object.keys(checkArchive).length;
-      }
-      // Approx 1 extra for CheckArchive Settings record
-      total += 1;
+      // Archive is stored as JSON in a single Settings record (NOT individual records)
+      // So we do NOT add checkArchive.length here
 
       el.textContent = '📊 Airtable: ~' + total + ' records';
       el.className = 'record-usage';
