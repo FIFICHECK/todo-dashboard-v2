@@ -300,6 +300,20 @@
       font-size: 0.7rem;
       color: #666;
     }
+    .record-usage {
+      font-size: 0.7rem;
+      color: #888;
+      margin-left: 12px;
+      padding-left: 12px;
+      border-left: 1px solid #333;
+    }
+    .record-usage.warning {
+      color: #ffa726;
+    }
+    .record-usage.danger {
+      color: #ef5350;
+      font-weight: 700;
+    }
 
     /* ===== Report Panel ===== */
     .report-panel {
@@ -611,6 +625,7 @@
   <div class="auto-refresh-bar">
     <span class="refresh-label">🔄 自動更新</span>
     <span class="refresh-countdown" id="refreshCountdown">10</span><span class="refresh-unit">s</span>
+    <span class="record-usage" id="recordUsage">📊 Airtable: -- records</span>
   </div>
 
   <div class="ticker-container" id="tickerContainer" style="display:none;">
@@ -965,11 +980,56 @@
       try {
         localStorage.setItem('checks_cache', JSON.stringify(checks));
         localStorage.setItem('check_archive_cache', JSON.stringify(checkArchive));
-      } catch(e) {}
-      
+      } catch(e) {
+        console.warn('ARCHIVE: Failed to save cache to localStorage:', e);
+      }
       console.log('ARCHIVE: Complete - archived ' + oldKeys.length + ', deleted ' + deleted + ' from Airtable');
-    }
 
+      // PHASE 2: Direct Airtable cleanup for orphaned records (never loaded into browser memory)
+      // These accumulate over time because the browser only fetches recent date ranges
+      try {
+        var orphanFormula = "CheckKey < '" + cutoffKey + "'";
+        console.log('ARCHIVE: Checking for orphaned records (' + orphanFormula + ')...');
+        var orphanRecords = await fetchAirtable('Checks', orphanFormula);
+        if (orphanRecords.length > 0) {
+          console.log('ARCHIVE: Found ' + orphanRecords.length + ' orphaned records to clean');
+          var orphanDeleted = 0;
+          for (var oi = 0; oi < orphanRecords.length; oi++) {
+            var rec = orphanRecords[oi];
+            var ck = rec.fields.CheckKey || '';
+            var state = rec.fields.State !== undefined ? rec.fields.State : 0;
+            // Add to archive if not already there
+            if (ck && !checkArchive[ck]) {
+              checkArchive[ck] = state;
+            }
+            // Delete from Airtable
+            try {
+              await deleteAirtableRecord('Checks', rec.id);
+              delete checkRecordIds[ck];
+              orphanDeleted++;
+              if (oi % 10 === 9) await new Promise(function(r) { setTimeout(r, 100); });
+            } catch(e) {
+              console.warn('ARCHIVE: Failed to delete orphan ' + rec.id + ':', e);
+            }
+          }
+          // Save updated archive with orphaned entries
+          try {
+            await saveCheckArchive();
+          } catch(e) {
+            console.error('ARCHIVE: Failed to save archive after orphan cleanup:', e);
+          }
+          // Update localStorage
+          try {
+            localStorage.setItem('check_archive_cache', JSON.stringify(checkArchive));
+          } catch(e) {}
+          console.log('ARCHIVE: Orphan cleanup done - deleted ' + orphanDeleted + ' records');
+        } else {
+          console.log('ARCHIVE: No orphaned records found');
+        }
+      } catch(e) {
+        console.error('ARCHIVE: Orphan cleanup query failed:', e);
+      }
+    }
     // Calculate date range for smart loading: current week ± weeks
     function getDateRangeForLoading(baseWeekStart, weeksBefore, weeksAfter) {
       var start = new Date(baseWeekStart);
@@ -1938,6 +1998,7 @@ async function saveRMStoAirtable() {
       table.innerHTML = html;
       renderUrgentBanner();
       renderIncompleteTicker();
+      updateRecordUsage();
     }
 
     function escapeHtml(text) {
@@ -2374,6 +2435,37 @@ async function saveRMStoAirtable() {
     function updateCountdown() {
       var el = document.getElementById('refreshCountdown');
       if (el) el.textContent = countdownValue;
+    }
+
+    // Update Airtable record usage counter
+    function updateRecordUsage() {
+      var el = document.getElementById('recordUsage');
+      if (!el) return;
+      var total = 0;
+      // Settings: fixed 7 RM records
+      total += 7;
+      // Works
+      if (typeof works !== 'undefined' && works) {
+        total += works.length;
+      }
+      // Active checks loaded in memory
+      if (typeof checks !== 'undefined' && checks) {
+        total += Object.keys(checks).length;
+      }
+      // Archived checks
+      if (typeof checkArchive !== 'undefined' && checkArchive) {
+        total += Object.keys(checkArchive).length;
+      }
+      // Approx 1 extra for CheckArchive Settings record
+      total += 1;
+
+      el.textContent = '📊 Airtable: ~' + total + ' records';
+      el.className = 'record-usage';
+      if (total > 800) {
+        el.classList.add('danger');
+      } else if (total > 500) {
+        el.classList.add('warning');
+      }
     }
     function startPolling() {
       if (syncInterval) clearInterval(syncInterval);
