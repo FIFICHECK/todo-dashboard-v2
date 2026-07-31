@@ -2718,7 +2718,7 @@ async function saveRMStoAirtable() {
         totalDone += s.done;
         totalPending += s.pending;
         totalCrossed += s.crossed;
-        var rate = s.total > 0 ? (s.done / s.total * 100) : 0;
+        var rate = s.total > 0 ? ((s.total - s.pending) / s.total * 100) : 0;
         var rateClass = rate >= 80 ? 'rate-good' : (rate >= 50 ? 'rate-mid' : 'rate-bad');
         var rmName = RMS[i] || 'RM' + (i+1);
         var color = RM_COLORS[i];
@@ -2732,7 +2732,7 @@ async function saveRMStoAirtable() {
         html += '</tr>';
       }
 
-      var overallRate = grandTotal > 0 ? (totalDone / grandTotal * 100) : 0;
+      var overallRate = grandTotal > 0 ? ((grandTotal - totalPending) / grandTotal * 100) : 0;
       var overallClass = overallRate >= 80 ? 'rate-good' : (overallRate >= 50 ? 'rate-mid' : 'rate-bad');
       html += '<tr style="background:#1a1a30;font-weight:700;">';
       html += '<td style="color:#4fc3f7;">📊 合計</td>';
