@@ -942,7 +942,15 @@
       console.log('ARCHIVE: Saved', Object.keys(checkArchive).length, 'archived checks');
     }
 
+    var lastArchiveRun = 0;
+    var archiveRunning = false;
     async function archiveOldChecks() {
+      if (archiveRunning) {
+        console.log('ARCHIVE: Already running, skipping');
+        return;
+      }
+      archiveRunning = true;
+      try {
       var cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - ARCHIVE_CUTOFF_DAYS);
       var cutoffKey = getDateKey(cutoff);
@@ -1049,6 +1057,17 @@
       } catch(e) {
         console.error('ARCHIVE: Orphan cleanup query failed:', e);
       }
+      } finally {
+        archiveRunning = false;
+        lastArchiveRun = Date.now();
+      }
+    }
+
+    // Throttled wrapper: only run archive at most once per 10 minutes
+    function maybeRunArchive() {
+      if (archiveRunning) return;
+      if (Date.now() - lastArchiveRun < 600000) return; // 10 min
+      archiveOldChecks();
     }
     // Calculate date range for smart loading: current week ± weeks
     function getDateRangeForLoading(baseWeekStart, weeksBefore, weeksAfter) {
@@ -1219,6 +1238,8 @@
           if (worksUpdatedCount > 0) msg += ' ' + worksUpdatedCount + ' 工作';
           showToast(true, msg);
         }
+        // Auto-archive old checks periodically (throttled to once per 10 min)
+        maybeRunArchive();
       } catch (e) {
         console.error('LOAD SMART: Failed:', e);
         showToast(false, '❌ 同步失敗');
@@ -1320,6 +1341,8 @@
           startPolling();
           // Fetch actual Airtable record count in background
           setTimeout(fetchRecordCount, 2000);
+          // Auto-archive old checks (throttled to once per 10 min)
+          setTimeout(maybeRunArchive, 5000);
         } catch(e) {
           console.log('LOAD: Cache parse failed');
           checks = {};
