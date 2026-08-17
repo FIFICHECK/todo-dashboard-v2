@@ -1294,6 +1294,8 @@
         }
         console.log('LOAD: Deduplicated to', uniqueWorks.length, 'unique works');
         works = uniqueWorks;
+        // Cache works so the dashboard can still display when API is down/quota exceeded
+        try { localStorage.setItem('works_cache', JSON.stringify(works)); } catch(e) {}
 
         // Load CheckArchive from Settings table
         await loadCheckArchive();
@@ -1311,6 +1313,18 @@
         });
       } catch (error) {
         console.error('LOAD: Error loading works/settings:', error);
+        // Fallback: use cached works so the dashboard isn't empty during API outages/quota exhaustion
+        if (!works || works.length === 0) {
+          var cachedWorks = localStorage.getItem('works_cache');
+          if (cachedWorks) {
+            try {
+              works = JSON.parse(cachedWorks);
+              console.log('LOAD: Using cached works (' + works.length + ' works)');
+            } catch(e) {
+              works = [];
+            }
+          }
+        }
       }
       
       // Step 2: Try localStorage cache first for instant UI
