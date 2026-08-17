@@ -844,6 +844,12 @@
         var response = await fetch(url, {
           headers: { 'Authorization': 'Bearer ' + AIRTABLE_API_KEY }
         });
+        if (!response.ok) {
+          // Throw so callers can detect 429 (rate limit / quota exhausted) and back off
+          var err = new Error('Airtable API error ' + response.status + ' for ' + table);
+          err.status = response.status;
+          throw err;
+        }
         var data = await response.json();
         if (data.records) {
           allRecords = allRecords.concat(data.records);
@@ -1242,6 +1248,12 @@
         maybeRunArchive();
       } catch (e) {
         console.error('LOAD SMART: Failed:', e);
+        // Detect rate limit / quota exhaustion → back off polling to avoid hammering
+        if (e && e.status === 429) {
+          console.warn('LOAD SMART: 429 detected, backing off polling to 10 min');
+          countdownValue = 600;
+          updateCountdown();
+        }
         showToast(false, '❌ 同步失敗');
       } finally {
         isSyncing = false;
@@ -2483,7 +2495,7 @@ async function saveRMStoAirtable() {
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible') {
         console.log('SYNC: Page became visible, restarting polling...');
-        countdownValue = 10;
+        countdownValue = SYNC_INTERVAL_SECONDS;
         updateCountdown();
         startPolling();
         if (!isLoading && !isSaving && !isSyncing) {
@@ -2495,9 +2507,10 @@ async function saveRMStoAirtable() {
       }
     });
     
-    // Poll for updates every 10 seconds with countdown timer
+    // Poll for updates every 60 seconds with countdown timer (was 10s — reduced to save Airtable API quota)
     var syncInterval = null;
-    var countdownValue = 10;
+    var countdownValue = 60;
+    var SYNC_INTERVAL_SECONDS = 60;
     function updateCountdown() {
       var el = document.getElementById('refreshCountdown');
       if (el) el.textContent = countdownValue;
@@ -2545,13 +2558,13 @@ async function saveRMStoAirtable() {
     }
     function startPolling() {
       if (syncInterval) clearInterval(syncInterval);
-      countdownValue = 10;
+      countdownValue = SYNC_INTERVAL_SECONDS;
       updateCountdown();
       // Countdown tick every 1 second
       syncInterval = setInterval(function() {
         countdownValue--;
         if (countdownValue <= 0) {
-          countdownValue = 10;
+          countdownValue = SYNC_INTERVAL_SECONDS;
           loadDataSmart();
         }
         updateCountdown();
