@@ -1116,10 +1116,10 @@
       }
     }
 
-    // Throttled wrapper: only run archive at most once per 10 minutes
+    // Throttled wrapper: only run archive at most once per 60 minutes (protect API quota)
     function maybeRunArchive() {
       if (archiveRunning) return;
-      if (Date.now() - lastArchiveRun < 600000) return; // 10 min
+      if (Date.now() - lastArchiveRun < 3600000) return; // 60 min
       archiveOldChecks();
     }
     // Calculate date range for smart loading: current week ± weeks
@@ -2600,10 +2600,10 @@ async function saveRMStoAirtable() {
       }
     });
     
-    // Poll for updates every 60 seconds with countdown timer (was 10s — reduced to save Airtable API quota)
+    // Poll for updates every 5 minutes (was 10s → 60s → now 300s to protect Airtable API quota)
     var syncInterval = null;
-    var countdownValue = 60;
-    var SYNC_INTERVAL_SECONDS = 60;
+    var countdownValue = 300;
+    var SYNC_INTERVAL_SECONDS = 300;
     function updateCountdown() {
       var el = document.getElementById('refreshCountdown');
       if (el) el.textContent = countdownValue;
@@ -2633,6 +2633,12 @@ async function saveRMStoAirtable() {
     }
     async function fetchRecordCount() {
       if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_URL) return;
+      // Only fetch the actual record count once per day (it paginates all Checks = many requests)
+      var lastCountFetch = localStorage.getItem('record_count_fetched_at');
+      if (lastCountFetch && (Date.now() - parseInt(lastCountFetch, 10) < 86400000)) {
+        console.log('Record count: using cached count (fetched < 24h ago)');
+        return;
+      }
       try {
         // Reuse the existing fetchAirtable helper (same pattern as loadDataSmart)
         var records = await fetchAirtable('Checks', null);
@@ -2643,6 +2649,7 @@ async function saveRMStoAirtable() {
         var settingsCnt = 8;
         var worksCnt = (typeof works !== 'undefined' && works) ? works.length : 0;
         cachedRecordCount = settingsCnt + worksCnt + uniqueKeys.size;
+        localStorage.setItem('record_count_fetched_at', String(Date.now()));
         console.log('Record count fetched:', cachedRecordCount, '(unique checks:', uniqueKeys.size, ')');
         updateRecordUsage();
       } catch(e) {
