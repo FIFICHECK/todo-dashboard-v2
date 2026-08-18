@@ -1643,7 +1643,17 @@ async function saveSingleCheckToAirtable(key) {
             }
           }
         }
-        // No cached ID or 404: POST to create new record
+        // No cached ID or 404: check if record already exists (prevents cross-browser duplicates)
+        // Multiple computers each have their own checkRecordIds cache, so a key created on
+        // another computer would otherwise be POSTed again here → duplicate records → record limit
+        var existing = await fetchAirtable('Checks', "{CheckKey} = '" + key + "'");
+        if (existing.length > 0) {
+          checkRecordIds[key] = existing[0].id;
+          var result = await updateAirtableRecord('Checks', existing[0].id, { 'State': state, 'LastModifiedTime': nowISO });
+          console.log('SAVE SINGLE: Found existing record, PATCH instead of POST:', existing[0].id);
+          return result;
+        }
+        // Truly new record: POST to create
         var result = await createAirtableRecord('Checks', { 'CheckKey': key, 'State': state, 'LastModifiedTime': nowISO });
         console.log('SAVE SINGLE: POST success:', result.id);
         checkRecordIds[key] = result.id; // Cache the new ID
